@@ -5,5 +5,13 @@ python:
 compiler:
   - gcc
   - clang
+before_script:
+  - git clone https://github.com/irungentoo/ProjectTox-Core.git toxcore
+  - cd toxcore
+  - autoreconf -i
+  - ./configure --disable-tests --disable-ntox --disable-dht-bootstrap-daemon
+  - make -j2
+  - sudo make install
+  - cd ..
 script:
   - python setup.py build
