@@ -5,15 +5,16 @@ Python binding for [Project Tox](https://github.com/irungentoo/ProjectTox-Core)
 
 PyTox is currently under development, patches are welcomed :)
 
-There is also another project [py-toxcore](https://github.com/alexandervdm/py-toxcore) that also provide Python binding for Tox written in SWIG, but PyTox provide a more object oriented binding. A simple example is as follows:
+There is also another project [py-toxcore](https://github.com/alexandervdm/py-toxcore) that also provide Python binding for Tox written in SWIG, but PyTox provide a more Pythonic binding, i.e Object-oriented instead of C style, raise exception instead of returning error code. A simple example is as follows:
 
     class EchoTox(Tox):
-        def on_friendrequest(self, *args):
-            pass
-
-        def on_friendmessage(self, *args):
-            pass
-
+        def on_statusmessage(self, *args):
+            fid = self.getfriend_id(TEST_ID)
+            self.sendmessage(fid, "Hi, this is EchoTox speacking...")
+    
+        def on_friendmessage(self, friendId, message):
+            name = self.getname(friendId)
+            print '%s: %s' % (name, message)
 	...
 
 As you can see callbacks are mapped into class method instead of using it the the c ways. For more details please refer to `test.py`.
