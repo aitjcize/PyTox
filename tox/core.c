@@ -501,13 +501,13 @@ ToxCore_sendmessage(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  int ret = tox_sendmessage(self->tox, friendid, message, length + 1);
+  uint32_t ret = tox_sendmessage(self->tox, friendid, message, length + 1);
   if (ret == 0) {
     PyErr_SetString(ToxCoreError, "failed to send message");
     return NULL;
   }
 
-  return PyInt_FromLong(ret);
+  return PyLong_FromUnsignedLong(ret);
 }
 
 static PyObject*
@@ -521,13 +521,13 @@ ToxCore_sendaction(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  int ret = tox_sendaction(self->tox, friendid, action, length + 1);
+  uint32_t ret = tox_sendaction(self->tox, friendid, action, length + 1);
   if (ret == 0) {
     PyErr_SetString(ToxCoreError, "failed to send action");
     return NULL;
   }
 
-  return PyInt_FromLong(ret);
+  return PyLong_FromUnsignedLong(ret);
 }
 
 static PyObject*
@@ -620,7 +620,6 @@ static PyObject*
 ToxCore_get_statusmessage_size(ToxCore* self, PyObject* args)
 {
   int friendid = 0;
-
   if (!PyArg_ParseTuple(args, "i", &friendid)) {
     return NULL;
   }
@@ -677,7 +676,6 @@ static PyObject*
 ToxCore_get_userstatus(ToxCore* self, PyObject* args)
 {
   int friendid = 0;
-
   if (!PyArg_ParseTuple(args, "i", &friendid)) {
     return NULL;
   }
@@ -691,7 +689,6 @@ static PyObject*
 ToxCore_get_selfuserstatus(ToxCore* self, PyObject* args)
 {
   int status = tox_get_selfuserstatus(self->tox);
-
   return PyInt_FromLong(status);
 }
 
@@ -714,8 +711,7 @@ static PyObject*
 ToxCore_count_friendlist(ToxCore* self, PyObject* args)
 {
   uint32_t count = tox_count_friendlist(self->tox);
-
-  return PyInt_FromLong(count);
+  return PyLong_FromUnsignedLong(count);
 }
 
 static PyObject*
@@ -725,13 +721,13 @@ ToxCore_copy_friendlist(ToxCore* self, PyObject* args)
   uint32_t count = tox_count_friendlist(self->tox);
   int* list = (int*)malloc(count * sizeof(int));
 
-  int n = tox_copy_friendlist(self->tox, list, count);
+  uint32_t n = tox_copy_friendlist(self->tox, list, count);
 
   if (!(plist = PyList_New(0))) {
     return NULL;
   }
 
-  int i = 0;
+  uint32_t i = 0;
   for (i = 0; i < n; ++i) {
     PyList_Append(plist, PyInt_FromLong(list[i]));
   }
@@ -784,7 +780,7 @@ ToxCore_group_peername(ToxCore* self, PyObject* args)
     PyErr_SetString(PyExc_TypeError, "failed to get group peername");
   }
 
-  return PyString_FromString(buf);
+  return PyString_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -883,7 +879,7 @@ ToxCore_group_copy_names(ToxCore* self, PyObject* args)
 
   int i = 0;
   for (i = 0; i < n2; ++i) {
-    PyList_Append(list, PyString_FromString(names[i]));
+    PyList_Append(list, PyString_FromString((const char*)names[i]));
   }
 
   return list;
@@ -892,8 +888,8 @@ ToxCore_group_copy_names(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_count_chatlist(ToxCore* self, PyObject* args)
 {
-  int n = tox_count_chatlist(self->tox);
-  return PyInt_FromLong(n);
+  uint32_t n = tox_count_chatlist(self->tox);
+  return PyLong_FromUnsignedLong(n);
 }
 
 static PyObject*
@@ -1033,9 +1029,7 @@ ToxCore_file_dataremaining(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  // XXX: ret is long long!
-  return PyInt_FromLong(ret);
-
+  return PyLong_FromUnsignedLongLong(ret);
 }
 
 static PyMethodDef Rabin_methods[] = {
