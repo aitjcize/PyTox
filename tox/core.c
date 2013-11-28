@@ -921,30 +921,120 @@ ToxCore_copy_chatlist(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_new_filesender(ToxCore* self, PyObject* args)
 {
+  int friendnumber = 0;
+  int filesize = 0;
+  uint8_t* filename = 0;
+  int filename_length = 0;
 
+  if (!PyArg_ParseTuple(args, "iKs#", &friendnumber, &filesize, &filename,
+        &filename_length)) {
+    return NULL;
+  }
+
+  int ret = tox_new_filesender(self->tox, friendnumber, filesize, filename,
+      filename_length);
+
+  if (ret == -1) {
+    PyErr_SetString(PyExc_TypeError, "tox_new_filesender() failed");
+    return NULL;
+  }
+
+  return PyInt_FromLong(ret);
 }
 
 static PyObject*
 ToxCore_file_sendcontrol(ToxCore* self, PyObject* args)
 {
+  int friendnumber = 0;
+  uint8_t send_receive = 0;
+  int filenumber = 0;
+  uint8_t message_id = 0;
+  uint8_t* data = NULL;
+  int data_length = 0;
 
+
+  if (!PyArg_ParseTuple(args, "ibibs#", &friendnumber, &send_receive,
+        &filenumber, &message_id, &data, &data_length)) {
+    return NULL;
+  }
+
+  int ret = tox_file_sendcontrol(self->tox, friendnumber, send_receive,
+      filenumber, message_id, data, data_length);
+
+  if (!ret) {
+    PyErr_SetString(PyExc_TypeError, "tox_file_sendcontrol() failed");
+    return NULL;
+  }
+
+  Py_RETURN_NONE;
 }
 
 static PyObject*
 ToxCore_file_senddata(ToxCore* self, PyObject* args)
 {
+  int friendnumber = 0;
+  int filenumber = 0;
+  uint8_t* data = NULL;
+  uint32_t data_length = 0;
 
+
+  if (!PyArg_ParseTuple(args, "iis#", &friendnumber, &filenumber, &data,
+        &data_length)) {
+    return NULL;
+  }
+
+  int ret = tox_file_senddata(self->tox, friendnumber, filenumber, data,
+      data_length);
+
+  if (!ret) {
+    PyErr_SetString(PyExc_TypeError, "tox_file_senddata() failed");
+    return NULL;
+  }
+
+  Py_RETURN_NONE;
 }
 
 static PyObject*
 ToxCore_filedata_size(ToxCore* self, PyObject* args)
 {
+  int friendnumber = 0;
+  if (!PyArg_ParseTuple(args, "i", &friendnumber)) {
+    return NULL;
+  }
 
+  int ret = tox_filedata_size(self->tox, friendnumber);
+
+  if (!ret) {
+    PyErr_SetString(PyExc_TypeError, "tox_filedata_size() failed");
+    return NULL;
+  }
+
+  return PyInt_FromLong(ret);
 }
 
 static PyObject*
 ToxCore_file_dataremaining(ToxCore* self, PyObject* args)
 {
+  int friendnumber = 0;
+  int filenumber = 0;
+  uint8_t send_receive = 0;
+
+
+  if (!PyArg_ParseTuple(args, "iic", &friendnumber, &filenumber,
+        &send_receive)) {
+    return NULL;
+  }
+
+  uint64_t ret = tox_file_dataremaining(self->tox, friendnumber, filenumber,
+      send_receive);
+
+  if (!ret) {
+    PyErr_SetString(PyExc_TypeError, "tox_file_dataremaining() failed");
+    return NULL;
+  }
+
+  // XXX: ret is long long!
+  return PyInt_FromLong(ret);
 
 }
 
