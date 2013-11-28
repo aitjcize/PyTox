@@ -1,6 +1,8 @@
 # PyTox
 Python binding for [Project Tox](https://github.com/irungentoo/ProjectTox-Core)
 
+[![Build Status](https://travis-ci.org/aitjcize/PyTox.png?branch=master)](https://travis-ci.org/aitjcize/PyTox)
+
 PyTox is currently under development, patches are welcomed :)
 
 ## Usage
