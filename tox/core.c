@@ -33,10 +33,10 @@ static void bytes_to_hex_string(char* digest, int length, char* hex_digest)
   for(i = j = 0; i < length; ++i) {
     char c;
     c = (digest[i] >> 4) & 0xf;
-    c = (c > 9) ? c + 'a'- 10 : c + '0';
+    c = (c > 9) ? c + 'A'- 10 : c + '0';
     hex_digest[j++] = c;
     c = (digest[i] & 0xf);
-    c = (c > 9) ? c + 'a' - 10 : c + '0';
+    c = (c > 9) ? c + 'A' - 10 : c + '0';
     hex_digest[j++] = c;
   }
 }
