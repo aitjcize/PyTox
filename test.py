@@ -12,52 +12,12 @@ class EchoTox(Tox):
             if n == 100:
                 self.addfriend("4E9D1B82DEE3BD3D4DDA62190873EA40737251A43445E4D517E66230BC4507233533EDD01F24", "Hi")
 
-    def on_friendrequest(self, *args):
-        pass
-
-    def on_friendmessage(self, *args):
-        pass
-
-    def on_action(self, *args):
-        pass
-
-    def on_namechange(self, *args):
-        pass
-
     def on_statusmessage(self, *args):
         print 'on_statusmessage!!!'
         fid = self.getfriend_id("4E9D1B82DEE3BD3D4DDA62190873EA40737251A43445E4D517E66230BC4507233533EDD01F24")
         print 'fid', fid
 
         self.sendmessage(fid, "abcdefg")
-
-    def on_userstatus(self, *args):
-        pass
-
-    def on_read_receipt(self, *args):
-        pass
-
-    def on_connectionstatus(self, *args):
-        pass
-
-    def on_group_invite(self, *args):
-        pass
-
-    def on_group_message(self, *args):
-        pass
-
-    def on_group_namelistchange(self, *args):
-        pass
-
-    def on_file_sendrequest(self, *args):
-        pass
-
-    def on_file_control(self, *args):
-        pass
-
-    def on_file_data(self, *args):
-        pass
-
 
 t = EchoTox()
 

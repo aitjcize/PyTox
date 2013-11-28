@@ -210,6 +210,12 @@ ToxCore_dealloc(ToxCore* self)
 }
 
 static PyObject*
+ToxCore_callback_stub(ToxCore* self, PyObject* args)
+{
+  Py_RETURN_NONE;
+}
+
+static PyObject*
 ToxCore_do(ToxCore* self, PyObject* args)
 {
   tox_do(self->tox);
@@ -714,6 +720,20 @@ ToxCore_copy_friendlist(ToxCore* self, PyObject* args)
 }
 
 static PyMethodDef Rabin_methods[] = {
+  {"on_friendrequest", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
+  {"on_friendmessage", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
+  {"on_action", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
+  {"on_namechange", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
+  {"on_statusmessage", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
+  {"on_userstatus", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
+  {"on_read_receipt", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
+  {"on_connectionstatus", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
+  {"on_group_invite", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
+  {"on_group_message", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
+  {"on_group_namelistchange", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
+  {"on_file_sendrequest", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
+  {"on_file_control", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
+  {"on_file_data", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
   {"do", (PyCFunction)ToxCore_do, METH_NOARGS,
     "The main loop that needs to be run at least 20 times per second"
   },
