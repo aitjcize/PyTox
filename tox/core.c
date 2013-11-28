@@ -25,7 +25,8 @@
 
 PyObject* ToxCoreError;
 
-static void bytes_to_hex_string(char* digest, int length, char* hex_digest)
+static void bytes_to_hex_string(uint8_t* digest, int length,
+    uint8_t* hex_digest)
 {
   hex_digest[2 * length] = 0;
 
@@ -56,9 +57,9 @@ static int hex_char_to_int(char c)
   return val;
 }
 
-static void hex_string_to_bytes(char* hexstr, int length, char* bytes)
+static void hex_string_to_bytes(uint8_t* hexstr, int length, uint8_t* bytes)
 {
-  int i, j;
+  int i;
   for (i = 0; i < length; ++i) {
     bytes[i] = (hex_char_to_int(hexstr[2 * i]) << 4)
              | (hex_char_to_int(hexstr[2 * i + 1]));
@@ -74,8 +75,9 @@ typedef struct {
 static void callback_friendrequest(uint8_t* public_key, uint8_t* data,
     uint16_t length, void* self)
 {
-  char buf[TOX_FRIEND_ADDRESS_SIZE * 2 + 1];
+  uint8_t buf[TOX_FRIEND_ADDRESS_SIZE * 2 + 1];
   bytes_to_hex_string(public_key, TOX_FRIEND_ADDRESS_SIZE, buf);
+
   PyObject_CallMethod((PyObject*)self, "on_friendrequest", "ss#", buf, data,
       length);
 }
@@ -238,15 +240,15 @@ ToxCore_save(ToxCore* self, PyObject* args)
 {
   PyObject* res = NULL;
   int size = tox_size(self->tox);
-  char* buffer = (char*)malloc(size);
+  uint8_t* buf = (uint8_t*)malloc(size);
 
-  if (buffer == NULL) {
+  if (buf == NULL) {
     return PyErr_NoMemory();
   }
-  tox_save(self->tox, buffer);
+  tox_save(self->tox, buf);
 
-  res = PyString_FromString(buffer);
-  free(buffer);
+  res = PyString_FromString((const char*)buf);
+  free(buf);
 
   return res;
 }
@@ -254,7 +256,7 @@ ToxCore_save(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_load(ToxCore* self, PyObject* args)
 {
-  char* data;
+  uint8_t* data;
   int length;
 
   if (!PyArg_ParseTuple(args, "s#", &data, &length)) {
@@ -315,7 +317,7 @@ ToxCore_getaddress(ToxCore* self, PyObject* args)
   tox_getaddress(self->tox, address);
   bytes_to_hex_string(address, TOX_FRIEND_ADDRESS_SIZE, address_hex);
 
-  PyObject* res = PyString_FromString(address_hex);
+  PyObject* res = PyString_FromString((const char*)address_hex);
   return res;
 }
 
@@ -332,7 +334,7 @@ ToxCore_addfriend(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  char pk[TOX_FRIEND_ADDRESS_SIZE];
+  uint8_t pk[TOX_FRIEND_ADDRESS_SIZE];
   hex_string_to_bytes(address, TOX_FRIEND_ADDRESS_SIZE, pk);
 
   int ret = tox_addfriend(self->tox, pk, data, data_length + 1);
@@ -386,7 +388,7 @@ ToxCore_addfriend_norequest(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  char pk[TOX_FRIEND_ADDRESS_SIZE];
+  uint8_t pk[TOX_FRIEND_ADDRESS_SIZE];
   hex_string_to_bytes(address, TOX_FRIEND_ADDRESS_SIZE, pk);
 
   if (tox_addfriend_norequest(self->tox, pk) == -1) {
@@ -407,7 +409,7 @@ ToxCore_getfriend_id(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  char pk[TOX_FRIEND_ADDRESS_SIZE];
+  uint8_t pk[TOX_FRIEND_ADDRESS_SIZE];
   hex_string_to_bytes(address, TOX_FRIEND_ADDRESS_SIZE, pk);
 
   int ret = tox_getfriend_id(self->tox, pk);
@@ -422,7 +424,7 @@ ToxCore_getfriend_id(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_getclient_id(ToxCore* self, PyObject* args)
 {
-  char pk[TOX_FRIEND_ADDRESS_SIZE + 1];
+  uint8_t pk[TOX_FRIEND_ADDRESS_SIZE + 1];
   pk[TOX_FRIEND_ADDRESS_SIZE] = 0;
 
   int friendid = 0;
@@ -433,7 +435,7 @@ ToxCore_getclient_id(ToxCore* self, PyObject* args)
 
   tox_getclient_id(self->tox, friendid, pk);
 
-  return PyString_FromString(pk);
+  return PyString_FromString((const char*)pk);
 }
 
 static PyObject*
@@ -546,7 +548,7 @@ ToxCore_setname(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_getselfname(ToxCore* self, PyObject* args)
 {
-  char buf[TOX_MAX_NAME_LENGTH];
+  uint8_t buf[TOX_MAX_NAME_LENGTH];
   memset(buf, 0, TOX_MAX_NAME_LENGTH);
 
   if (tox_getselfname(self->tox, buf, TOX_MAX_NAME_LENGTH) == 0) {
@@ -554,14 +556,14 @@ ToxCore_getselfname(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  return PyString_FromString(buf);
+  return PyString_FromString((const char*)buf);
 }
 
 static PyObject*
 ToxCore_getname(ToxCore* self, PyObject* args)
 {
   int friendid = 0;
-  char buf[TOX_MAX_NAME_LENGTH];
+  uint8_t buf[TOX_MAX_NAME_LENGTH];
   memset(buf, 0, TOX_MAX_NAME_LENGTH);
 
   if (!PyArg_ParseTuple(args, "i", &friendid)) {
@@ -573,7 +575,7 @@ ToxCore_getname(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  return PyString_FromString(buf);
+  return PyString_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -627,7 +629,7 @@ ToxCore_get_statusmessage_size(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_copy_statusmessage(ToxCore* self, PyObject* args)
 {
-  char buf[TOX_MAX_STATUSMESSAGE_LENGTH];
+  uint8_t buf[TOX_MAX_STATUSMESSAGE_LENGTH];
   int friendid = 0;
 
   memset(buf, 0, TOX_MAX_STATUSMESSAGE_LENGTH);
@@ -646,13 +648,13 @@ ToxCore_copy_statusmessage(ToxCore* self, PyObject* args)
 
   buf[TOX_MAX_STATUSMESSAGE_LENGTH -1] = 0;
 
-  return PyString_FromString(buf);
+  return PyString_FromString((const char*)buf);
 }
 
 static PyObject*
 ToxCore_copy_self_statusmessage(ToxCore* self, PyObject* args)
 {
-  char buf[TOX_MAX_STATUSMESSAGE_LENGTH];
+  uint8_t buf[TOX_MAX_STATUSMESSAGE_LENGTH];
   memset(buf, 0, TOX_MAX_STATUSMESSAGE_LENGTH);
 
   int ret = tox_copy_self_statusmessage(self->tox, buf,
@@ -665,7 +667,7 @@ ToxCore_copy_self_statusmessage(ToxCore* self, PyObject* args)
 
   buf[TOX_MAX_STATUSMESSAGE_LENGTH -1] = 0;
 
-  return PyString_FromString(buf);
+  return PyString_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -800,7 +802,7 @@ static PyMethodDef Rabin_methods[] = {
   {"set_statusmessage", (PyCFunction)ToxCore_set_statusmessage, METH_VARARGS,
     "Set our user status message"
   },
-  {"set_userstatus", (PyCFunction)ToxCore_set_statusmessage, METH_VARARGS,
+  {"set_userstatus", (PyCFunction)ToxCore_set_userstatus, METH_VARARGS,
     "Set our user status"
   },
   {"get_statusmessage_size", (PyCFunction)ToxCore_get_statusmessage_size,
