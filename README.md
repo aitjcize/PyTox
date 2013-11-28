@@ -5,7 +5,7 @@ Python binding for [Project Tox](https://github.com/irungentoo/ProjectTox-Core)
 
 PyTox is currently under development, patches are welcomed :)
 
-There is also another project [py-toxcore](https://github.com/alexandervdm/py-toxcore) that also provide Python binding for Tox written in SWIG, but PyTox provide a more Pythonic binding, i.e Object-oriented instead of C style, raise exception instead of returning error code. A simple example is as follows:
+There is also another project [py-toxcore](https://github.com/alexandervdm/py-toxcore) that also provides Python binding for Tox written in SWIG, but PyTox provides a more Pythonic binding, i.e Object-oriented instead of C style, raise exception instead of returning error code. A simple example is as follows:
 
     class EchoTox(Tox):
         def on_statusmessage(self, *args):
