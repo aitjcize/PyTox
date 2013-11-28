@@ -428,8 +428,6 @@ ToxCore_getclient_id(ToxCore* self, PyObject* args)
   return PyString_FromString(pk);
 }
 
-// ---
-
 static PyObject*
 ToxCore_delfriend(ToxCore* self, PyObject* args)
 {
@@ -573,52 +571,146 @@ ToxCore_getname(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_set_statusmessage(ToxCore* self, PyObject* args)
 {
+  uint8_t* message;
+  int length;
+  if (!PyArg_ParseTuple(args, "s#", &message, &length)) {
+    return NULL;
+  }
+
+  if (tox_set_statusmessage(self->tox, message, length + 1) == -1) {
+    PyErr_SetString(ToxCoreError, "failed to set statusmessage");
+    return NULL;
+  }
+
+  Py_RETURN_NONE;
 }
 
 static PyObject*
 ToxCore_set_userstatus(ToxCore* self, PyObject* args)
 {
+  int status = 0;
+
+  if (!PyArg_ParseTuple(args, "i", &status)) {
+    return NULL;
+  }
+
+  if (tox_set_userstatus(self->tox, status) == -1) {
+    PyErr_SetString(ToxCoreError, "failed to set status");
+    return NULL;
+  }
+
+  Py_RETURN_NONE;
 }
 
 
 static PyObject*
 ToxCore_get_statusmessage_size(ToxCore* self, PyObject* args)
 {
+  int friendid = 0;
+
+  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+    return NULL;
+  }
+
+  int ret = tox_get_statusmessage_size(self->tox, friendid);
+  return PyInt_FromLong(ret);
 }
 
 static PyObject*
 ToxCore_copy_statusmessage(ToxCore* self, PyObject* args)
 {
+  char buf[TOX_MAX_STATUSMESSAGE_LENGTH];
+  int friendid = 0;
+
+  memset(buf, 0, TOX_MAX_STATUSMESSAGE_LENGTH);
+
+  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+    return NULL;
+  }
+
+  int ret = tox_copy_statusmessage(self->tox, friendid, buf,
+      TOX_MAX_STATUSMESSAGE_LENGTH);
+
+  if (ret == -1) {
+    PyErr_SetString(ToxCoreError, "failed to copy statusmessage");
+    return NULL;
+  }
+
+  buf[TOX_MAX_STATUSMESSAGE_LENGTH -1] = 0;
+
+  return PyString_FromString(buf);
 }
 
 static PyObject*
 ToxCore_copy_self_statusmessage(ToxCore* self, PyObject* args)
 {
+  char buf[TOX_MAX_STATUSMESSAGE_LENGTH];
+  memset(buf, 0, TOX_MAX_STATUSMESSAGE_LENGTH);
+
+  int ret = tox_copy_self_statusmessage(self->tox, buf,
+      TOX_MAX_STATUSMESSAGE_LENGTH);
+
+  if (ret == -1) {
+    PyErr_SetString(ToxCoreError, "failed to copy self statusmessage");
+    return NULL;
+  }
+
+  buf[TOX_MAX_STATUSMESSAGE_LENGTH -1] = 0;
+
+  return PyString_FromString(buf);
 }
 
 static PyObject*
 ToxCore_get_userstatus(ToxCore* self, PyObject* args)
 {
+  int friendid = 0;
+
+  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+    return NULL;
+  }
+
+  int status = tox_get_userstatus(self->tox, friendid);
+
+  return PyInt_FromLong(status);
 }
 
 static PyObject*
 ToxCore_get_selfuserstatus(ToxCore* self, PyObject* args)
 {
+  int status = tox_get_selfuserstatus(self->tox);
+
+  return PyInt_FromLong(status);
 }
 
 static PyObject*
 ToxCore_set_send_receipts(ToxCore* self, PyObject* args)
 {
+  int friendid = 0;
+  int yesno = 0;
+
+  if (!PyArg_ParseTuple(args, "ii", &friendid, &yesno)) {
+    return NULL;
+  }
+
+  tox_set_sends_receipts(self->tox, friendid, yesno);
+
+  Py_RETURN_NONE;
 }
 
 static PyObject*
 ToxCore_count_friendlist(ToxCore* self, PyObject* args)
 {
+  int count = tox_count_friendlist(self->tox);
+
+  return PyInt_FromLong(count);
 }
 
 static PyObject*
 ToxCore_copy_friendlist(ToxCore* self, PyObject* args)
 {
+  int count = tox_count_friendlist(self->tox);
+
+  return PyInt_FromLong(count);
 }
 
 static PyMethodDef Rabin_methods[] = {
