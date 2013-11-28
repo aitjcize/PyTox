@@ -1,6 +1,8 @@
 from tox import Tox
 import time
 
+TEST_ID = "4E9D1B82DEE3BD3D4DDA62190873EA40737251A43445E4D517E66230BC4507233533EDD01F24"
+
 class EchoTox(Tox):
     def loop(self):
         n = 0
@@ -10,14 +12,15 @@ class EchoTox(Tox):
 
             n += 1
             if n == 100:
-                self.addfriend("4E9D1B82DEE3BD3D4DDA62190873EA40737251A43445E4D517E66230BC4507233533EDD01F24", "Hi")
+                self.addfriend(TEST_ID, "Hi, I'm echo tox!")
 
     def on_statusmessage(self, *args):
-        print 'on_statusmessage!!!'
-        fid = self.getfriend_id("4E9D1B82DEE3BD3D4DDA62190873EA40737251A43445E4D517E66230BC4507233533EDD01F24")
-        print 'fid', fid
+        fid = self.getfriend_id(TEST_ID)
+        self.sendmessage(fid, "Hi, this is EchoTox speacking...")
 
-        self.sendmessage(fid, "abcdefg")
+    def on_friendmessage(self, friendId, message):
+        name = self.getname(friendId)
+        print '%s: %s' % (name, message)
 
 t = EchoTox()
 
