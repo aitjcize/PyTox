@@ -7,21 +7,28 @@ PyTox is currently under development, patches are welcomed :)
 
 There is also another project [py-toxcore](https://github.com/alexandervdm/py-toxcore) that also provides Python binding for Tox written in SWIG, but PyTox provides a more Pythonic binding, i.e Object-oriented instead of C style, raise exception instead of returning error code. A simple example is as follows:
 
-    class EchoTox(Tox):
-        def on_statusmessage(self, *args):
-            fid = self.getfriend_id(TEST_ID)
-            self.sendmessage(fid, "Hi, this is EchoTox speacking...")
+    class EchoBot(Tox):
+        def loop(self):
+            while True:
+                self.do()
+                time.sleep(0.03)
+    
+        def on_friendrequest(self, pk, message):
+            print 'Friend request from %s: %s' % (pk, message)
+            self.addfriend_norequest(pk)
+            print 'Accepted.'
     
         def on_friendmessage(self, friendId, message):
             name = self.getname(friendId)
             print '%s: %s' % (name, message)
-	...
+            print 'EchoBot: %s' % message
+            self.sendmessage(friendId, message)
 
-As you can see callbacks are mapped into class method instead of using it the the c ways. For more details please refer to `test.py`.
+As you can see callbacks are mapped into class method instead of using it the the c ways. For more details please refer to `examples/echo.py`.
 
 
-## Usage
-* See test.py for example
+## Examples
+* `echo.py`: A working echo bot that wait for friend requests, and than start echoing anything that friend send.
 
 ## Contributing
 1. Fork it
