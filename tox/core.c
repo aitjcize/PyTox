@@ -710,7 +710,7 @@ ToxCore_set_send_receipts(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_count_friendlist(ToxCore* self, PyObject* args)
 {
-  int count = tox_count_friendlist(self->tox);
+  uint32_t count = tox_count_friendlist(self->tox);
 
   return PyInt_FromLong(count);
 }
@@ -718,9 +718,23 @@ ToxCore_count_friendlist(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_copy_friendlist(ToxCore* self, PyObject* args)
 {
-  int count = tox_count_friendlist(self->tox);
+  PyObject* plist = NULL;
+  uint32_t count = tox_count_friendlist(self->tox);
+  int* list = (int*)malloc(count * sizeof(int));
 
-  return PyInt_FromLong(count);
+  int n = tox_copy_friendlist(self->tox, list, count);
+
+  if (!(plist = PyList_New(0))) {
+    return NULL;
+  }
+
+  int i = 0;
+  for (i = 0; i < n; ++i) {
+    PyList_Append(plist, PyInt_FromLong(list[i]));
+  }
+  free(list);
+
+  return plist;
 }
 
 static PyMethodDef Rabin_methods[] = {
