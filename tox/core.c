@@ -74,8 +74,10 @@ typedef struct {
 static void callback_friendrequest(uint8_t* public_key, uint8_t* data,
     uint16_t length, void* self)
 {
-  PyObject_CallMethod((PyObject*)self, "on_friendrequest", "s#s#", public_key,
-      TOX_FRIEND_ADDRESS_SIZE, data, length);
+  char buf[TOX_FRIEND_ADDRESS_SIZE * 2 + 1];
+  bytes_to_hex_string(public_key, TOX_FRIEND_ADDRESS_SIZE, buf);
+  PyObject_CallMethod((PyObject*)self, "on_friendrequest", "ss#", buf, data,
+      length);
 }
 
 static void callback_friendmessage(Tox *tox, int friendnumber,
@@ -761,7 +763,7 @@ static PyMethodDef Rabin_methods[] = {
     "add a friend"
   },
   {"addfriend_norequest", (PyCFunction)ToxCore_addfriend_norequest,
-    METH_NOARGS,
+    METH_VARARGS,
     "add a friend without sending request"
   },
   {"getfriend_id", (PyCFunction)ToxCore_getfriend_id, METH_VARARGS,
