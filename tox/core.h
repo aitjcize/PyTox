@@ -2,7 +2,7 @@
 #ifndef CORE_H
 #define CORE_H
 
-extern PyMethodDef Rabin_methods[];
+extern PyMethodDef Tox_methods[];
 
 #endif
 

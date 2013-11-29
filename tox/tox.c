@@ -35,7 +35,7 @@ static struct PyModuleDef moduledef = {
   "tox",
   "Python Toxcore module",
   -1,
-  Rabin_methods,
+  Tox_methods,
   NULL,
   NULL,
   NULL,

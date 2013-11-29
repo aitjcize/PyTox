@@ -1208,7 +1208,7 @@ ToxCore_load_from_file(ToxCore* self, PyObject* args)
   }
 }
 
-PyMethodDef Rabin_methods[] = {
+PyMethodDef Tox_methods[] = {
   {"on_friend_request", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
   {"on_friend_message", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
   {"on_action", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
@@ -1350,7 +1350,7 @@ PyTypeObject ToxCoreType = {
   0,                         /*ob_size*/
 #endif
   "core.Tox",                /*tp_name*/
-  sizeof(ToxCore),             /*tp_basicsize*/
+  sizeof(ToxCore),           /*tp_basicsize*/
   0,                         /*tp_itemsize*/
   (destructor)ToxCore_dealloc, /*tp_dealloc*/
   0,                         /*tp_print*/
@@ -1368,14 +1368,14 @@ PyTypeObject ToxCoreType = {
   0,                         /*tp_setattro*/
   0,                         /*tp_as_buffer*/
   Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
-  "ToxCore object",            /* tp_doc */
+  "ToxCore object",          /* tp_doc */
   0,                         /* tp_traverse */
   0,                         /* tp_clear */
   0,                         /* tp_richcompare */
   0,                         /* tp_weaklistoffset */
   0,                         /* tp_iter */
   0,                         /* tp_iternext */
-  Rabin_methods,             /* tp_methods */
+  Tox_methods,               /* tp_methods */
   0,                         /* tp_members */
   0,                         /* tp_getset */
   0,                         /* tp_base */
