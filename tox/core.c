@@ -66,6 +66,29 @@ static void hex_string_to_bytes(uint8_t* hexstr, int length, uint8_t* bytes)
   }
 }
 
+// PyString_ functions were deprecated in Python 3 in favour
+// of PyUnicode_for string data and PyBytes_ for binary data:
+PyObject* PyUnicodeString_FromString(const char *str) {
+  PyObject* res;
+  #if PY_MAJOR_VERSION < 3
+    res = PyString_FromString(str);
+  #else
+    res = PyUnicode_FromString(str);
+  #endif
+  return res;
+}
+
+PyObject* PyByteString_FromString(const char *str) {
+  PyObject* res;
+  #if PY_MAJOR_VERSION < 3
+    res = PyString_FromString(str);
+  #else
+    res = PyBytes_FromString(str);
+  #endif
+  return res;  
+}
+
+
 /* core.Tox definition */
 typedef struct {
   PyObject_HEAD
@@ -251,8 +274,8 @@ ToxCore_getaddress(ToxCore* self, PyObject* args)
 
   tox_getaddress(self->tox, address);
   bytes_to_hex_string(address, TOX_FRIEND_ADDRESS_SIZE, address_hex);
-
-  PyObject* res = PyString_FromString((const char*)address_hex);
+  
+  PyObject* res = PyUnicodeString_FromString((const char*)address_hex);
   return res;
 }
 
@@ -373,7 +396,7 @@ ToxCore_getclient_id(ToxCore* self, PyObject* args)
   tox_getclient_id(self->tox, friendid, pk);
   bytes_to_hex_string(pk, TOX_FRIEND_ADDRESS_SIZE, hex);
 
-  return PyString_FromString((const char*)hex);
+  return PyUnicodeString_FromString((const char*)hex);
 }
 
 static PyObject*
@@ -538,7 +561,7 @@ ToxCore_getselfname(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  return PyString_FromString((const char*)buf);
+  return PyUnicodeString_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -557,7 +580,7 @@ ToxCore_getname(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  return PyString_FromString((const char*)buf);
+  return PyUnicodeString_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -629,7 +652,7 @@ ToxCore_copy_statusmessage(ToxCore* self, PyObject* args)
 
   buf[TOX_MAX_STATUSMESSAGE_LENGTH -1] = 0;
 
-  return PyString_FromString((const char*)buf);
+  return PyUnicodeString_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -648,7 +671,7 @@ ToxCore_copy_self_statusmessage(ToxCore* self, PyObject* args)
 
   buf[TOX_MAX_STATUSMESSAGE_LENGTH -1] = 0;
 
-  return PyString_FromString((const char*)buf);
+  return PyUnicodeString_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -759,7 +782,7 @@ ToxCore_group_peername(ToxCore* self, PyObject* args)
     PyErr_SetString(PyExc_TypeError, "failed to get group peername");
   }
 
-  return PyString_FromString((const char*)buf);
+  return PyUnicodeString_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -858,7 +881,7 @@ ToxCore_group_copy_names(ToxCore* self, PyObject* args)
 
   int i = 0;
   for (i = 0; i < n2; ++i) {
-    PyList_Append(list, PyString_FromString((const char*)names[i]));
+    PyList_Append(list, PyUnicodeString_FromString((const char*)names[i]));
   }
 
   return list;
@@ -1084,7 +1107,13 @@ ToxCore_save(ToxCore* self, PyObject* args)
 
   tox_save(self->tox, buf);
 
-  res = PyString_FromStringAndSize((const char*)buf, size);
+  // The PyString_* functions were split in Python 3.* into 
+  // PyUnicode_ for string data and PyBytes_ for binary data
+  #if PY_MAJOR_VERSION < 3
+    res = PyString_FromStringAndSize((const char*)buf, size);
+  #else
+    res = PyBytes_FromStringAndSize((const char*)buf, size);
+  #endif
   free(buf);
 
   return res;
