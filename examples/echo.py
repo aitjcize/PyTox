@@ -12,7 +12,7 @@ class EchoBot(Tox):
 
         self.connect()
         self.set_name("EchoBot")
-        print('ID:', self.get_address())
+        print('ID: %s' % self.get_address())
 
     def connect(self):
         print('connecting...')
