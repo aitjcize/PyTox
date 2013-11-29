@@ -66,6 +66,30 @@ static void hex_string_to_bytes(uint8_t* hexstr, int length, uint8_t* bytes)
   }
 }
 
+/* Helper functions for Python 2 and 3 compability */
+
+// PyString_ functions were deprecated in Python 3 in favour
+// of PyUnicode_for string data and PyBytes_ for binary data:
+PyObject* PyUnicodeString_FromString(const char *str) {
+  PyObject* res;
+  #if PY_MAJOR_VERSION < 3
+    res = PyString_FromString(str);
+  #else
+    res = PyUnicode_FromString(str);
+  #endif
+  return res;
+}
+
+PyObject* PyByteString_FromString(const char *str) {
+  PyObject* res;
+  #if PY_MAJOR_VERSION < 3
+    res = PyString_FromString(str);
+  #else
+    res = PyBytes_FromString(str);
+  #endif
+  return res;  
+}
+
 /* core.Tox definition */
 typedef struct {
   PyObject_HEAD
@@ -251,8 +275,8 @@ ToxCore_getaddress(ToxCore* self, PyObject* args)
 
   tox_get_address(self->tox, address);
   bytes_to_hex_string(address, TOX_FRIEND_ADDRESS_SIZE, address_hex);
-
-  PyObject* res = PyString_FromString((const char*)address_hex);
+  
+  PyObject* res = PyUnicodeString_FromString((const char*)address_hex);
   return res;
 }
 
@@ -307,7 +331,7 @@ ToxCore_addfriend(ToxCore* self, PyObject* args)
   }
 
   if (success) {
-    return PyInt_FromLong(ret);
+    return PyLong_FromLong(ret);
   } else {
     return NULL;
   }
@@ -353,7 +377,7 @@ ToxCore_getfriend_id(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  return PyInt_FromLong(ret);
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
@@ -373,7 +397,7 @@ ToxCore_getclient_id(ToxCore* self, PyObject* args)
   tox_get_client_id(self->tox, friendid, pk);
   bytes_to_hex_string(pk, TOX_FRIEND_ADDRESS_SIZE, hex);
 
-  return PyString_FromString((const char*)hex);
+  return PyUnicodeString_FromString((const char*)hex);
 }
 
 static PyObject*
@@ -538,7 +562,7 @@ ToxCore_getselfname(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  return PyString_FromString((const char*)buf);
+  return PyUnicodeString_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -557,7 +581,7 @@ ToxCore_getname(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  return PyString_FromString((const char*)buf);
+  return PyUnicodeString_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -604,7 +628,7 @@ ToxCore_get_statusmessage_size(ToxCore* self, PyObject* args)
   }
 
   int ret = tox_get_status_message_size(self->tox, friendid);
-  return PyInt_FromLong(ret);
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
@@ -629,7 +653,7 @@ ToxCore_copy_statusmessage(ToxCore* self, PyObject* args)
 
   buf[TOX_MAX_STATUSMESSAGE_LENGTH -1] = 0;
 
-  return PyString_FromString((const char*)buf);
+  return PyUnicodeString_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -648,7 +672,7 @@ ToxCore_copy_self_statusmessage(ToxCore* self, PyObject* args)
 
   buf[TOX_MAX_STATUSMESSAGE_LENGTH -1] = 0;
 
-  return PyString_FromString((const char*)buf);
+  return PyUnicodeString_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -661,14 +685,14 @@ ToxCore_get_userstatus(ToxCore* self, PyObject* args)
 
   int status = tox_get_user_status(self->tox, friendid);
 
-  return PyInt_FromLong(status);
+  return PyLong_FromLong(status);
 }
 
 static PyObject*
 ToxCore_get_selfuserstatus(ToxCore* self, PyObject* args)
 {
   int status = tox_get_self_user_status(self->tox);
-  return PyInt_FromLong(status);
+  return PyLong_FromLong(status);
 }
 
 static PyObject*
@@ -708,7 +732,7 @@ ToxCore_copy_friendlist(ToxCore* self, PyObject* args)
 
   uint32_t i = 0;
   for (i = 0; i < n; ++i) {
-    PyList_Append(plist, PyInt_FromLong(list[i]));
+    PyList_Append(plist, PyLong_FromLong(list[i]));
   }
   free(list);
 
@@ -723,7 +747,7 @@ ToxCore_add_groupchat(ToxCore* self, PyObject* args)
     PyErr_SetString(PyExc_TypeError, "failed to add groupchat");
   }
 
-  return PyInt_FromLong(ret);
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
@@ -759,7 +783,7 @@ ToxCore_group_peername(ToxCore* self, PyObject* args)
     PyErr_SetString(PyExc_TypeError, "failed to get group peername");
   }
 
-  return PyString_FromString((const char*)buf);
+  return PyUnicodeString_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -798,7 +822,7 @@ ToxCore_join_groupchat(ToxCore* self, PyObject* args)
     PyErr_SetString(PyExc_TypeError, "failed to join group chat");
   }
 
-  return PyInt_FromLong(ret);
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
@@ -830,7 +854,7 @@ ToxCore_group_number_peers(ToxCore* self, PyObject* args)
 
   int ret = tox_group_number_peers(self->tox, groupnumber);
 
-  return PyInt_FromLong(ret);
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
@@ -858,7 +882,7 @@ ToxCore_group_copy_names(ToxCore* self, PyObject* args)
 
   int i = 0;
   for (i = 0; i < n2; ++i) {
-    PyList_Append(list, PyString_FromString((const char*)names[i]));
+    PyList_Append(list, PyUnicodeString_FromString((const char*)names[i]));
   }
 
   return list;
@@ -886,7 +910,7 @@ ToxCore_copy_chatlist(ToxCore* self, PyObject* args)
 
   int i = 0;
   for (i = 0; i < n; ++i) {
-    PyList_Append(plist, PyInt_FromLong(list[i]));
+    PyList_Append(plist, PyLong_FromLong(list[i]));
   }
   free(list);
 
@@ -914,7 +938,7 @@ ToxCore_new_filesender(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  return PyInt_FromLong(ret);
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
@@ -984,7 +1008,7 @@ ToxCore_filedata_size(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  return PyInt_FromLong(ret);
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
@@ -1084,7 +1108,13 @@ ToxCore_save(ToxCore* self, PyObject* args)
 
   tox_save(self->tox, buf);
 
-  res = PyString_FromStringAndSize((const char*)buf, size);
+  // The PyString_* functions were split in Python 3.* into 
+  // PyUnicode_ for string data and PyBytes_ for binary data
+  #if PY_MAJOR_VERSION < 3
+    res = PyString_FromStringAndSize((const char*)buf, size);
+  #else
+    res = PyBytes_FromStringAndSize((const char*)buf, size);
+  #endif
   free(buf);
 
   return res;
