@@ -1193,7 +1193,7 @@ ToxCore_load_from_file(ToxCore* self, PyObject* args)
   length = ftell(fp);
   fseek(fp, 0, SEEK_SET);
 
-  uint8_t* data = (char*)malloc(length * sizeof(char));
+  uint8_t* data = (uint8_t*)malloc(length * sizeof(char));
 
   if (fread(data, length, 1, fp) != 1) {
     PyErr_SetString(PyExc_TypeError,
