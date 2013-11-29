@@ -12,10 +12,10 @@ class EchoBot(Tox):
 
         self.connect()
         self.set_name("EchoBot")
-        print 'ID:', self.get_address()
+        print('ID:', self.get_address())
 
     def connect(self):
-        print 'connecting...'
+        print('connecting...')
         self.bootstrap_from_address(SERVER[0], 0, SERVER[1], SERVER[2])
 
     def loop(self):
@@ -25,11 +25,11 @@ class EchoBot(Tox):
             while True:
                 status = self.isconnected()
                 if not checked and status:
-                    print 'Connected to DHT.'
+                    print('Connected to DHT.')
                     checked = True
 
                 if checked and not status:
-                    print 'Disconnected from DHT.'
+                    print('Disconnected from DHT.')
                     self.connect()
                     checked = False
 
@@ -39,21 +39,21 @@ class EchoBot(Tox):
             self.save_to_file('data')
 
     def on_friend_request(self, pk, message):
-        print 'Friend request from %s: %s' % (pk, message)
+        print('Friend request from %s: %s' % (pk, message))
         self.add_friend_norequest(pk)
-        print 'Accepted.'
+        print('Accepted.')
 
     def on_friend_message(self, friendId, message):
         name = self.get_name(friendId)
-        print '%s: %s' % (name, message)
-        print 'EchoBot: %s' % message
+        print('%s: %s' % (name, message))
+        print('EchoBot: %s' % message)
         self.send_message(friendId, message)
 
     def on_file_send_request(self, friendId, filenumber, size, filename):
         name = self.get_name(friendId)
-        print "%s is sending a file `%s'" % (name, filename)
+        print("%s is sending a file `%s'" % (name, filename))
 
 t = EchoBot()
 
-print 'Waiting for friend request'
+print('Waiting for friend request')
 t.loop()
