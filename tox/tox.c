@@ -21,26 +21,52 @@
  */
 
 #include <stdio.h>
-
 #include <Python.h>
+
+#include "core.h"
 
 extern PyTypeObject ToxCoreType;
 extern PyObject* ToxCoreError;
 
-PyMODINIT_FUNC inittox(void) {
-  PyObject* m = Py_InitModule("tox", NULL);
-  if (m == NULL) {
-    return;
-  }
 
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef moduledef = {
+  PyModuleDef_HEAD_INIT,
+  "tox",
+  "Python Toxcore module",
+  -1,
+  Rabin_methods,
+  NULL,
+  NULL,
+  NULL,
+  NULL
+};
+#endif
+
+
+
+#if PY_MAJOR_VERSION >= 3
+PyObject *PyInit_tox(void) {
+  PyObject *m = PyModule_Create(&moduledef);
+#else
+PyMODINIT_FUNC inittox(void) {
+  PyObject *m = Py_InitModule("tox", NULL);
+#endif
+
+  if (m == NULL) return;
+  
   // Initialize tox.core
   if (PyType_Ready(&ToxCoreType) < 0) {
     fprintf(stderr, "Invalid PyTypeObject `ToxCoreType'\n");
     return;
   }
-
+  
   Py_INCREF(&ToxCoreType);
   PyModule_AddObject(m, "Tox", (PyObject*)&ToxCoreType);
 
   ToxCoreError = PyErr_NewException("tox.OperationFailedError", NULL, NULL);
+
+  #if PY_MAJOR_VERSION >= 3
+    return m;
+  #endif
 }
