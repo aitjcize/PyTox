@@ -231,6 +231,8 @@ static int init_helper(ToxCore* self, PyObject* args)
   tox_callback_file_data(tox, callback_file_data, self);
 
   self->tox = tox;
+
+  return 0;
 }
 
 static PyObject*
