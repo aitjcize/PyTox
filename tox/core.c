@@ -936,7 +936,7 @@ ToxCore_file_sendcontrol(ToxCore* self, PyObject* args)
   int ret = tox_file_send_control(self->tox, friendnumber, send_receive,
       filenumber, message_id, data, data_length);
 
-  if (!ret) {
+  if (ret == -1) {
     PyErr_SetString(PyExc_TypeError, "tox_file_send_control() failed");
     return NULL;
   }
@@ -961,7 +961,7 @@ ToxCore_file_senddata(ToxCore* self, PyObject* args)
   int ret = tox_file_send_data(self->tox, friendnumber, filenumber, data,
       data_length);
 
-  if (!ret) {
+  if (ret == -1) {
     PyErr_SetString(PyExc_TypeError, "tox_file_send_data() failed");
     return NULL;
   }
@@ -979,7 +979,7 @@ ToxCore_filedata_size(ToxCore* self, PyObject* args)
 
   int ret = tox_file_data_size(self->tox, friendnumber);
 
-  if (!ret) {
+  if (ret == -1) {
     PyErr_SetString(PyExc_TypeError, "tox_file_data_size() failed");
     return NULL;
   }
