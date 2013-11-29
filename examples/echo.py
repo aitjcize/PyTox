@@ -40,7 +40,7 @@ class EchoBot(Tox):
 
     def on_friend_request(self, pk, message):
         print 'Friend request from %s: %s' % (pk, message)
-        self.addfriend_norequest(pk)
+        self.add_friend_norequest(pk)
         print 'Accepted.'
 
     def on_friend_message(self, friendId, message):
