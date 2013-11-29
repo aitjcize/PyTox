@@ -30,12 +30,12 @@ There is also another project `py-toxcore <https://github.com/alexandervdm/py-to
             print 'EchoBot: %s' % message
             self.sendmessage(friendId, message)
 
-As you can see callbacks are mapped into class method instead of using it the the c ways. For more details please refer to ``examples/echo.py``.
+As you can see callbacks are mapped into class method instead of using it the the c ways. For more details please refer to `examples/echo.py <https://github.com/aitjcize/PyTox/blob/master/examples/echo.py>`_.
 
 
 Examples
 --------
-- ``echo.py``: A working echo bot that wait for friend requests, and than start echoing anything that friend send.
+- `echo.py <https://github.com/aitjcize/PyTox/blob/master/examples/echo.py>`_: A working echo bot that wait for friend requests, and than start echoing anything that friend send.
 
 Contributing
 ------------
