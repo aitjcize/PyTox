@@ -175,11 +175,15 @@ static void callback_file_data(Tox *m, int friendnumber, uint8_t filenumber,
       friendnumber, filenumber, data, length);
 }
 
-static int ToxCore_init(ToxCore* self, PyObject* args, PyObject* kwds)
+static int init_helper(ToxCore* self, PyObject* args)
 {
-  int ipv6enabled = 0;
+  if (self->tox != NULL) {
+    tox_kill(self->tox);
+    self->tox = NULL;
+  }
 
-  ipv6enabled = TOX_ENABLE_IPV6_DEFAULT;
+  int ipv6enabled = TOX_ENABLE_IPV6_DEFAULT;
+
   if (!PyArg_ParseTuple(args, "|i", &ipv6enabled)) {
     PyErr_SetString(PyExc_TypeError, "ipv6enabled should be boolean");
     return -1;
@@ -203,8 +207,28 @@ static int ToxCore_init(ToxCore* self, PyObject* args, PyObject* kwds)
   tox_callback_file_data(tox, callback_file_data, self);
 
   self->tox = tox;
+}
 
-  return 0;
+static PyObject*
+ToxCore_new(PyTypeObject *type, PyObject* args, PyObject* kwds)
+{
+  ToxCore* self = (ToxCore*)type->tp_alloc(type, 0);
+  self->tox = NULL;
+
+  if (init_helper(self, args) == -1) {
+    return NULL;
+  }
+
+  return (PyObject*)self;
+}
+
+static int ToxCore_init(ToxCore* self, PyObject* args, PyObject* kwds)
+{
+  // since __init__ in Python is optional(superclass need to call it
+  // explicitly), we need to initialize self->tox in ToxCore_new instead of
+  // init. If ToxCore_init is called, we re-initialize self->tox and pass
+  // the new ipv6enabled setting.
+  return init_helper(self, args);
 }
 
 static int
@@ -216,95 +240,6 @@ ToxCore_dealloc(ToxCore* self)
 static PyObject*
 ToxCore_callback_stub(ToxCore* self, PyObject* args)
 {
-  Py_RETURN_NONE;
-}
-
-static PyObject*
-ToxCore_do(ToxCore* self, PyObject* args)
-{
-  tox_do(self->tox);
-
-  Py_RETURN_NONE;
-}
-
-static PyObject*
-ToxCore_kill(ToxCore* self, PyObject* args)
-{
-  tox_kill(self->tox);
-
-  Py_RETURN_NONE;
-}
-
-static PyObject*
-ToxCore_save(ToxCore* self, PyObject* args)
-{
-  PyObject* res = NULL;
-  int size = tox_size(self->tox);
-  uint8_t* buf = (uint8_t*)malloc(size);
-
-  if (buf == NULL) {
-    return PyErr_NoMemory();
-  }
-  tox_save(self->tox, buf);
-
-  res = PyString_FromString((const char*)buf);
-  free(buf);
-
-  return res;
-}
-
-static PyObject*
-ToxCore_load(ToxCore* self, PyObject* args)
-{
-  uint8_t* data;
-  int length;
-
-  if (!PyArg_ParseTuple(args, "s#", &data, &length)) {
-    PyErr_SetString(PyExc_TypeError, "no data specified");
-    return NULL;
-  }
-
-  if (tox_load(self->tox, data, length) == -1) {
-    Py_RETURN_FALSE;
-  } else {
-    Py_RETURN_TRUE;
-  }
-}
-
-static PyObject*
-ToxCore_isconnected(ToxCore* self, PyObject* args)
-{
-  if (tox_isconnected(self->tox)) {
-    fprintf(stderr, "true!!\n");
-    Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
-  }
-}
-
-static PyObject*
-ToxCore_bootstrap_from_address(ToxCore* self, PyObject* args)
-{
-  int ipv6enabled = TOX_ENABLE_IPV6_DEFAULT;
-  int port = 0;
-  uint8_t* public_key = NULL;
-  char* address = NULL;
-  int addr_length = 0;
-  int pk_length = 0;
-
-  if (!PyArg_ParseTuple(args, "s#iis#", &address, &addr_length, &ipv6enabled,
-        &port, &public_key, &pk_length)) {
-    return NULL;
-  }
-
-  int ret = tox_bootstrap_from_address(self->tox, address, ipv6enabled, port,
-      public_key);
-
-  if (!ret) {
-    PyErr_SetString(ToxCoreError, "failed to resolve address");
-    return NULL;
-  }
-
   Py_RETURN_NONE;
 }
 
@@ -511,6 +446,28 @@ ToxCore_sendmessage(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
+ToxCore_sendmessage_withid(ToxCore* self, PyObject* args)
+{
+  int friendid = 0;
+  int length = 0;
+  uint32_t id = 0;
+  uint8_t* message = NULL;
+
+  if (!PyArg_ParseTuple(args, "iIs#", &friendid, &id, &message, &length)) {
+    return NULL;
+  }
+
+  uint32_t ret = tox_sendmessage_withid(self->tox, friendid, id,message,
+      length + 1);
+  if (ret == 0) {
+    PyErr_SetString(ToxCoreError, "failed to send message with id");
+    return NULL;
+  }
+
+  return PyLong_FromUnsignedLong(ret);
+}
+
+static PyObject*
 ToxCore_sendaction(ToxCore* self, PyObject* args)
 {
   int friendid = 0;
@@ -524,6 +481,28 @@ ToxCore_sendaction(ToxCore* self, PyObject* args)
   uint32_t ret = tox_sendaction(self->tox, friendid, action, length + 1);
   if (ret == 0) {
     PyErr_SetString(ToxCoreError, "failed to send action");
+    return NULL;
+  }
+
+  return PyLong_FromUnsignedLong(ret);
+}
+
+static PyObject*
+ToxCore_sendaction_withid(ToxCore* self, PyObject* args)
+{
+  int friendid = 0;
+  int length = 0;
+  uint32_t id = 0;
+  uint8_t* action = NULL;
+
+  if (!PyArg_ParseTuple(args, "iIs#", &friendid, &id, &action, &length)) {
+    return NULL;
+  }
+
+  uint32_t ret = tox_sendaction_withid(self->tox, friendid, id, action,
+      length + 1);
+  if (ret == 0) {
+    PyErr_SetString(ToxCoreError, "failed to send action with id");
     return NULL;
   }
 
@@ -1032,6 +1011,171 @@ ToxCore_file_dataremaining(ToxCore* self, PyObject* args)
   return PyLong_FromUnsignedLongLong(ret);
 }
 
+static PyObject*
+ToxCore_bootstrap_from_address(ToxCore* self, PyObject* args)
+{
+  int ipv6enabled = TOX_ENABLE_IPV6_DEFAULT;
+  int port = 0;
+  uint8_t* public_key = NULL;
+  char* address = NULL;
+  int addr_length = 0;
+  int pk_length = 0;
+
+  if (!PyArg_ParseTuple(args, "s#iis#", &address, &addr_length, &ipv6enabled,
+        &port, &public_key, &pk_length)) {
+    return NULL;
+  }
+
+  int ret = tox_bootstrap_from_address(self->tox, address, ipv6enabled, port,
+      public_key);
+
+  if (!ret) {
+    PyErr_SetString(ToxCoreError, "failed to resolve address");
+    return NULL;
+  }
+
+  Py_RETURN_NONE;
+}
+
+static PyObject*
+ToxCore_isconnected(ToxCore* self, PyObject* args)
+{
+  if (tox_isconnected(self->tox)) {
+    Py_RETURN_TRUE;
+  } else {
+    Py_RETURN_FALSE;
+  }
+}
+
+static PyObject*
+ToxCore_kill(ToxCore* self, PyObject* args)
+{
+  tox_kill(self->tox);
+
+  Py_RETURN_NONE;
+}
+
+static PyObject*
+ToxCore_do(ToxCore* self, PyObject* args)
+{
+  tox_do(self->tox);
+
+  Py_RETURN_NONE;
+}
+
+static PyObject*
+ToxCore_size(ToxCore* self, PyObject* args)
+{
+  uint32_t size = tox_size(self->tox);
+
+  return PyLong_FromUnsignedLong(size);
+}
+
+static PyObject*
+ToxCore_save(ToxCore* self, PyObject* args)
+{
+  PyObject* res = NULL;
+  int size = tox_size(self->tox);
+  uint8_t* buf = (uint8_t*)malloc(size);
+
+  if (buf == NULL) {
+    return PyErr_NoMemory();
+  }
+
+  tox_save(self->tox, buf);
+
+  res = PyString_FromStringAndSize((const char*)buf, size);
+  free(buf);
+
+  return res;
+}
+
+static PyObject*
+ToxCore_save_to_file(ToxCore* self, PyObject* args)
+{
+  char* filename;
+  if (!PyArg_ParseTuple(args, "s", &filename)) {
+    return NULL;
+  }
+
+  int size = tox_size(self->tox);
+  uint8_t* buf = (uint8_t*)malloc(size);
+
+  if (buf == NULL) {
+    return PyErr_NoMemory();
+  }
+
+  tox_save(self->tox, buf);
+
+  FILE* fp = fopen(filename, "w");
+
+  if (fp == NULL) {
+    PyErr_SetString(ToxCoreError, "tox_save(): can't open file for saving");
+    return NULL;
+  }
+
+  fwrite(buf, size, 1, fp);
+  fclose(fp);
+
+  free(buf);
+
+  Py_RETURN_NONE;
+}
+
+static PyObject*
+ToxCore_load(ToxCore* self, PyObject* args)
+{
+  uint8_t* data = NULL;
+  int length = 0;
+
+  if (!PyArg_ParseTuple(args, "s#", &data, &length)) {
+    PyErr_SetString(PyExc_TypeError, "no data specified");
+    return NULL;
+  }
+
+  if (tox_load(self->tox, data, length) == -1) {
+    Py_RETURN_FALSE;
+  } else {
+    Py_RETURN_TRUE;
+  }
+}
+
+static PyObject*
+ToxCore_load_from_file(ToxCore* self, PyObject* args)
+{
+  char* filename = NULL;
+
+  if (!PyArg_ParseTuple(args, "s", &filename)) {
+    return NULL;
+  }
+
+  FILE* fp = fopen(filename, "r");
+  if (fp == NULL) {
+    PyErr_SetString(PyExc_TypeError,
+        "tox_load(): failed to open file for reading");
+    return NULL;
+  }
+
+  size_t length = 0;
+  fseek(fp, 0, SEEK_END);
+  length = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
+
+  char* data = (char*)malloc(length * sizeof(char));
+
+  if (fread(data, length, 1, fp) != 1) {
+    PyErr_SetString(PyExc_TypeError,
+        "tox_load(): corrupted data file");
+    return NULL;
+  }
+
+  if (tox_load(self->tox, data, length) == -1) {
+    Py_RETURN_FALSE;
+  } else {
+    Py_RETURN_TRUE;
+  }
+}
+
 static PyMethodDef Rabin_methods[] = {
   {"on_friendrequest", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
   {"on_friendmessage", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
@@ -1068,8 +1212,12 @@ static PyMethodDef Rabin_methods[] = {
     "Checks if there exists a friend with given friendnumber" },
   {"sendmessage", (PyCFunction)ToxCore_sendmessage, METH_VARARGS,
     "Send a text chat message to an online friend" },
+  {"sendmessage_withid", (PyCFunction)ToxCore_sendmessage_withid, METH_VARARGS,
+    "Send a text chat message to an online friend with id" },
   {"sendaction", (PyCFunction)ToxCore_sendaction, METH_VARARGS,
     "Send an action to an online friend" },
+  {"sendaction_withid", (PyCFunction)ToxCore_sendaction_withid, METH_VARARGS,
+    "Send an action to an online friend with id" },
   {"setname", (PyCFunction)ToxCore_setname, METH_VARARGS,
     "Set our nickname" },
   {"getselfname", (PyCFunction)ToxCore_getselfname, METH_NOARGS,
@@ -1134,7 +1282,7 @@ static PyMethodDef Rabin_methods[] = {
     "Returns the recommended/maximum size of the filedata you send with "
     "tox_file_senddata()"},
   {"file_dataremaining", (PyCFunction)ToxCore_file_dataremaining, METH_VARARGS,
-    ""},
+    "Give the number of bytes left to be sent/received."},
   {"bootstrap_from_address", (PyCFunction)ToxCore_bootstrap_from_address,
     METH_VARARGS,
     "Resolves address into an IP address. If successful, sends a 'get nodes'"
@@ -1145,10 +1293,16 @@ static PyMethodDef Rabin_methods[] = {
     "Run this before closing shop" },
   {"do", (PyCFunction)ToxCore_do, METH_NOARGS,
     "The main loop that needs to be run at least 20 times per second" },
+  {"size", (PyCFunction)ToxCore_size, METH_NOARGS,
+    "return size of messenger data (for saving)." },
   {"save", (PyCFunction)ToxCore_save, METH_NOARGS,
     "Save the messenger in data" },
+  {"save_to_file", (PyCFunction)ToxCore_save_to_file, METH_VARARGS,
+    "Save the messenger to a file" },
   {"load", (PyCFunction)ToxCore_load, METH_VARARGS,
     "Load the messenger from data of size length." },
+  {"load_from_file", (PyCFunction)ToxCore_load_from_file, METH_VARARGS,
+    "Load the messenger from file" },
   {NULL}
 };
 
@@ -1191,5 +1345,5 @@ PyTypeObject ToxCoreType = {
   0,                         /* tp_dictoffset */
   (initproc)ToxCore_init,    /* tp_init */
   0,                         /* tp_alloc */
-  PyType_GenericNew,         /* tp_new */
+  ToxCore_new,               /* tp_new */
 };
