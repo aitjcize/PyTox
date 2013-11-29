@@ -11,8 +11,8 @@ class EchoBot(Tox):
             self.load_from_file('data')
 
         self.connect()
-        self.setname("EchoBot")
-        print 'ID:', self.getaddress()
+        self.set_name("EchoBot")
+        print 'ID:', self.get_address()
 
     def connect(self):
         print 'connecting...'
@@ -38,19 +38,19 @@ class EchoBot(Tox):
         except KeyboardInterrupt:
             self.save_to_file('data')
 
-    def on_friendrequest(self, pk, message):
+    def on_friend_request(self, pk, message):
         print 'Friend request from %s: %s' % (pk, message)
         self.addfriend_norequest(pk)
         print 'Accepted.'
 
-    def on_friendmessage(self, friendId, message):
-        name = self.getname(friendId)
+    def on_friend_message(self, friendId, message):
+        name = self.get_name(friendId)
         print '%s: %s' % (name, message)
         print 'EchoBot: %s' % message
-        self.sendmessage(friendId, message)
+        self.send_message(friendId, message)
 
-    def on_file_sendrequest(self, friendId, filenumber, size, filename):
-        name = self.getname(friendId)
+    def on_file_send_request(self, friendId, filenumber, size, filename):
+        name = self.get_name(friendId)
         print "%s is sending a file `%s'" % (name, filename)
 
 t = EchoBot()
