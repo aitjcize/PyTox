@@ -90,19 +90,6 @@ PyObject* PyByteString_FromString(const char *str) {
   return res;  
 }
 
-// Python 3 unifies the int and long datatypes. As such, the 
-// PyInt_FromLong function became deprecated. 
-PyObject* PyInteger_FromLong(long ival) {
-  PyObject* res;
-  #if PY_MAJOR_VERSION < 3
-    res = PyInt_FromLong(ival);
-  #else
-    res = PyLong_FromLong(ival);
-  #endif
-  return res;
-}
-
-
 /* core.Tox definition */
 typedef struct {
   PyObject_HEAD
@@ -344,7 +331,7 @@ ToxCore_addfriend(ToxCore* self, PyObject* args)
   }
 
   if (success) {
-    return PyInteger_FromLong(ret);
+    return PyLong_FromLong(ret);
   } else {
     return NULL;
   }
@@ -390,7 +377,7 @@ ToxCore_getfriend_id(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  return PyInteger_FromLong(ret);
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
@@ -641,7 +628,7 @@ ToxCore_get_statusmessage_size(ToxCore* self, PyObject* args)
   }
 
   int ret = tox_get_statusmessage_size(self->tox, friendid);
-  return PyInteger_FromLong(ret);
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
@@ -698,14 +685,14 @@ ToxCore_get_userstatus(ToxCore* self, PyObject* args)
 
   int status = tox_get_userstatus(self->tox, friendid);
 
-  return PyInteger_FromLong(status);
+  return PyLong_FromLong(status);
 }
 
 static PyObject*
 ToxCore_get_selfuserstatus(ToxCore* self, PyObject* args)
 {
   int status = tox_get_selfuserstatus(self->tox);
-  return PyInteger_FromLong(status);
+  return PyLong_FromLong(status);
 }
 
 static PyObject*
@@ -745,7 +732,7 @@ ToxCore_copy_friendlist(ToxCore* self, PyObject* args)
 
   uint32_t i = 0;
   for (i = 0; i < n; ++i) {
-    PyList_Append(plist, PyInteger_FromLong(list[i]));
+    PyList_Append(plist, PyLong_FromLong(list[i]));
   }
   free(list);
 
@@ -760,7 +747,7 @@ ToxCore_add_groupchat(ToxCore* self, PyObject* args)
     PyErr_SetString(PyExc_TypeError, "failed to add groupchat");
   }
 
-  return PyInteger_FromLong(ret);
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
@@ -835,7 +822,7 @@ ToxCore_join_groupchat(ToxCore* self, PyObject* args)
     PyErr_SetString(PyExc_TypeError, "failed to join group chat");
   }
 
-  return PyInteger_FromLong(ret);
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
@@ -867,7 +854,7 @@ ToxCore_group_number_peers(ToxCore* self, PyObject* args)
 
   int ret = tox_group_number_peers(self->tox, groupnumber);
 
-  return PyInteger_FromLong(ret);
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
@@ -923,7 +910,7 @@ ToxCore_copy_chatlist(ToxCore* self, PyObject* args)
 
   int i = 0;
   for (i = 0; i < n; ++i) {
-    PyList_Append(plist, PyInteger_FromLong(list[i]));
+    PyList_Append(plist, PyLong_FromLong(list[i]));
   }
   free(list);
 
@@ -951,7 +938,7 @@ ToxCore_new_filesender(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  return PyInteger_FromLong(ret);
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
@@ -1021,7 +1008,7 @@ ToxCore_filedata_size(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  return PyInteger_FromLong(ret);
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
