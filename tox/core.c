@@ -1338,10 +1338,6 @@ PyMethodDef Tox_methods[] = {
   {NULL}
 };
 
-
-
-
-
 PyTypeObject ToxCoreType = {
 #if PY_MAJOR_VERSION >= 3
   PyVarObject_HEAD_INIT(NULL, 0)
