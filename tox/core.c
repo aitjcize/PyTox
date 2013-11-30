@@ -208,9 +208,11 @@ static int init_helper(ToxCore* self, PyObject* args)
 
   int ipv6enabled = TOX_ENABLE_IPV6_DEFAULT;
 
-  if (!PyArg_ParseTuple(args, "|i", &ipv6enabled)) {
-    PyErr_SetString(PyExc_TypeError, "ipv6enabled should be boolean");
-    return -1;
+  if (args) {
+    if (!PyArg_ParseTuple(args, "|i", &ipv6enabled)) {
+      PyErr_SetString(PyExc_TypeError, "ipv6enabled should be boolean");
+      return -1;
+    }
   }
 
   Tox* tox = tox_new(ipv6enabled);
@@ -241,7 +243,8 @@ ToxCore_new(PyTypeObject *type, PyObject* args, PyObject* kwds)
   ToxCore* self = (ToxCore*)type->tp_alloc(type, 0);
   self->tox = NULL;
 
-  if (init_helper(self, args) == -1) {
+  // We don't care about subclass's arguments
+  if (init_helper(self, NULL) == -1) {
     return NULL;
   }
 
