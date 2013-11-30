@@ -9,7 +9,7 @@ Python binding for `Project Tox <https://github.com/irungentoo/ProjectTox-Core>`
 
 PyTox is currently under development, patches are welcomed :)
 
-There is also another project `py-toxcore <https://github.com/alexandervdm/py-toxcore>`_ that also provides Python binding for Tox written in SWIG, but PyTox provides a more Pythonic binding, i.e Object-oriented instead of C style, raise exception instead of returning error code. A simple example is as follows:
+PyTox provides a Pythonic binding, i.e Object-oriented instead of C style, raise exception instead of returning error code. A simple example is as follows:
 
 .. code-block:: python
 
