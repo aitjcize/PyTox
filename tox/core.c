@@ -199,18 +199,20 @@ static void callback_file_data(Tox *m, int friendnumber, uint8_t filenumber,
       friendnumber, filenumber, data, length);
 }
 
-static int init_helper(ToxCore* self, PyObject* args)
+static PyObject*
+ToxCore_new(PyTypeObject *type, PyObject* args, PyObject* kwds)
 {
-  if (self->tox != NULL) {
-    tox_kill(self->tox);
-    self->tox = NULL;
-  }
+  ToxCore* self = (ToxCore*)type->tp_alloc(type, 0);
 
   int ipv6enabled = TOX_ENABLE_IPV6_DEFAULT;
 
-  if (!PyArg_ParseTuple(args, "|i", &ipv6enabled)) {
-    PyErr_SetString(PyExc_TypeError, "ipv6enabled should be boolean");
-    return -1;
+  PyObject* ipv6obj = PyTuple_GetItem(args, 0);
+  if (ipv6obj) {
+    if (!PyBool_Check(ipv6obj)) {
+      PyErr_SetString(PyExc_TypeError, "ipv6enabled should be boolean");
+      return NULL;
+    }
+    ipv6enabled = (ipv6obj == Py_True);
   }
 
   Tox* tox = tox_new(ipv6enabled);
@@ -232,29 +234,12 @@ static int init_helper(ToxCore* self, PyObject* args)
 
   self->tox = tox;
 
-  return 0;
-}
-
-static PyObject*
-ToxCore_new(PyTypeObject *type, PyObject* args, PyObject* kwds)
-{
-  ToxCore* self = (ToxCore*)type->tp_alloc(type, 0);
-  self->tox = NULL;
-
-  if (init_helper(self, args) == -1) {
-    return NULL;
-  }
-
   return (PyObject*)self;
 }
 
 static int ToxCore_init(ToxCore* self, PyObject* args, PyObject* kwds)
 {
-  // since __init__ in Python is optional(superclass need to call it
-  // explicitly), we need to initialize self->tox in ToxCore_new instead of
-  // init. If ToxCore_init is called, we re-initialize self->tox and pass
-  // the new ipv6enabled setting.
-  return init_helper(self, args);
+  return 0;
 }
 
 static int
