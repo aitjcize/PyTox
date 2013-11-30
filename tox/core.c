@@ -203,16 +203,20 @@ static PyObject*
 ToxCore_new(PyTypeObject *type, PyObject* args, PyObject* kwds)
 {
   ToxCore* self = (ToxCore*)type->tp_alloc(type, 0);
-
   int ipv6enabled = TOX_ENABLE_IPV6_DEFAULT;
+  PyObject* ipv6obj = NULL;
 
-  PyObject* ipv6obj = PyTuple_GetItem(args, 0);
-  if (ipv6obj) {
-    if (!PyBool_Check(ipv6obj)) {
-      PyErr_SetString(PyExc_TypeError, "ipv6enabled should be boolean");
+  if (PyTuple_Size(args) > 1) {
+    ipv6obj = PyTuple_GetItem(args, 0);
+    if (ipv6obj) {
+      if (!PyBool_Check(ipv6obj)) {
+        PyErr_SetString(PyExc_TypeError, "ipv6enabled should be boolean");
+        return NULL;
+      }
+      ipv6enabled = (ipv6obj == Py_True);
+    } else {
       return NULL;
     }
-    ipv6enabled = (ipv6obj == Py_True);
   }
 
   Tox* tox = tox_new(ipv6enabled);
