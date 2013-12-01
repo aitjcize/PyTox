@@ -28,6 +28,8 @@ extern PyTypeObject ToxCoreType;
 extern PyObject* ToxCoreError;
 extern PyMethodDef Tox_methods[];
 
+extern void ToxCore_install_dict();
+
 #if PY_MAJOR_VERSION >= 3
 struct PyModuleDef moduledef = {
   PyModuleDef_HEAD_INIT,
@@ -53,6 +55,8 @@ PyMODINIT_FUNC inittox(void) {
   if (m == NULL) {
     goto error;
   }
+
+  ToxCore_install_dict();
 
   // Initialize tox.core
   if (PyType_Ready(&ToxCoreType) < 0) {

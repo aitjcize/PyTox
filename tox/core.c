@@ -280,7 +280,7 @@ ToxCore_getaddress(ToxCore* self, PyObject* args)
 
   tox_get_address(self->tox, address);
   bytes_to_hex_string(address, TOX_FRIEND_ADDRESS_SIZE, address_hex);
-  
+
   PyObject* res = PyUnicodeString_FromString((const char*)address_hex);
   return res;
 }
@@ -955,7 +955,7 @@ ToxCore_file_sendcontrol(ToxCore* self, PyObject* args)
   int data_length = 0;
 
 
-  if (!PyArg_ParseTuple(args, "ibibs#", &friendnumber, &send_receive,
+  if (!PyArg_ParseTuple(args, "ibib|s#", &friendnumber, &send_receive,
         &filenumber, &message_id, &data, &data_length)) {
     return NULL;
   }
@@ -1385,4 +1385,33 @@ PyTypeObject ToxCoreType = {
   ToxCore_new,               /* tp_new */
 };
 
+void ToxCore_install_dict()
+{
+#define SET(name) PyDict_SetItemString(dict, #name, PyInt_FromLong(name));
 
+  PyObject* dict = PyDict_New();
+  SET(TOX_FAERR_TOOLONG)
+  SET(TOX_FAERR_NOMESSAGE)
+  SET(TOX_FAERR_OWNKEY)
+  SET(TOX_FAERR_ALREADYSENT)
+  SET(TOX_FAERR_UNKNOWN)
+  SET(TOX_FAERR_BADCHECKSUM)
+  SET(TOX_FAERR_SETNEWNOSPAM)
+  SET(TOX_FAERR_NOMEM)
+  SET(TOX_USERSTATUS_NONE)
+  SET(TOX_USERSTATUS_AWAY)
+  SET(TOX_USERSTATUS_BUSY)
+  SET(TOX_USERSTATUS_INVALID)
+  SET(TOX_CHAT_CHANGE_PEER_ADD)
+  SET(TOX_CHAT_CHANGE_PEER_DEL)
+  SET(TOX_CHAT_CHANGE_PEER_NAME)
+  SET(TOX_FILECONTROL_ACCEPT)
+  SET(TOX_FILECONTROL_PAUSE)
+  SET(TOX_FILECONTROL_KILL)
+  SET(TOX_FILECONTROL_FINISHED)
+  SET(TOX_FILECONTROL_RESUME_BROKEN)
+
+#undef SET
+
+  ToxCoreType.tp_dict = dict;
+}
