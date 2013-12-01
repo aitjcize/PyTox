@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a get of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
@@ -637,7 +637,7 @@ ToxCore_get_statusmessage_size(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_copy_statusmessage(ToxCore* self, PyObject* args)
+ToxCore_get_statusmessage(ToxCore* self, PyObject* args)
 {
   uint8_t buf[TOX_MAX_STATUSMESSAGE_LENGTH];
   int friendid = 0;
@@ -652,7 +652,7 @@ ToxCore_copy_statusmessage(ToxCore* self, PyObject* args)
       TOX_MAX_STATUSMESSAGE_LENGTH);
 
   if (ret == -1) {
-    PyErr_SetString(ToxCoreError, "failed to copy status_message");
+    PyErr_SetString(ToxCoreError, "failed to get status_message");
     return NULL;
   }
 
@@ -662,7 +662,7 @@ ToxCore_copy_statusmessage(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_copy_self_statusmessage(ToxCore* self, PyObject* args)
+ToxCore_get_self_statusmessage(ToxCore* self, PyObject* args)
 {
   uint8_t buf[TOX_MAX_STATUSMESSAGE_LENGTH];
   memset(buf, 0, TOX_MAX_STATUSMESSAGE_LENGTH);
@@ -671,7 +671,7 @@ ToxCore_copy_self_statusmessage(ToxCore* self, PyObject* args)
       TOX_MAX_STATUSMESSAGE_LENGTH);
 
   if (ret == -1) {
-    PyErr_SetString(ToxCoreError, "failed to copy self status_message");
+    PyErr_SetString(ToxCoreError, "failed to get self status_message");
     return NULL;
   }
 
@@ -723,7 +723,7 @@ ToxCore_count_friendlist(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_copy_friendlist(ToxCore* self, PyObject* args)
+ToxCore_get_friendlist(ToxCore* self, PyObject* args)
 {
   PyObject* plist = NULL;
   uint32_t count = tox_count_friendlist(self->tox);
@@ -859,7 +859,7 @@ ToxCore_group_number_peers(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_group_copy_names(ToxCore* self, PyObject* args)
+ToxCore_group_get_names(ToxCore* self, PyObject* args)
 {
   int groupid = 0;
   if (!PyArg_ParseTuple(args, "i", &groupid)) {
@@ -868,11 +868,11 @@ ToxCore_group_copy_names(ToxCore* self, PyObject* args)
 
   int n = tox_group_number_peers(self->tox, groupid);
   uint8_t (*names)[TOX_MAX_NAME_LENGTH] = (uint8_t(*)[TOX_MAX_NAME_LENGTH])
-    malloc(sizeof(uint8_t*) * n);
+    malloc(sizeof(uint8_t*) * n * TOX_MAX_NAME_LENGTH);
 
   int n2 = tox_group_get_names(self->tox, groupid, names, n);
   if (n2 == -1) {
-    PyErr_SetString(PyExc_TypeError, "failed to copy group member names");
+    PyErr_SetString(PyExc_TypeError, "failed to get group member names");
     return NULL;
   }
 
@@ -886,6 +886,8 @@ ToxCore_group_copy_names(ToxCore* self, PyObject* args)
     PyList_Append(list, PyUnicodeString_FromString((const char*)names[i]));
   }
 
+  free(names);
+
   return list;
 }
 
@@ -897,7 +899,7 @@ ToxCore_count_chatlist(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_copy_chatlist(ToxCore* self, PyObject* args)
+ToxCore_get_chatlist(ToxCore* self, PyObject* args)
 {
   PyObject* plist = NULL;
   uint32_t count = tox_count_chatlist(self->tox);
@@ -1262,10 +1264,10 @@ PyMethodDef Tox_methods[] = {
   {"get_status_message_size", (PyCFunction)ToxCore_get_statusmessage_size,
     METH_VARARGS,
     "return the length of friendnumber's status message, including null" },
-  {"get_status_message", (PyCFunction)ToxCore_copy_statusmessage,
+  {"get_status_message", (PyCFunction)ToxCore_get_statusmessage,
     METH_VARARGS,
     "get status message of a friend" },
-  {"get_selfstatusmessage", (PyCFunction)ToxCore_copy_self_statusmessage,
+  {"get_selfstatusmessage", (PyCFunction)ToxCore_get_self_statusmessage,
     METH_NOARGS,
     "get status message of yourself" },
   {"get_user_status", (PyCFunction)ToxCore_get_userstatus,
@@ -1280,7 +1282,7 @@ PyMethodDef Tox_methods[] = {
   {"count_friendlist", (PyCFunction)ToxCore_count_friendlist,
     METH_NOARGS,
     "Return the number of friends" },
-  {"get_friendlist", (PyCFunction)ToxCore_copy_friendlist,
+  {"get_friendlist", (PyCFunction)ToxCore_get_friendlist,
     METH_NOARGS,
     "Copy a list of valid friend IDs into the array out_list" },
   {"add_groupchat", (PyCFunction)ToxCore_add_groupchat, METH_VARARGS,
@@ -1297,11 +1299,11 @@ PyMethodDef Tox_methods[] = {
     "send a group message"},
   {"group_number_peers", (PyCFunction)ToxCore_group_number_peers, METH_VARARGS,
     "Return the number of peers in the group chat on success."},
-  {"group_get_names", (PyCFunction)ToxCore_group_copy_names, METH_VARARGS,
+  {"group_get_names", (PyCFunction)ToxCore_group_get_names, METH_VARARGS,
     "List all the peers in the group chat."},
   {"count_chatlist", (PyCFunction)ToxCore_count_chatlist, METH_VARARGS,
     "Return the number of chats in the instance m."},
-  {"get_chatlist", (PyCFunction)ToxCore_copy_chatlist, METH_VARARGS,
+  {"get_chatlist", (PyCFunction)ToxCore_get_chatlist, METH_VARARGS,
     "Copy a list of valid chat IDs into the array out_list."},
   {"new_file_sender", (PyCFunction)ToxCore_new_filesender, METH_VARARGS,
     "Send a file send request."},
