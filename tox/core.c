@@ -814,15 +814,11 @@ ToxCore_join_groupchat(ToxCore* self, PyObject* args)
   int length = 0;
   int friendnumber = 0;
 
-  uint8_t pkbytes[TOX_FRIEND_ADDRESS_SIZE + 1];
-
   if (!PyArg_ParseTuple(args, "is#", &friendnumber, &pk, &length)) {
     return NULL;
   }
 
-  hex_string_to_bytes(pk, TOX_FRIEND_ADDRESS_SIZE, pkbytes);
-
-  int ret = tox_join_groupchat(self->tox, friendnumber, pkbytes);
+  int ret = tox_join_groupchat(self->tox, friendnumber, pk);
   if (ret == -1) {
     PyErr_SetString(PyExc_TypeError, "failed to join group chat");
   }
