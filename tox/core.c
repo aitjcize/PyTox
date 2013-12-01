@@ -162,18 +162,18 @@ static void callback_group_invite(Tox *tox, int friendnumber,
       group_public_key, TOX_FRIEND_ADDRESS_SIZE);
 }
 
-static void callback_group_message(Tox *tox, int groupnumber,
-    int friendgroupnumber, uint8_t* message, uint16_t length, void *self)
+static void callback_group_message(Tox *tox, int groupid,
+    int friendgroupid, uint8_t* message, uint16_t length, void *self)
 {
-  PyObject_CallMethod((PyObject*)self, "on_group_message", "iis#", groupnumber,
-      friendgroupnumber, message, length);
+  PyObject_CallMethod((PyObject*)self, "on_group_message", "iis#", groupid,
+      friendgroupid, message, length);
 }
 
-static void callback_group_namelist_change(Tox *tox, int groupnumber,
+static void callback_group_namelist_change(Tox *tox, int groupid,
     int peernumber, uint8_t change, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_group_namelist_change", "iii",
-      groupnumber, peernumber, change);
+      groupid, peernumber, change);
 }
 
 static void callback_file_send_request(Tox *m, int friendnumber,
@@ -758,13 +758,13 @@ ToxCore_add_groupchat(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_del_groupchat(ToxCore* self, PyObject* args)
 {
-  int groupnumber = 0;
+  int groupid = 0;
 
-  if (!PyArg_ParseTuple(args, "i", &groupnumber)) {
+  if (!PyArg_ParseTuple(args, "i", &groupid)) {
     return NULL;
   }
 
-  if (tox_del_groupchat(self->tox, groupnumber) == -1) {
+  if (tox_del_groupchat(self->tox, groupid) == -1) {
     PyErr_SetString(PyExc_TypeError, "failed to del groupchat");
   }
 
@@ -777,13 +777,13 @@ ToxCore_group_peername(ToxCore* self, PyObject* args)
   uint8_t buf[TOX_MAX_NAME_LENGTH];
   memset(buf, 0, TOX_MAX_NAME_LENGTH);
 
-  int groupnumber = 0;
+  int groupid = 0;
   int peernumber = 0;
-  if (!PyArg_ParseTuple(args, "ii", &groupnumber, &peernumber)) {
+  if (!PyArg_ParseTuple(args, "ii", &groupid, &peernumber)) {
     return NULL;
   }
 
-  int ret = tox_group_peername(self->tox, groupnumber, peernumber, buf);
+  int ret = tox_group_peername(self->tox, groupid, peernumber, buf);
   if (ret == -1) {
     PyErr_SetString(PyExc_TypeError, "failed to get group peername");
   }
@@ -795,12 +795,12 @@ static PyObject*
 ToxCore_invite_friend(ToxCore* self, PyObject* args)
 {
   int friendnumber = 0;
-  int groupnumber = 0;
-  if (!PyArg_ParseTuple(args, "ii", &friendnumber, &groupnumber)) {
+  int groupid = 0;
+  if (!PyArg_ParseTuple(args, "ii", &friendnumber, &groupid)) {
     return NULL;
   }
 
-  if (tox_invite_friend(self->tox, friendnumber, groupnumber) == -1) {
+  if (tox_invite_friend(self->tox, friendnumber, groupid) == -1) {
     PyErr_SetString(PyExc_TypeError, "failed to invite friend");
   }
 
@@ -829,15 +829,15 @@ ToxCore_join_groupchat(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_group_message_send(ToxCore* self, PyObject* args)
 {
-  int groupnumber = 0;
+  int groupid = 0;
   uint8_t* message = NULL;
   uint32_t length = 0;
 
-  if (!PyArg_ParseTuple(args, "is#", &groupnumber, &message, &length)) {
+  if (!PyArg_ParseTuple(args, "is#", &groupid, &message, &length)) {
     return NULL;
   }
 
-  if (tox_group_message_send(self->tox, groupnumber, message, length) == -1) {
+  if (tox_group_message_send(self->tox, groupid, message, length + 1) == -1) {
     PyErr_SetString(PyExc_TypeError, "failed to send group message");
   }
 
@@ -847,13 +847,13 @@ ToxCore_group_message_send(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_group_number_peers(ToxCore* self, PyObject* args)
 {
-  int groupnumber = 0;
+  int groupid = 0;
 
-  if (!PyArg_ParseTuple(args, "i", &groupnumber)) {
+  if (!PyArg_ParseTuple(args, "i", &groupid)) {
     return NULL;
   }
 
-  int ret = tox_group_number_peers(self->tox, groupnumber);
+  int ret = tox_group_number_peers(self->tox, groupid);
 
   return PyLong_FromLong(ret);
 }
@@ -861,16 +861,16 @@ ToxCore_group_number_peers(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_group_copy_names(ToxCore* self, PyObject* args)
 {
-  int groupnumber = 0;
-  if (!PyArg_ParseTuple(args, "i", &groupnumber)) {
+  int groupid = 0;
+  if (!PyArg_ParseTuple(args, "i", &groupid)) {
     return NULL;
   }
 
-  int n = tox_group_number_peers(self->tox, groupnumber);
+  int n = tox_group_number_peers(self->tox, groupid);
   uint8_t (*names)[TOX_MAX_NAME_LENGTH] = (uint8_t(*)[TOX_MAX_NAME_LENGTH])
     malloc(sizeof(uint8_t*) * n);
 
-  int n2 = tox_group_get_names(self->tox, groupnumber, names, n);
+  int n2 = tox_group_get_names(self->tox, groupid, names, n);
   if (n2 == -1) {
     PyErr_SetString(PyExc_TypeError, "failed to copy group member names");
     return NULL;
