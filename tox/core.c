@@ -1387,7 +1387,7 @@ PyTypeObject ToxCoreType = {
 
 void ToxCore_install_dict()
 {
-#define SET(name) PyDict_SetItemString(dict, #name, PyInt_FromLong(name));
+#define SET(name) PyDict_SetItemString(dict, #name, PyLong_FromLong(name));
 
   PyObject* dict = PyDict_New();
   SET(TOX_FAERR_TOOLONG)
