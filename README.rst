@@ -38,7 +38,7 @@ Examples
 
 Documentation
 -------------
-Full API documentation can be read `here <http://aitjcize.github.io/PyTox/`_.
+Full API documentation can be read `here <http://aitjcize.github.io/PyTox/>`_.
 
 
 Contributing
