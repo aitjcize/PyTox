@@ -1061,7 +1061,7 @@ ToxCore_bootstrap_from_address(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  return PyLong_FromLong(ret);
+  Py_RETURN_NONE;
 }
 
 static PyObject*
@@ -1257,23 +1257,23 @@ PyMethodDef Tox_methods[] = {
     "Get your nickname" },
   {"get_name", (PyCFunction)ToxCore_getname, METH_VARARGS,
     "Get name of friendnumber and put it in name" },
-  {"set_statusmessage", (PyCFunction)ToxCore_set_statusmessage, METH_VARARGS,
+  {"set_status_message", (PyCFunction)ToxCore_set_statusmessage, METH_VARARGS,
     "Set our user status message" },
   {"set_userstatus", (PyCFunction)ToxCore_set_userstatus, METH_VARARGS,
     "Set our user status" },
-  {"get_statusmessage_size", (PyCFunction)ToxCore_get_statusmessage_size,
+  {"get_status_message_size", (PyCFunction)ToxCore_get_statusmessage_size,
     METH_VARARGS,
     "return the length of friendnumber's status message, including null" },
-  {"get_statusmessage", (PyCFunction)ToxCore_get_statusmessage,
+  {"get_status_message", (PyCFunction)ToxCore_get_statusmessage,
     METH_VARARGS,
     "get status message of a friend" },
-  {"get_self_statusmessage", (PyCFunction)ToxCore_get_self_statusmessage,
+  {"get_selfstatusmessage", (PyCFunction)ToxCore_get_self_statusmessage,
     METH_NOARGS,
     "get status message of yourself" },
-  {"get_userstatus", (PyCFunction)ToxCore_get_userstatus,
+  {"get_user_status", (PyCFunction)ToxCore_get_userstatus,
     METH_VARARGS,
     "get friend status" },
-  {"get_self_userstatus", (PyCFunction)ToxCore_get_selfuserstatus,
+  {"get_self_user_status", (PyCFunction)ToxCore_get_selfuserstatus,
     METH_VARARGS,
     "get self user_status" },
   {"set_sends_receipts", (PyCFunction)ToxCore_set_send_receipts,
