@@ -151,8 +151,8 @@ static void callback_read_receipt(Tox *tox, int friendnumber, uint32_t receipt,
 static void callback_connection_status(Tox *tox, int friendnumber,
     uint8_t status, void* self)
 {
-  PyObject_CallMethod((PyObject*)self, "on_connection_status", "ii",
-      friendnumber, status);
+  PyObject_CallMethod((PyObject*)self, "on_connection_status", "iO",
+      friendnumber, PyBool_FromLong(status));
 }
 
 static void callback_group_invite(Tox *tox, int friendnumber,
@@ -366,15 +366,15 @@ ToxCore_add_friend_norequest(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_get_friend_id(ToxCore* self, PyObject* args)
 {
-  uint8_t* address = NULL;
+  uint8_t* id = NULL;
   int addr_length = 0;
 
-  if (!PyArg_ParseTuple(args, "s#", &address, &addr_length)) {
+  if (!PyArg_ParseTuple(args, "s#", &id, &addr_length)) {
     return NULL;
   }
 
-  uint8_t pk[TOX_FRIEND_ADDRESS_SIZE];
-  hex_string_to_bytes(address, TOX_FRIEND_ADDRESS_SIZE, pk);
+  uint8_t pk[TOX_CLIENT_ID_SIZE];
+  hex_string_to_bytes(id, TOX_CLIENT_ID_SIZE, pk);
 
   int ret = tox_get_friend_id(self->tox, pk);
   if (ret == -1) {
@@ -388,10 +388,10 @@ ToxCore_get_friend_id(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_get_client_id(ToxCore* self, PyObject* args)
 {
-  uint8_t pk[TOX_FRIEND_ADDRESS_SIZE + 1];
+  uint8_t pk[TOX_CLIENT_ID_SIZE + 1];
   pk[TOX_FRIEND_ADDRESS_SIZE] = 0;
 
-  uint8_t hex[TOX_FRIEND_ADDRESS_SIZE * 2 + 1];
+  uint8_t hex[TOX_CLIENT_ID_SIZE * 2 + 1];
 
   int friendid = 0;
 
@@ -400,7 +400,7 @@ ToxCore_get_client_id(ToxCore* self, PyObject* args)
   }
 
   tox_get_client_id(self->tox, friendid, pk);
-  bytes_to_hex_string(pk, TOX_FRIEND_ADDRESS_SIZE, hex);
+  bytes_to_hex_string(pk, TOX_CLIENT_ID_SIZE, hex);
 
   return PyUnicodeString_FromString((const char*)hex);
 }
