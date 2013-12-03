@@ -13,7 +13,7 @@
 
 import sys, os
 
-sys.path.insert(0, os.popen('git rev-parse --show-toplevel 2> /dev/null').read().strip() + '/docs')
+sys.path.insert(0, os.popen('git rev-parse --show-toplevel 2> /dev/null').read().strip())
 
 
 # If extensions (or modules to document with autodoc) are in another directory,
