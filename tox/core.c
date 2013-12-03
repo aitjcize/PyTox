@@ -286,7 +286,7 @@ ToxCore_getaddress(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_addfriend(ToxCore* self, PyObject* args)
+ToxCore_add_friend(ToxCore* self, PyObject* args)
 {
   uint8_t* address = NULL;
   int addr_length = 0;
@@ -343,7 +343,7 @@ ToxCore_addfriend(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_addfriend_norequest(ToxCore* self, PyObject* args)
+ToxCore_add_friend_norequest(ToxCore* self, PyObject* args)
 {
   uint8_t* address = NULL;
   int addr_length = 0;
@@ -364,7 +364,7 @@ ToxCore_addfriend_norequest(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_getfriend_id(ToxCore* self, PyObject* args)
+ToxCore_get_friend_id(ToxCore* self, PyObject* args)
 {
   uint8_t* address = NULL;
   int addr_length = 0;
@@ -386,7 +386,7 @@ ToxCore_getfriend_id(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_getclient_id(ToxCore* self, PyObject* args)
+ToxCore_get_client_id(ToxCore* self, PyObject* args)
 {
   uint8_t pk[TOX_FRIEND_ADDRESS_SIZE + 1];
   pk[TOX_FRIEND_ADDRESS_SIZE] = 0;
@@ -423,7 +423,7 @@ ToxCore_delfriend(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_friend_connectionstatus(ToxCore* self, PyObject* args)
+ToxCore_get_friend_connection_status(ToxCore* self, PyObject* args)
 {
   int friendid = 0;
 
@@ -497,7 +497,7 @@ ToxCore_sendmessage_withid(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_sendaction(ToxCore* self, PyObject* args)
+ToxCore_send_action(ToxCore* self, PyObject* args)
 {
   int friendid = 0;
   int length = 0;
@@ -517,7 +517,7 @@ ToxCore_sendaction(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_sendaction_withid(ToxCore* self, PyObject* args)
+ToxCore_send_action_withid(ToxCore* self, PyObject* args)
 {
   int friendid = 0;
   int length = 0;
@@ -539,7 +539,7 @@ ToxCore_sendaction_withid(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_setname(ToxCore* self, PyObject* args)
+ToxCore_set_name(ToxCore* self, PyObject* args)
 {
   uint8_t* name = 0;
   int length = 0;
@@ -557,7 +557,7 @@ ToxCore_setname(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_getselfname(ToxCore* self, PyObject* args)
+ToxCore_get_self_name(ToxCore* self, PyObject* args)
 {
   uint8_t buf[TOX_MAX_NAME_LENGTH];
   memset(buf, 0, TOX_MAX_NAME_LENGTH);
@@ -571,7 +571,7 @@ ToxCore_getselfname(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_getname(ToxCore* self, PyObject* args)
+ToxCore_get_name(ToxCore* self, PyObject* args)
 {
   int friendid = 0;
   uint8_t buf[TOX_MAX_NAME_LENGTH];
@@ -590,7 +590,7 @@ ToxCore_getname(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_set_statusmessage(ToxCore* self, PyObject* args)
+ToxCore_set_status_message(ToxCore* self, PyObject* args)
 {
   uint8_t* message;
   int length;
@@ -625,7 +625,7 @@ ToxCore_set_userstatus(ToxCore* self, PyObject* args)
 
 
 static PyObject*
-ToxCore_get_statusmessage_size(ToxCore* self, PyObject* args)
+ToxCore_get_status_message_size(ToxCore* self, PyObject* args)
 {
   int friendid = 0;
   if (!PyArg_ParseTuple(args, "i", &friendid)) {
@@ -637,7 +637,7 @@ ToxCore_get_statusmessage_size(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_statusmessage(ToxCore* self, PyObject* args)
+ToxCore_get_status_message(ToxCore* self, PyObject* args)
 {
   uint8_t buf[TOX_MAX_STATUSMESSAGE_LENGTH];
   int friendid = 0;
@@ -662,7 +662,7 @@ ToxCore_get_statusmessage(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_self_statusmessage(ToxCore* self, PyObject* args)
+ToxCore_get_self_status_message(ToxCore* self, PyObject* args)
 {
   uint8_t buf[TOX_MAX_STATUSMESSAGE_LENGTH];
   memset(buf, 0, TOX_MAX_STATUSMESSAGE_LENGTH);
@@ -681,7 +681,7 @@ ToxCore_get_self_statusmessage(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_userstatus(ToxCore* self, PyObject* args)
+ToxCore_get_user_status(ToxCore* self, PyObject* args)
 {
   int friendid = 0;
   if (!PyArg_ParseTuple(args, "i", &friendid)) {
@@ -694,7 +694,7 @@ ToxCore_get_userstatus(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_selfuserstatus(ToxCore* self, PyObject* args)
+ToxCore_get_self_user_status(ToxCore* self, PyObject* args)
 {
   int status = tox_get_self_user_status(self->tox);
   return PyLong_FromLong(status);
@@ -1226,20 +1226,20 @@ PyMethodDef Tox_methods[] = {
   {"on_file_data", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
   {"get_address", (PyCFunction)ToxCore_getaddress, METH_NOARGS,
     "return FRIEND_ADDRESS_SIZE byte address to give to others" },
-  {"add_friend", (PyCFunction)ToxCore_addfriend, METH_VARARGS,
+  {"add_friend", (PyCFunction)ToxCore_add_friend, METH_VARARGS,
     "add a friend" },
-  {"add_friend_norequest", (PyCFunction)ToxCore_addfriend_norequest,
+  {"add_friend_norequest", (PyCFunction)ToxCore_add_friend_norequest,
     METH_VARARGS,
     "add a friend without sending request" },
-  {"get_friend_id", (PyCFunction)ToxCore_getfriend_id, METH_VARARGS,
+  {"get_friend_id", (PyCFunction)ToxCore_get_friend_id, METH_VARARGS,
     "return the friend id associated to that client id" },
-  {"get_client_id", (PyCFunction)ToxCore_getclient_id, METH_VARARGS,
+  {"get_client_id", (PyCFunction)ToxCore_get_client_id, METH_VARARGS,
     "Copies the public key associated to that friend id into client_id buffer"
   },
   {"del_friend", (PyCFunction)ToxCore_delfriend, METH_VARARGS,
     "Remove a friend" },
   {"get_friend_connection_status",
-    (PyCFunction)ToxCore_get_friend_connectionstatus, METH_VARARGS,
+    (PyCFunction)ToxCore_get_friend_connection_status, METH_VARARGS,
     "Checks friend's connecting status" },
   {"friend_exists", (PyCFunction)ToxCore_friend_exists, METH_VARARGS,
     "Checks if there exists a friend with given friendnumber" },
@@ -1247,33 +1247,33 @@ PyMethodDef Tox_methods[] = {
     "Send a text chat message to an online friend" },
   {"send_message_withid", (PyCFunction)ToxCore_sendmessage_withid, METH_VARARGS,
     "Send a text chat message to an online friend with id" },
-  {"send_action", (PyCFunction)ToxCore_sendaction, METH_VARARGS,
+  {"send_action", (PyCFunction)ToxCore_send_action, METH_VARARGS,
     "Send an action to an online friend" },
-  {"send_action_withid", (PyCFunction)ToxCore_sendaction_withid, METH_VARARGS,
+  {"send_action_withid", (PyCFunction)ToxCore_send_action_withid, METH_VARARGS,
     "Send an action to an online friend with id" },
-  {"set_name", (PyCFunction)ToxCore_setname, METH_VARARGS,
+  {"set_name", (PyCFunction)ToxCore_set_name, METH_VARARGS,
     "Set our nickname" },
-  {"get_self_name", (PyCFunction)ToxCore_getselfname, METH_NOARGS,
+  {"get_self_name", (PyCFunction)ToxCore_get_self_name, METH_NOARGS,
     "Get your nickname" },
-  {"get_name", (PyCFunction)ToxCore_getname, METH_VARARGS,
+  {"get_name", (PyCFunction)ToxCore_get_name, METH_VARARGS,
     "Get name of friendnumber and put it in name" },
-  {"set_status_message", (PyCFunction)ToxCore_set_statusmessage, METH_VARARGS,
+  {"set_status_message", (PyCFunction)ToxCore_set_status_message, METH_VARARGS,
     "Set our user status message" },
   {"set_userstatus", (PyCFunction)ToxCore_set_userstatus, METH_VARARGS,
     "Set our user status" },
-  {"get_status_message_size", (PyCFunction)ToxCore_get_statusmessage_size,
+  {"get_status_message_size", (PyCFunction)ToxCore_get_status_message_size,
     METH_VARARGS,
     "return the length of friendnumber's status message, including null" },
-  {"get_status_message", (PyCFunction)ToxCore_get_statusmessage,
+  {"get_status_message", (PyCFunction)ToxCore_get_status_message,
     METH_VARARGS,
     "get status message of a friend" },
-  {"get_selfstatusmessage", (PyCFunction)ToxCore_get_self_statusmessage,
+  {"get_self_status_message", (PyCFunction)ToxCore_get_self_status_message,
     METH_NOARGS,
     "get status message of yourself" },
-  {"get_user_status", (PyCFunction)ToxCore_get_userstatus,
+  {"get_user_status", (PyCFunction)ToxCore_get_user_status,
     METH_VARARGS,
     "get friend status" },
-  {"get_self_user_status", (PyCFunction)ToxCore_get_selfuserstatus,
+  {"get_self_user_status", (PyCFunction)ToxCore_get_self_user_status,
     METH_VARARGS,
     "get self user_status" },
   {"set_sends_receipts", (PyCFunction)ToxCore_set_send_receipts,
