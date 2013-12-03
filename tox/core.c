@@ -1246,7 +1246,7 @@ PyMethodDef Tox_methods[] = {
     "Callback for receiving friend status changes, default implementation "
     "does nothing.\n\n"
     ".. seealso ::\n"
-    "    :attr:`set_userstatus`"
+    "    :meth:`.set_userstatus`"
   },
   {
     "on_read_receipt", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
@@ -1302,10 +1302,10 @@ PyMethodDef Tox_methods[] = {
     "on_file_control(friend_number, receive_send, file_number, control_type, "
     "data)\n"
     "Callback for receiving file send control, default implementation does "
-    "nothing. See :attr:`file_send_control` for the meaning of *receive_send* "
+    "nothing. See :meth:`.file_send_control` for the meaning of *receive_send* "
     "and *control_type*.\n\n"
     ".. seealso ::\n"
-    "    :attr:`file_send_control`"
+    "    :meth:`.file_send_control`"
   },
   {
     "on_file_data", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
@@ -1434,16 +1434,16 @@ PyMethodDef Tox_methods[] = {
     METH_VARARGS,
     "get_user_status(friend_number)\n"
     "Get friend status.\n\n"
-    ".. seealso ::"
-    "    :attr:`set_userstatus`"
+    ".. seealso ::\n"
+    "    :meth:`.set_userstatus`"
   },
   {
     "get_self_user_status", (PyCFunction)ToxCore_get_self_user_status,
     METH_VARARGS,
     "get_self_user_status()\n"
-    "Get user status of youself."
-    ".. seealso ::"
-    "    :attr:`set_userstatus`"
+    "Get user status of youself.\n\n"
+    ".. seealso ::\n"
+    "    :meth:`.set_userstatus`"
   },
   {
     "set_sends_receipts", (PyCFunction)ToxCore_set_send_receipts,
@@ -1549,7 +1549,7 @@ PyMethodDef Tox_methods[] = {
     "file_data_size", (PyCFunction)ToxCore_file_data_size, METH_VARARGS,
     "file_data_size(friend_number)\n"
     "Returns the recommended/maximum size of the filedata you send with "
-    ":attr:`file_send_data`."},
+    ":meth:`.file_send_data`."},
   {
     "file_data_remaining", (PyCFunction)ToxCore_file_dataremaining,
     METH_VARARGS,
