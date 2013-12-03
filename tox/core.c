@@ -633,7 +633,7 @@ ToxCore_get_status_message_size(ToxCore* self, PyObject* args)
   }
 
   int ret = tox_get_status_message_size(self->tox, friendid);
-  return PyLong_FromLong(ret);
+  return PyLong_FromLong(ret - 1);
 }
 
 static PyObject*
@@ -997,7 +997,7 @@ ToxCore_file_senddata(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_filedata_size(ToxCore* self, PyObject* args)
+ToxCore_file_data_size(ToxCore* self, PyObject* args)
 {
   int friendnumber = 0;
   if (!PyArg_ParseTuple(args, "i", &friendnumber)) {
@@ -1210,132 +1210,400 @@ ToxCore_load_from_file(ToxCore* self, PyObject* args)
 }
 
 PyMethodDef Tox_methods[] = {
-  {"on_friend_request", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
-  {"on_friend_message", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
-  {"on_action", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
-  {"on_name_change", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
-  {"on_status_message", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
-  {"on_user_status", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
-  {"on_read_receipt", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
-  {"on_connection_status", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
-  {"on_group_invite", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
-  {"on_group_message", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
-  {"on_group_namelist_change", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
-  {"on_file_send_request", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
-  {"on_file_control", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
-  {"on_file_data", (PyCFunction)ToxCore_callback_stub, METH_VARARGS, ""},
-  {"get_address", (PyCFunction)ToxCore_getaddress, METH_NOARGS,
-    "return FRIEND_ADDRESS_SIZE byte address to give to others" },
-  {"add_friend", (PyCFunction)ToxCore_add_friend, METH_VARARGS,
-    "add a friend" },
-  {"add_friend_norequest", (PyCFunction)ToxCore_add_friend_norequest,
-    METH_VARARGS,
-    "add a friend without sending request" },
-  {"get_friend_id", (PyCFunction)ToxCore_get_friend_id, METH_VARARGS,
-    "return the friend id associated to that client id" },
-  {"get_client_id", (PyCFunction)ToxCore_get_client_id, METH_VARARGS,
-    "Copies the public key associated to that friend id into client_id buffer"
+  {
+    "on_friend_request", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_friend_request(address, message)\n"
+    "Callback for receiving friend requests, default implementation does "
+    "nothing."
   },
-  {"del_friend", (PyCFunction)ToxCore_delfriend, METH_VARARGS,
-    "Remove a friend" },
-  {"get_friend_connection_status",
+  {
+    "on_friend_message", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_friend_message(friend_number, message)\n"
+    "Callback for receiving friend messages, default implementation does "
+    "nothing."
+  },
+  {
+    "on_action", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_action(friend_number, action)\n"
+    "Callback for receiving friend actions, default implementation does "
+    "nothing."
+  },
+  {
+    "on_name_change", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_name_change(friend_number, new_name)\n"
+    "Callback for receiving friend name changes, default implementation does "
+    "nothing."
+  },
+  {
+    "on_status_message", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_status_message(friend_number, new_status)\n"
+    "Callback for receiving friend status message changes, default "
+    "implementation does nothing."
+  },
+  {
+    "on_user_status", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_user_status(friend_number, kind)\n"
+    "Callback for receiving friend status changes, default implementation "
+    "does nothing.\n\n"
+    ".. seealso ::\n"
+    "    :attr:`set_userstatus`"
+  },
+  {
+    "on_read_receipt", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_read_receipt(friend_number, receipt)\n"
+    "Callback for receiving read receipt, default implementation does nothing."
+  },
+  {
+    "on_connection_status", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_connection_status(friend_number, status)\n"
+    "Callback for receiving read receipt, default implementation does "
+    "nothing.\n\n"
+    "*status* is a boolean value which indicates the status of the friend "
+    "indicated by *friend_number*. True means online and False means offline "
+    "after previously online."
+  },
+  {
+    "on_group_invite", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_group_invite(friend_number, group_public_key)\n"
+    "Callback for receiving group invitations, default implementation does "
+    "nothing."
+  },
+  {
+    "on_group_message", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_group_message(group_number, friend_group_number, message)\n"
+    "Callback for receiving group messages, default implementation does "
+    "nothing."
+  },
+  {
+    "on_group_namelist_change", (PyCFunction)ToxCore_callback_stub,
+    METH_VARARGS,
+    "on_group_namelist_change(group_number, peer_number, change)\n"
+    "Callback for receiving group messages, default implementation does "
+    "nothing.\n\n"
+    "There are there possible *change* values:\n\n"
+    "+---------------------------+----------------------+\n"
+    "| change                    | description          |\n"
+    "+===========================+======================+\n"
+    "| Tox.CHAT_CHANGE_PEER_ADD  | a peer is added      |\n"
+    "+---------------------------+----------------------+\n"
+    "| Tox.CHAT_CHANGE_PEER_DEL  | a peer is deleted    |\n"
+    "+---------------------------+----------------------+\n"
+    "| Tox.CHAT_CHANGE_PEER_NAME | name of peer changed |\n"
+    "+---------------------------+----------------------+\n"
+  },
+  {
+    "on_file_send_request", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_file_send_request(friend_number, file_number, file_size, filename)\n"
+    "Callback for receiving file send requests, default implementation does "
+    "nothing."
+  },
+  {
+    "on_file_control", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_file_control(friend_number, receive_send, file_number, control_type, "
+    "data)\n"
+    "Callback for receiving file send control, default implementation does "
+    "nothing. See :attr:`file_send_control` for the meaning of *receive_send* "
+    "and *control_type*.\n\n"
+    ".. seealso ::\n"
+    "    :attr:`file_send_control`"
+  },
+  {
+    "on_file_data", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_file_data(friend_number, file_number, data)\n"
+    "Callback for receiving file data, default implementation does nothing."
+  },
+  {
+    "get_address", (PyCFunction)ToxCore_getaddress, METH_NOARGS,
+    "get_address()\n"
+    "Return address to give to others."
+  },
+  {
+    "add_friend", (PyCFunction)ToxCore_add_friend, METH_VARARGS,
+    "add_friend(address, message)\n"
+    "Add a friend."
+  },
+  {
+    "add_friend_norequest", (PyCFunction)ToxCore_add_friend_norequest,
+    METH_VARARGS,
+    "add_friend_norequest(address)\n"
+    "Add a friend without sending request."
+  },
+  {
+    "get_friend_id", (PyCFunction)ToxCore_get_friend_id, METH_VARARGS,
+    "get_friend_id(friend_id)\n"
+    "Return the friend id associated to that client id."
+  },
+  {
+    "get_client_id", (PyCFunction)ToxCore_get_client_id, METH_VARARGS,
+    "get_client_id(friend_number)\n"
+    "Return the public key associated to that friend number."
+  },
+  {
+    "del_friend", (PyCFunction)ToxCore_delfriend, METH_VARARGS,
+    "del_friend(friend_number)\n"
+    "Remove a friend."
+  },
+  {
+    "get_friend_connection_status",
     (PyCFunction)ToxCore_get_friend_connection_status, METH_VARARGS,
-    "Checks friend's connecting status" },
-  {"friend_exists", (PyCFunction)ToxCore_friend_exists, METH_VARARGS,
-    "Checks if there exists a friend with given friendnumber" },
-  {"send_message", (PyCFunction)ToxCore_sendmessage, METH_VARARGS,
-    "Send a text chat message to an online friend" },
-  {"send_message_withid", (PyCFunction)ToxCore_sendmessage_withid, METH_VARARGS,
-    "Send a text chat message to an online friend with id" },
-  {"send_action", (PyCFunction)ToxCore_send_action, METH_VARARGS,
-    "Send an action to an online friend" },
-  {"send_action_withid", (PyCFunction)ToxCore_send_action_withid, METH_VARARGS,
-    "Send an action to an online friend with id" },
-  {"set_name", (PyCFunction)ToxCore_set_name, METH_VARARGS,
-    "Set our nickname" },
-  {"get_self_name", (PyCFunction)ToxCore_get_self_name, METH_NOARGS,
-    "Get your nickname" },
-  {"get_name", (PyCFunction)ToxCore_get_name, METH_VARARGS,
-    "Get name of friendnumber and put it in name" },
-  {"set_status_message", (PyCFunction)ToxCore_set_status_message, METH_VARARGS,
-    "Set our user status message" },
-  {"set_userstatus", (PyCFunction)ToxCore_set_userstatus, METH_VARARGS,
-    "Set our user status" },
-  {"get_status_message_size", (PyCFunction)ToxCore_get_status_message_size,
+    "get_friend_connection_status(friend_number)\n"
+    "Return True if friend is connected(Online) else False."
+  },
+  {
+    "friend_exists", (PyCFunction)ToxCore_friend_exists, METH_VARARGS,
+    "friend_exists(friend_number)\n"
+    "Checks if there exists a friend with given friendnumber."
+  },
+  {
+    "send_message", (PyCFunction)ToxCore_sendmessage, METH_VARARGS,
+    "send_message(friend_number, message)\n"
+    "Send a text chat message to an online friend."
+  },
+  {
+    "send_message_withid", (PyCFunction)ToxCore_sendmessage_withid,
     METH_VARARGS,
-    "return the length of friendnumber's status message, including null" },
-  {"get_status_message", (PyCFunction)ToxCore_get_status_message,
+    "send_message_withid(friend_number, id, message)\n"
+    "Send a text chat message to an online friend with id."
+  },
+  {
+    "send_action", (PyCFunction)ToxCore_send_action, METH_VARARGS,
+    "send_action(friend_number, action)\n"
+    "Send an action to an online friend."
+  },
+  {
+    "send_action_withid", (PyCFunction)ToxCore_send_action_withid, METH_VARARGS,
+    "send_action_withid(friend_number, id, action)\n"
+    "Send an action to an online friend with id."
+  },
+  {
+    "set_name", (PyCFunction)ToxCore_set_name, METH_VARARGS,
+    "set_name(name)\n"
+    "Set our nickname."
+  },
+  {
+    "get_self_name", (PyCFunction)ToxCore_get_self_name, METH_NOARGS,
+    "get_self_name()\n"
+    "Get your nickname."
+  },
+  {
+    "get_name", (PyCFunction)ToxCore_get_name, METH_VARARGS,
+    "get_name(friend_number)\n"
+    "Get name of *friend_number*."
+  },
+  {
+    "set_status_message", (PyCFunction)ToxCore_set_status_message, METH_VARARGS,
+    "set_status_message(message)\n"
+    "Set our user status message."
+  },
+  {
+    "set_userstatus", (PyCFunction)ToxCore_set_userstatus, METH_VARARGS,
+    "set_userstatus(status)\n"
+    "Set our user status, status can have following values:\n\n"
+    "+------------------------+--------------------+\n"
+    "| kind                   | description        |\n"
+    "+========================+====================+\n"
+    "| Tox.USERSTATUS_NONE    | the user is online |\n"
+    "+------------------------+--------------------+\n"
+    "| Tox.USERSTATUS_AWAY    | the user is away   |\n"
+    "+------------------------+--------------------+\n"
+    "| Tox.USERSTATUS_BUSY    | the user is busy   |\n"
+    "+------------------------+--------------------+\n"
+    "| Tox.USERSTATUS_INVALID | invalid status     |\n"
+    "+------------------------+--------------------+\n"
+  },
+  {
+    "get_status_message_size", (PyCFunction)ToxCore_get_status_message_size,
     METH_VARARGS,
-    "get status message of a friend" },
-  {"get_self_status_message", (PyCFunction)ToxCore_get_self_status_message,
+    "get_status_message_size(friend_number)\n"
+    "Return the length of *friend_number*'s status message."
+  },
+  {
+    "get_status_message", (PyCFunction)ToxCore_get_status_message,
+    METH_VARARGS,
+    "get_status_message(friend_number)\n"
+    "Get status message of a friend."
+  },
+  {
+    "get_self_status_message", (PyCFunction)ToxCore_get_self_status_message,
     METH_NOARGS,
-    "get status message of yourself" },
-  {"get_user_status", (PyCFunction)ToxCore_get_user_status,
+    "get_self_status_message()\n"
+    "Get status message of yourself."
+  },
+  {
+    "get_user_status", (PyCFunction)ToxCore_get_user_status,
     METH_VARARGS,
-    "get friend status" },
-  {"get_self_user_status", (PyCFunction)ToxCore_get_self_user_status,
+    "get_user_status(friend_number)\n"
+    "Get friend status.\n\n"
+    ".. seealso ::"
+    "    :attr:`set_userstatus`"
+  },
+  {
+    "get_self_user_status", (PyCFunction)ToxCore_get_self_user_status,
     METH_VARARGS,
-    "get self user_status" },
-  {"set_sends_receipts", (PyCFunction)ToxCore_set_send_receipts,
+    "get_self_user_status()\n"
+    "Get user status of youself."
+    ".. seealso ::"
+    "    :attr:`set_userstatus`"
+  },
+  {
+    "set_sends_receipts", (PyCFunction)ToxCore_set_send_receipts,
     METH_VARARGS,
-    "Sets whether we send read receipts for friendnumber." },
-  {"count_friendlist", (PyCFunction)ToxCore_count_friendlist,
+    "set_sends_receipts(friend_number, yesno)\n"
+    "Sets whether we send read receipts for friendnumber. *yesno* should be "
+    "a boolean value."
+  },
+  {
+    "count_friendlist", (PyCFunction)ToxCore_count_friendlist,
     METH_NOARGS,
-    "Return the number of friends" },
-  {"get_friendlist", (PyCFunction)ToxCore_get_friendlist,
+    "count_friendlist()\n"
+    "Return the number of friends."
+  },
+  {
+    "get_friendlist", (PyCFunction)ToxCore_get_friendlist,
     METH_NOARGS,
-    "Copy a list of valid friend IDs into the array out_list" },
-  {"add_groupchat", (PyCFunction)ToxCore_add_groupchat, METH_VARARGS,
-    "Creates a new groupchat and puts it in the chats array"},
-  {"del_groupchat", (PyCFunction)ToxCore_del_groupchat, METH_VARARGS,
-    "Delete a groupchat from the chats array"},
-  {"group_peername", (PyCFunction)ToxCore_group_peername, METH_VARARGS,
-    "get the group peer's name"},
-  {"invite_friend", (PyCFunction)ToxCore_invite_friend, METH_VARARGS,
-    "invite friendnumber to groupnumber "},
-  {"join_groupchat", (PyCFunction)ToxCore_join_groupchat, METH_VARARGS,
-    "Join a group (you need to have been invited first.)"},
-  {"group_message_send", (PyCFunction)ToxCore_group_message_send, METH_VARARGS,
-    "send a group message"},
-  {"group_number_peers", (PyCFunction)ToxCore_group_number_peers, METH_VARARGS,
-    "Return the number of peers in the group chat on success."},
-  {"group_get_names", (PyCFunction)ToxCore_group_get_names, METH_VARARGS,
-    "List all the peers in the group chat."},
-  {"count_chatlist", (PyCFunction)ToxCore_count_chatlist, METH_VARARGS,
-    "Return the number of chats in the instance m."},
-  {"get_chatlist", (PyCFunction)ToxCore_get_chatlist, METH_VARARGS,
-    "Copy a list of valid chat IDs into the array out_list."},
-  {"new_file_sender", (PyCFunction)ToxCore_new_filesender, METH_VARARGS,
-    "Send a file send request."},
-  {"file_send_control", (PyCFunction)ToxCore_file_sendcontrol, METH_VARARGS,
-    "Send a file control request."},
-  {"file_send_data", (PyCFunction)ToxCore_file_senddata, METH_VARARGS,
-    "Send file data."},
-  {"file_data_size", (PyCFunction)ToxCore_filedata_size, METH_VARARGS,
+    "get_friendlist()\n"
+    "Get a list of valid friend numbers."
+  },
+  {
+    "add_groupchat", (PyCFunction)ToxCore_add_groupchat, METH_VARARGS,
+    "add_groupchat()\n"
+    "Creates a new groupchat and puts it in the chats array."
+  },
+  {
+    "del_groupchat", (PyCFunction)ToxCore_del_groupchat, METH_VARARGS,
+    "del_groupchat(gruop_number)\n"
+    "Delete a groupchat from the chats array."
+  },
+  {
+    "group_peername", (PyCFunction)ToxCore_group_peername, METH_VARARGS,
+    "group_peername(group_number, peer_number)\n"
+    "Get the group peer's name."
+  },
+  {
+    "invite_friend", (PyCFunction)ToxCore_invite_friend, METH_VARARGS,
+    "invite_friend(friend_number, group_number)\n"
+    "Invite friendnumber to groupnumber."
+  },
+  {
+    "join_groupchat", (PyCFunction)ToxCore_join_groupchat, METH_VARARGS,
+    "join_groupchat(friend_number, publick_key)\n"
+    "Join a group (you need to have been invited first.)"
+  },
+  {
+    "group_message_send", (PyCFunction)ToxCore_group_message_send, METH_VARARGS,
+    "group_message_send(group_number, message)\n"
+    "send a group message."
+  },
+  {
+    "group_number_peers", (PyCFunction)ToxCore_group_number_peers, METH_VARARGS,
+    "group_number_peers(group_number)\n"
+    "Return the number of peers in the group chat on success."
+  },
+  {
+    "group_get_names", (PyCFunction)ToxCore_group_get_names, METH_VARARGS,
+    "group_get_names(group_number)\n"
+    "List all the peers in the group chat."
+  },
+  {
+    "count_chatlist", (PyCFunction)ToxCore_count_chatlist, METH_VARARGS,
+    "count_chatlist()\n"
+    "Return the number of chats in the current Tox instance."
+  },
+  {
+    "get_chatlist", (PyCFunction)ToxCore_get_chatlist, METH_VARARGS,
+    "get_chatlist()\n"
+    "Return a list of valid group numbers."
+  },
+  {
+    "new_file_sender", (PyCFunction)ToxCore_new_filesender, METH_VARARGS,
+    "new_file_sender(friend_number, file_size, filename)\n"
+    "Send a file send request."
+  },
+  {
+    "file_send_control", (PyCFunction)ToxCore_file_sendcontrol, METH_VARARGS,
+    "file_send_control(friend_number, send_receive, file_number, control_type"
+    "[, data=None])\n"
+    "Send file transfer control.\n\n"
+    "*send_receive* is 0 for sending and 1 for receiving.\n\n"
+    "*control_type* can be one of following value:\n\n"
+    "+-------------------------------+------------------------+\n"
+    "| control_type                  | description            |\n"
+    "+===============================+========================+\n"
+    "| Tox.FILECONTROL_ACCEPT        | accepts transfer       |\n"
+    "+-------------------------------+------------------------+\n"
+    "| Tox.FILECONTROL_PAUSE         | pause transfer         |\n"
+    "+-------------------------------+------------------------+\n"
+    "| Tox.FILECONTROL_KILL          | kill/rejct transfer    |\n"
+    "+-------------------------------+------------------------+\n"
+    "| Tox.FILECONTROL_FINISHED      | transfer finished      |\n"
+    "+-------------------------------+------------------------+\n"
+    "| Tox.FILECONTROL_RESUME_BROKEN | resume broken transfer |\n"
+    "+-------------------------------+------------------------+\n"
+  },
+  {
+    "file_send_data", (PyCFunction)ToxCore_file_senddata, METH_VARARGS,
+    "file_send_data(friend_number, file_number, data)\n"
+    "Send file data."
+  },
+  {
+    "file_data_size", (PyCFunction)ToxCore_file_data_size, METH_VARARGS,
+    "file_data_size(friend_number)\n"
     "Returns the recommended/maximum size of the filedata you send with "
-    "tox_file_send_data()"},
-  {"file_data_remaining", (PyCFunction)ToxCore_file_dataremaining, METH_VARARGS,
-    "Give the number of bytes left to be sent/received."},
-  {"bootstrap_from_address", (PyCFunction)ToxCore_bootstrap_from_address,
+    ":attr:`file_send_data`."},
+  {
+    "file_data_remaining", (PyCFunction)ToxCore_file_dataremaining,
     METH_VARARGS,
+    "file_data_remaining(friend_number, file_number, send_receive)\n"
+    "Give the number of bytes left to be sent/received. *send_receive* is "
+    "0 for sending and 1 for receiving."
+  },
+  {
+    "bootstrap_from_address", (PyCFunction)ToxCore_bootstrap_from_address,
+    METH_VARARGS,
+    "bootstrap_from_address(address, ipv6enabled, port, public_key)\n"
     "Resolves address into an IP address. If successful, sends a 'get nodes'"
-    "request to the given node with ip, port " },
-  {"isconnected", (PyCFunction)ToxCore_isconnected, METH_NOARGS,
-    "return False if we are not connected to the DHT." },
-  {"kill", (PyCFunction)ToxCore_kill, METH_NOARGS,
-    "Run this before closing shop" },
-  {"do", (PyCFunction)ToxCore_do, METH_NOARGS,
-    "The main loop that needs to be run at least 20 times per second" },
-  {"size", (PyCFunction)ToxCore_size, METH_NOARGS,
-    "return size of messenger data (for saving)." },
-  {"save", (PyCFunction)ToxCore_save, METH_NOARGS,
-    "Save the messenger in data" },
-  {"save_to_file", (PyCFunction)ToxCore_save_to_file, METH_VARARGS,
-    "Save the messenger to a file" },
-  {"load", (PyCFunction)ToxCore_load, METH_VARARGS,
-    "Load the messenger from data of size length." },
-  {"load_from_file", (PyCFunction)ToxCore_load_from_file, METH_VARARGS,
-    "Load the messenger from file" },
+    "request to the given node with ip, port."
+  },
+  {
+    "isconnected", (PyCFunction)ToxCore_isconnected, METH_NOARGS,
+    "isconnected()\n"
+    "Return False if we are not connected to the DHT."
+  },
+  {
+    "kill", (PyCFunction)ToxCore_kill, METH_NOARGS,
+    "kill()\n"
+    "Run this before closing shop."
+  },
+  {
+    "do", (PyCFunction)ToxCore_do, METH_NOARGS,
+    "do()\n"
+    "The main loop that needs to be run at least 20 times per second."
+  },
+  {
+    "size", (PyCFunction)ToxCore_size, METH_NOARGS,
+    "size()\n"
+    "return size of messenger data (for saving)."
+  },
+  {
+    "save", (PyCFunction)ToxCore_save, METH_NOARGS,
+    "save()\n"
+    "Return messenger blob in str."
+  },
+  {
+    "save_to_file", (PyCFunction)ToxCore_save_to_file, METH_VARARGS,
+    "save_to_file(filename)\n"
+    "Save the messenger to a file."
+  },
+  {
+    "load", (PyCFunction)ToxCore_load, METH_VARARGS,
+    "load(blob)\n"
+    "Load the messenger from *blob*."
+  },
+  {
+    "load_from_file", (PyCFunction)ToxCore_load_from_file, METH_VARARGS,
+    "load_from_file(filename)\n"
+    "Load the messenger from file."
+  },
   {NULL}
 };
 
