@@ -1061,7 +1061,7 @@ ToxCore_bootstrap_from_address(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  Py_RETURN_NONE;
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
