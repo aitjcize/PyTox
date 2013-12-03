@@ -3,3 +3,4 @@ build/
 *.so
 *.o
 ./compile
+_build
