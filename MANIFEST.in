@@ -1,0 +1,4 @@
+include tox/*
+include README.rst
+include COPYING
+include MANIFEST.in
