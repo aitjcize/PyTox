@@ -1,4 +1,4 @@
-include tox/*
+include tox/*.c
 include README.rst
 include COPYING
 include MANIFEST.in
