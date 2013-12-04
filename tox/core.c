@@ -355,12 +355,13 @@ ToxCore_add_friend_norequest(ToxCore* self, PyObject* args)
   uint8_t pk[TOX_FRIEND_ADDRESS_SIZE];
   hex_string_to_bytes(address, TOX_FRIEND_ADDRESS_SIZE, pk);
 
-  // return friend_id on success, else -1. 
+  // return friend_id on success, else -1.
   int res = tox_add_friend_norequest(self->tox, pk);
   if (res == -1) {
     PyErr_SetString(ToxCoreError, "failed to add friend");
     return NULL;
   }
+
   return PyLong_FromLong(res);
 }
 
@@ -1043,14 +1044,14 @@ static PyObject*
 ToxCore_bootstrap_from_address(ToxCore* self, PyObject* args)
 {
   int ipv6enabled = TOX_ENABLE_IPV6_DEFAULT;
-  int port = 0;
+  uint16_t port = 0;
   uint8_t* public_key = NULL;
   char* address = NULL;
   int addr_length = 0;
   int pk_length = 0;
   uint8_t pk[TOX_CLIENT_ID_SIZE];
 
-  if (!PyArg_ParseTuple(args, "s#iis#", &address, &addr_length, &ipv6enabled,
+  if (!PyArg_ParseTuple(args, "s#iHs#", &address, &addr_length, &ipv6enabled,
         &port, &public_key, &pk_length)) {
     return NULL;
   }
