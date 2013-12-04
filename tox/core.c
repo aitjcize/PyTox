@@ -1048,14 +1048,16 @@ ToxCore_bootstrap_from_address(ToxCore* self, PyObject* args)
   char* address = NULL;
   int addr_length = 0;
   int pk_length = 0;
+  uint8_t pk[TOX_CLIENT_ID_SIZE];
 
   if (!PyArg_ParseTuple(args, "s#iis#", &address, &addr_length, &ipv6enabled,
         &port, &public_key, &pk_length)) {
     return NULL;
   }
 
-  int ret = tox_bootstrap_from_address(self->tox, address, ipv6enabled, port,
-      public_key);
+  hex_string_to_bytes(public_key, TOX_CLIENT_ID_SIZE, pk);
+  int ret = tox_bootstrap_from_address(self->tox, address, ipv6enabled,
+      htons(port), pk);
 
   if (!ret) {
     PyErr_SetString(ToxCoreError, "failed to resolve address");
