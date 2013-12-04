@@ -355,12 +355,13 @@ ToxCore_add_friend_norequest(ToxCore* self, PyObject* args)
   uint8_t pk[TOX_FRIEND_ADDRESS_SIZE];
   hex_string_to_bytes(address, TOX_FRIEND_ADDRESS_SIZE, pk);
 
-  if (tox_add_friend_norequest(self->tox, pk) == -1) {
+  // return friend_id on success, else -1. 
+  int res = tox_add_friend_norequest(self->tox, pk);
+  if (res == -1) {
     PyErr_SetString(ToxCoreError, "failed to add friend");
     return NULL;
   }
-
-  Py_RETURN_NONE;
+  return PyLong_FromLong(res);
 }
 
 static PyObject*
