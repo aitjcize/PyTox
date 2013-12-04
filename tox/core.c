@@ -1246,7 +1246,7 @@ PyMethodDef Tox_methods[] = {
     "Callback for receiving friend status changes, default implementation "
     "does nothing.\n\n"
     ".. seealso ::\n"
-    "    :meth:`.set_userstatus`"
+    "    :meth:`.set_user_status`"
   },
   {
     "on_read_receipt", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
@@ -1435,7 +1435,7 @@ PyMethodDef Tox_methods[] = {
     "get_user_status(friend_number)\n"
     "Get friend status.\n\n"
     ".. seealso ::\n"
-    "    :meth:`.set_userstatus`"
+    "    :meth:`.set_user_status`"
   },
   {
     "get_self_user_status", (PyCFunction)ToxCore_get_self_user_status,
@@ -1443,7 +1443,7 @@ PyMethodDef Tox_methods[] = {
     "get_self_user_status()\n"
     "Get user status of youself.\n\n"
     ".. seealso ::\n"
-    "    :meth:`.set_userstatus`"
+    "    :meth:`.set_user_status`"
   },
   {
     "set_sends_receipts", (PyCFunction)ToxCore_set_send_receipts,
