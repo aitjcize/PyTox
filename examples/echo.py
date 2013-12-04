@@ -3,20 +3,21 @@ from tox import Tox
 from time import sleep
 from os.path import exists
 
-SERVER = ["192.81.133.111", 33445, "8CD5A9BF0A6CE358BA36F7A653F99FA6B258FF756E490F52C1F98CC420F78858"]
+SERVER = ["192.184.81.118", 33445, "5CD7EB176C19A2FD840406CD56177BB8E75587BB366F7BB3004B19E3EDC04143"]
 
 class EchoBot(Tox):
     def __init__(self):
         if exists('data'):
             self.load_from_file('data')
 
-        self.connect()
         self.set_name("EchoBot")
         print('ID: %s' % self.get_address())
 
+        self.connect()
+
     def connect(self):
         print('connecting...')
-        self.bootstrap_from_address(SERVER[0], 0, SERVER[1], SERVER[2])
+        self.bootstrap_from_address(SERVER[0], 1, SERVER[1], SERVER[2])
 
     def loop(self):
         checked = False
@@ -24,8 +25,10 @@ class EchoBot(Tox):
         try:
             while True:
                 status = self.isconnected()
+
                 if not checked and status:
                     print('Connected to DHT.')
+                    print('Waiting for friend request')
                     checked = True
 
                 if checked and not status:
@@ -34,7 +37,7 @@ class EchoBot(Tox):
                     checked = False
 
                 self.do()
-                sleep(0.02)
+                sleep(0.025)
         except KeyboardInterrupt:
             self.save_to_file('data')
 
@@ -49,11 +52,5 @@ class EchoBot(Tox):
         print('EchoBot: %s' % message)
         self.send_message(friendId, message)
 
-    def on_file_send_request(self, friendId, filenumber, size, filename):
-        name = self.get_name(friendId)
-        print("%s is sending a file `%s'" % (name, filename))
-
 t = EchoBot()
-
-print('Waiting for friend request')
 t.loop()
