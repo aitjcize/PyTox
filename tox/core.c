@@ -607,7 +607,7 @@ ToxCore_set_status_message(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_set_userstatus(ToxCore* self, PyObject* args)
+ToxCore_set_user_status(ToxCore* self, PyObject* args)
 {
   int status = 0;
 
@@ -615,7 +615,7 @@ ToxCore_set_userstatus(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  if (tox_set_userstatus(self->tox, status) == -1) {
+  if (tox_set_user_status(self->tox, status) == -1) {
     PyErr_SetString(ToxCoreError, "failed to set status");
     return NULL;
   }
@@ -1396,8 +1396,8 @@ PyMethodDef Tox_methods[] = {
     "Set our user status message."
   },
   {
-    "set_userstatus", (PyCFunction)ToxCore_set_userstatus, METH_VARARGS,
-    "set_userstatus(status)\n"
+    "set_user_status", (PyCFunction)ToxCore_set_user_status, METH_VARARGS,
+    "set_user_status(status)\n"
     "Set our user status, status can have following values:\n\n"
     "+------------------------+--------------------+\n"
     "| kind                   | description        |\n"
