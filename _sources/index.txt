@@ -6,6 +6,18 @@
 Welcome to PyTox's documentation!
 =================================
 
+.. image:: https://travis-ci.org/aitjcize/PyTox.png?branch=master
+   :target: https://travis-ci.org/aitjcize/PyTox
+.. image:: https://pypip.in/v/PyTox/badge.png
+   :target: https://pypi.python.org/pypi/PyTox
+
+About
+-----
+
+PyTox is the offical Python binding for `Project-Tox <http://tox.im/>`_.
+
+The project page/repo is located at `Github <https://github.com/aitjcize/PyTox/>`_.
+
 Module Documentation
 --------------------
 
