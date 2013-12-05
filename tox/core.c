@@ -391,7 +391,7 @@ static PyObject*
 ToxCore_get_client_id(ToxCore* self, PyObject* args)
 {
   uint8_t pk[TOX_CLIENT_ID_SIZE + 1];
-  pk[TOX_FRIEND_ADDRESS_SIZE] = 0;
+  pk[TOX_CLIENT_ID_SIZE] = 0;
 
   uint8_t hex[TOX_CLIENT_ID_SIZE * 2 + 1];
 
