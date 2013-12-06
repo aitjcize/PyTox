@@ -44,10 +44,12 @@ struct PyModuleDef moduledef = {
 #endif
 
 #if PY_MAJOR_VERSION >= 3
-PyObject *PyInit_tox(void) {
+PyMODINIT_FUNC PyInit_tox(void)
+{
   PyObject *m = PyModule_Create(&moduledef);
 #else
-PyMODINIT_FUNC inittox(void) {
+PyMODINIT_FUNC inittox(void)
+{
   PyObject *m = Py_InitModule("tox", NULL);
 #endif
 

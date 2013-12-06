@@ -100,6 +100,8 @@ static void callback_friend_request(uint8_t* public_key, uint8_t* data,
     uint16_t length, void* self)
 {
   uint8_t buf[TOX_FRIEND_ADDRESS_SIZE * 2 + 1];
+  memset(buf, 0, TOX_FRIEND_ADDRESS_SIZE * 2 + 1);
+
   bytes_to_hex_string(public_key, TOX_FRIEND_ADDRESS_SIZE, buf);
 
   PyObject_CallMethod((PyObject*)self, "on_friend_request", "ss#", buf, data,
@@ -158,8 +160,12 @@ static void callback_connection_status(Tox *tox, int friendnumber,
 static void callback_group_invite(Tox *tox, int friendnumber,
     uint8_t* group_public_key, void *self)
 {
-  PyObject_CallMethod((PyObject*)self, "on_group_invite", "is#", friendnumber,
-      group_public_key, TOX_FRIEND_ADDRESS_SIZE);
+  uint8_t gpk[TOX_CLIENT_ID_SIZE * 2 + 1];
+  memset(gpk, 0, TOX_CLIENT_ID_SIZE * 2 + 1);
+
+  bytes_to_hex_string(group_public_key, TOX_CLIENT_ID_SIZE, gpk);
+  PyObject_CallMethod((PyObject*)self, "on_group_invite", "is", friendnumber,
+      gpk);
 }
 
 static void callback_group_message(Tox *tox, int groupid,
@@ -188,15 +194,25 @@ static void callback_file_control(Tox *m, int friendnumber,
     uint8_t receive_send, uint8_t filenumber, uint8_t control_type,
     uint8_t* data, uint16_t length, void* self)
 {
+#if PY_MAJOR_VERSION < 3
   PyObject_CallMethod((PyObject*)self, "on_file_control", "iiiis#",
       friendnumber, receive_send, filenumber, control_type, data, length);
+#else
+  PyObject_CallMethod((PyObject*)self, "on_file_control", "iiiiy#",
+      friendnumber, receive_send, filenumber, control_type, data, length);
+#endif
 }
 
 static void callback_file_data(Tox *m, int friendnumber, uint8_t filenumber,
     uint8_t* data, uint16_t length, void* self)
 {
+#if PY_MAJOR_VERSION < 3
   PyObject_CallMethod((PyObject*)self, "on_file_data", "iis#",
       friendnumber, filenumber, data, length);
+#else
+  PyObject_CallMethod((PyObject*)self, "on_file_data", "iiy#",
+      friendnumber, filenumber, data, length);
+#endif
 }
 
 static int init_helper(ToxCore* self, PyObject* args)
@@ -277,6 +293,7 @@ ToxCore_getaddress(ToxCore* self, PyObject* args)
 {
   uint8_t address[TOX_FRIEND_ADDRESS_SIZE];
   uint8_t address_hex[TOX_FRIEND_ADDRESS_SIZE * 2 + 1];
+  memset(address_hex, 0, TOX_FRIEND_ADDRESS_SIZE * 2 + 1);
 
   tox_get_address(self->tox, address);
   bytes_to_hex_string(address, TOX_FRIEND_ADDRESS_SIZE, address_hex);
@@ -394,6 +411,7 @@ ToxCore_get_client_id(ToxCore* self, PyObject* args)
   pk[TOX_CLIENT_ID_SIZE] = 0;
 
   uint8_t hex[TOX_CLIENT_ID_SIZE * 2 + 1];
+  memset(hex, 0, TOX_CLIENT_ID_SIZE * 2 + 1);
 
   int friendid = 0;
 
@@ -812,13 +830,17 @@ ToxCore_invite_friend(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_join_groupchat(ToxCore* self, PyObject* args)
 {
-  uint8_t* pk = NULL;
+  uint8_t* public_key = NULL;
   int length = 0;
   int friendnumber = 0;
+  uint8_t pk[TOX_CLIENT_ID_SIZE];
 
-  if (!PyArg_ParseTuple(args, "is#", &friendnumber, &pk, &length)) {
+  if (!PyArg_ParseTuple(args, "is#", &friendnumber, &public_key, &length)) {
     return NULL;
   }
+
+  hex_string_to_bytes(public_key, TOX_CLIENT_ID_SIZE, pk);
+  fprintf(stderr, "%s\n", public_key);
 
   int ret = tox_join_groupchat(self->tox, friendnumber, pk);
   if (ret == -1) {
