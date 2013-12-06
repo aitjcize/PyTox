@@ -72,21 +72,21 @@ static void hex_string_to_bytes(uint8_t* hexstr, int length, uint8_t* bytes)
 // of PyUnicode_for string data and PyBytes_ for binary data:
 PyObject* PyUnicodeString_FromString(const char *str) {
   PyObject* res;
-  #if PY_MAJOR_VERSION < 3
-    res = PyString_FromString(str);
-  #else
-    res = PyUnicode_FromString(str);
-  #endif
+#if PY_MAJOR_VERSION < 3
+  res = PyString_FromString(str);
+#else
+  res = PyUnicode_FromString(str);
+#endif
   return res;
 }
 
 PyObject* PyByteString_FromString(const char *str) {
   PyObject* res;
-  #if PY_MAJOR_VERSION < 3
-    res = PyString_FromString(str);
-  #else
-    res = PyBytes_FromString(str);
-  #endif
+#if PY_MAJOR_VERSION < 3
+  res = PyString_FromString(str);
+#else
+  res = PyBytes_FromString(str);
+#endif
   return res;  
 }
 
@@ -1117,11 +1117,11 @@ ToxCore_save(ToxCore* self, PyObject* args)
 
   // The PyString_* functions were split in Python 3.* into 
   // PyUnicode_ for string data and PyBytes_ for binary data
-  #if PY_MAJOR_VERSION < 3
-    res = PyString_FromStringAndSize((const char*)buf, size);
-  #else
-    res = PyBytes_FromStringAndSize((const char*)buf, size);
-  #endif
+#if PY_MAJOR_VERSION < 3
+  res = PyString_FromStringAndSize((const char*)buf, size);
+#else
+  res = PyBytes_FromStringAndSize((const char*)buf, size);
+#endif
   free(buf);
 
   return res;
