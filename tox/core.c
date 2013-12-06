@@ -840,7 +840,6 @@ ToxCore_join_groupchat(ToxCore* self, PyObject* args)
   }
 
   hex_string_to_bytes(public_key, TOX_CLIENT_ID_SIZE, pk);
-  fprintf(stderr, "%s\n", public_key);
 
   int ret = tox_join_groupchat(self->tox, friendnumber, pk);
   if (ret == -1) {
