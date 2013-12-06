@@ -26,7 +26,6 @@
 
 extern PyTypeObject ToxCoreType;
 extern PyObject* ToxCoreError;
-extern PyMethodDef Tox_methods[];
 
 extern void ToxCore_install_dict();
 
@@ -36,7 +35,7 @@ struct PyModuleDef moduledef = {
   "tox",
   "Python Toxcore module",
   -1,
-  Tox_methods,
+  NULL,
   NULL,
   NULL,
   NULL,
