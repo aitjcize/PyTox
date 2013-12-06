@@ -1112,6 +1112,9 @@ ToxCore_do(ToxCore* self, PyObject* args)
 {
   tox_do(self->tox);
 
+  if (PyErr_Occurred()) {
+    return NULL;
+  }
   Py_RETURN_NONE;
 }
 
