@@ -3,7 +3,7 @@ from tox import Tox
 from time import sleep
 from os.path import exists
 
-SERVER = ["192.184.81.118", 33445, "5CD7EB176C19A2FD840406CD56177BB8E75587BB366F7BB3004B19E3EDC04143"]
+SERVER = ["54.215.145.71", 33445, "6EDDEE2188EF579303C0766B4796DCBA89C93058B6032FEA51593DCD42FB746C"]
 
 class EchoBot(Tox):
     def __init__(self):
@@ -37,7 +37,7 @@ class EchoBot(Tox):
                     checked = False
 
                 self.do()
-                sleep(0.025)
+                sleep(0.02)
         except KeyboardInterrupt:
             self.save_to_file('data')
 
