@@ -57,6 +57,22 @@ class ToxTest(unittest.TestCase):
 
         return True
 
+    def ensure_exec(self, method, args):
+        count = 0
+        THRESHOLD = 10
+
+        while True:
+            try:
+                method(*args)
+                break
+            except:
+                self.loop(10)
+                if count > THRESHOLD:
+                    return False
+                count += 1
+
+        return True
+
     def bob_add_alice_as_friend(self):
         """
         t:add_friend
@@ -84,6 +100,8 @@ class ToxTest(unittest.TestCase):
 
         self.bid = self.alice.get_friend_id(bob_addr)
         self.aid = self.bob.get_friend_id(alice_addr)
+
+        self.loop(50)
 
     def test_boostrap(self):
         """
@@ -167,7 +185,6 @@ class ToxTest(unittest.TestCase):
         t:on_connection_status
         """
         self.bob_add_alice_as_friend()
-        self.loop(100)
 
         AID = self.aid
         def on_connection_status(self, friend_id, status):
@@ -290,11 +307,11 @@ class ToxTest(unittest.TestCase):
 
         TestTox.on_friend_message = on_friend_message
 
-        self.bob.send_message(self.aid, MSG)
+        self.ensure_exec(self.bob.send_message, (self.aid, MSG))
         self.alice.fm = False
         assert self.wait_callback(self.alice, 'fm')
 
-        self.bob.send_message_withid(self.aid, 42, MSG)
+        self.ensure_exec(self.bob.send_message_withid, (self.aid, 42, MSG))
         self.alice.fm = False
         assert self.wait_callback(self.alice, 'fm')
 
@@ -310,11 +327,11 @@ class ToxTest(unittest.TestCase):
 
         TestTox.on_action = on_action
 
-        self.bob.send_action(self.aid, ACTION)
+        self.ensure_exec(self.bob.send_action, (self.aid, ACTION))
         self.alice.fa = False
         assert self.wait_callback(self.alice, 'fa')
 
-        self.bob.send_action_withid(self.aid, 42, ACTION)
+        self.ensure_exec(self.bob.send_action_withid, (self.aid, 42, ACTION))
         self.alice.fa = False
         assert self.wait_callback(self.alice, 'fa')
 
@@ -368,13 +385,7 @@ class ToxTest(unittest.TestCase):
         self.alice.gi = False
         self.alice.gn = False
 
-        while True:
-            try:
-                self.bob.invite_friend(self.aid, group_id)
-                break
-            except:
-                print '!'
-                self.loop(10)
+        assert self.ensure_exec(self.bob.invite_friend, (self.aid, group_id))
 
         assert self.wait_callback(self.alice, 'gi')
         if not self.alice.gn:
@@ -422,12 +433,7 @@ class ToxTest(unittest.TestCase):
         TestTox.on_group_message = on_group_message
         self.alice.gm = False
 
-        while True:
-            try:
-                self.bob.group_message_send(group_id, MSG)
-                break
-            except:
-                self.loop(10)
+        assert self.ensure_exec(self.bob.group_message_send, (group_id, MSG))
 
         self.wait_callback(self.alice, 'gm')
         TestTox.on_group_message = Tox.on_group_message
@@ -450,6 +456,7 @@ if __name__ == '__main__':
     not_tested = methods.difference(tested)
 
     print('Test Coverage: %.2f%%' % (len(tested) * 100.0 / len(methods)))
-    print('Not tested:\n    %s' % "\n    ".join(sorted(list(not_tested))))
+    if len(not_tested):
+        print('Not tested:\n    %s' % "\n    ".join(sorted(list(not_tested))))
 
     unittest.main()
