@@ -99,10 +99,10 @@ typedef struct {
 static void callback_friend_request(uint8_t* public_key, uint8_t* data,
     uint16_t length, void* self)
 {
-  uint8_t buf[TOX_FRIEND_ADDRESS_SIZE * 2 + 1];
-  memset(buf, 0, TOX_FRIEND_ADDRESS_SIZE * 2 + 1);
+  uint8_t buf[TOX_CLIENT_ID_SIZE * 2 + 1];
+  memset(buf, 0, TOX_CLIENT_ID_SIZE * 2 + 1);
 
-  bytes_to_hex_string(public_key, TOX_FRIEND_ADDRESS_SIZE, buf);
+  bytes_to_hex_string(public_key, TOX_CLIENT_ID_SIZE, buf);
 
   PyObject_CallMethod((PyObject*)self, "on_friend_request", "ss#", buf, data,
       length - 1);
