@@ -769,7 +769,7 @@ ToxCore_add_groupchat(ToxCore* self, PyObject* args)
 {
   int ret = tox_add_groupchat(self->tox);
   if (ret == -1) {
-    PyErr_SetString(PyExc_TypeError, "failed to add groupchat");
+    PyErr_SetString(ToxCoreError, "failed to add groupchat");
   }
 
   return PyLong_FromLong(ret);
@@ -785,7 +785,7 @@ ToxCore_del_groupchat(ToxCore* self, PyObject* args)
   }
 
   if (tox_del_groupchat(self->tox, groupid) == -1) {
-    PyErr_SetString(PyExc_TypeError, "failed to del groupchat");
+    PyErr_SetString(ToxCoreError, "failed to del groupchat");
   }
 
   Py_RETURN_NONE;
@@ -805,7 +805,7 @@ ToxCore_group_peername(ToxCore* self, PyObject* args)
 
   int ret = tox_group_peername(self->tox, groupid, peernumber, buf);
   if (ret == -1) {
-    PyErr_SetString(PyExc_TypeError, "failed to get group peername");
+    PyErr_SetString(ToxCoreError, "failed to get group peername");
   }
 
   return PyUnicodeString_FromString((const char*)buf);
@@ -821,7 +821,7 @@ ToxCore_invite_friend(ToxCore* self, PyObject* args)
   }
 
   if (tox_invite_friend(self->tox, friendnumber, groupid) == -1) {
-    PyErr_SetString(PyExc_TypeError, "failed to invite friend");
+    PyErr_SetString(ToxCoreError, "failed to invite friend");
   }
 
   Py_RETURN_NONE;
@@ -843,7 +843,7 @@ ToxCore_join_groupchat(ToxCore* self, PyObject* args)
 
   int ret = tox_join_groupchat(self->tox, friendnumber, pk);
   if (ret == -1) {
-    PyErr_SetString(PyExc_TypeError, "failed to join group chat");
+    PyErr_SetString(ToxCoreError, "failed to join group chat");
   }
 
   return PyLong_FromLong(ret);
@@ -861,7 +861,7 @@ ToxCore_group_message_send(ToxCore* self, PyObject* args)
   }
 
   if (tox_group_message_send(self->tox, groupid, message, length + 1) == -1) {
-    PyErr_SetString(PyExc_TypeError, "failed to send group message");
+    PyErr_SetString(ToxCoreError, "failed to send group message");
   }
 
   Py_RETURN_NONE;
@@ -895,7 +895,7 @@ ToxCore_group_get_names(ToxCore* self, PyObject* args)
 
   int n2 = tox_group_get_names(self->tox, groupid, names, n);
   if (n2 == -1) {
-    PyErr_SetString(PyExc_TypeError, "failed to get group member names");
+    PyErr_SetString(ToxCoreError, "failed to get group member names");
     return NULL;
   }
 
@@ -960,7 +960,7 @@ ToxCore_new_filesender(ToxCore* self, PyObject* args)
       filename_length);
 
   if (ret == -1) {
-    PyErr_SetString(PyExc_TypeError, "tox_new_file_sender() failed");
+    PyErr_SetString(ToxCoreError, "tox_new_file_sender() failed");
     return NULL;
   }
 
@@ -987,7 +987,7 @@ ToxCore_file_sendcontrol(ToxCore* self, PyObject* args)
       filenumber, message_id, data, data_length);
 
   if (ret == -1) {
-    PyErr_SetString(PyExc_TypeError, "tox_file_send_control() failed");
+    PyErr_SetString(ToxCoreError, "tox_file_send_control() failed");
     return NULL;
   }
 
@@ -1012,7 +1012,7 @@ ToxCore_file_senddata(ToxCore* self, PyObject* args)
       data_length);
 
   if (ret == -1) {
-    PyErr_SetString(PyExc_TypeError, "tox_file_send_data() failed");
+    PyErr_SetString(ToxCoreError, "tox_file_send_data() failed");
     return NULL;
   }
 
@@ -1030,7 +1030,7 @@ ToxCore_file_data_size(ToxCore* self, PyObject* args)
   int ret = tox_file_data_size(self->tox, friendnumber);
 
   if (ret == -1) {
-    PyErr_SetString(PyExc_TypeError, "tox_file_data_size() failed");
+    PyErr_SetString(ToxCoreError, "tox_file_data_size() failed");
     return NULL;
   }
 
@@ -1054,7 +1054,7 @@ ToxCore_file_dataremaining(ToxCore* self, PyObject* args)
       send_receive);
 
   if (!ret) {
-    PyErr_SetString(PyExc_TypeError, "tox_file_data_remaining() failed");
+    PyErr_SetString(ToxCoreError, "tox_file_data_remaining() failed");
     return NULL;
   }
 
@@ -1190,7 +1190,7 @@ ToxCore_load(ToxCore* self, PyObject* args)
   int length = 0;
 
   if (!PyArg_ParseTuple(args, "s#", &data, &length)) {
-    PyErr_SetString(PyExc_TypeError, "no data specified");
+    PyErr_SetString(ToxCoreError, "no data specified");
     return NULL;
   }
 
@@ -1212,7 +1212,7 @@ ToxCore_load_from_file(ToxCore* self, PyObject* args)
 
   FILE* fp = fopen(filename, "r");
   if (fp == NULL) {
-    PyErr_SetString(PyExc_TypeError,
+    PyErr_SetString(ToxCoreError,
         "tox_load(): failed to open file for reading");
     return NULL;
   }
@@ -1225,7 +1225,7 @@ ToxCore_load_from_file(ToxCore* self, PyObject* args)
   uint8_t* data = (uint8_t*)malloc(length * sizeof(char));
 
   if (fread(data, length, 1, fp) != 1) {
-    PyErr_SetString(PyExc_TypeError,
+    PyErr_SetString(ToxCoreError,
         "tox_load(): corrupted data file");
     return NULL;
   }
