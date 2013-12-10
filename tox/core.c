@@ -1125,16 +1125,16 @@ ToxCore_file_data_size(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_file_dataremaining(ToxCore* self, PyObject* args)
+ToxCore_file_data_remaining(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
   int friendnumber = 0;
   int filenumber = 0;
-  uint8_t send_receive = 0;
+  int send_receive = 0;
 
 
-  if (!PyArg_ParseTuple(args, "iic", &friendnumber, &filenumber,
+  if (!PyArg_ParseTuple(args, "iii", &friendnumber, &filenumber,
         &send_receive)) {
     return NULL;
   }
@@ -1687,7 +1687,7 @@ PyMethodDef Tox_methods[] = {
     "Returns the recommended/maximum size of the filedata you send with "
     ":meth:`.file_send_data`."},
   {
-    "file_data_remaining", (PyCFunction)ToxCore_file_dataremaining,
+    "file_data_remaining", (PyCFunction)ToxCore_file_data_remaining,
     METH_VARARGS,
     "file_data_remaining(friend_number, file_number, send_receive)\n"
     "Give the number of bytes left to be sent/received. *send_receive* is "
