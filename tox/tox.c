@@ -69,6 +69,7 @@ PyMODINIT_FUNC inittox(void)
   PyModule_AddObject(m, "Tox", (PyObject*)&ToxCoreType);
 
   ToxCoreError = PyErr_NewException("tox.OperationFailedError", NULL, NULL);
+  PyModule_AddObject(m, "OperationFailedError", (PyObject*)ToxCoreError);
 
 #if PY_MAJOR_VERSION >= 3
   return m;
