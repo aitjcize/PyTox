@@ -27,3 +27,5 @@ before_script:
   - cd ..
 script:
   - python setup.py build
+  - sudo python setup.py install
+  - python tests/tests.py
