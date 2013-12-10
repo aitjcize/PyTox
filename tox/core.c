@@ -1653,7 +1653,7 @@ PyMethodDef Tox_methods[] = {
   {
     "new_file_sender", (PyCFunction)ToxCore_new_filesender, METH_VARARGS,
     "new_file_sender(friend_number, file_size, filename)\n"
-    "Send a file send request."
+    "Send a file send request. Returns file number to be sent."
   },
   {
     "file_send_control", (PyCFunction)ToxCore_file_sendcontrol, METH_VARARGS,
