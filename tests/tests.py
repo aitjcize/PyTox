@@ -1,3 +1,5 @@
+import hashlib
+import os
 import re
 import unittest
 
@@ -9,13 +11,16 @@ SERVER = ["54.215.145.71", 33445, "6EDDEE2188EF579303C0766B4796DCBA89C93058B6032
 ADDR_SIZE = 76
 CLIENT_ID_SIZE = 64
 
-class TestTox(Tox):
+class AliceTox(Tox):
+    pass
+
+class BobTox(Tox):
     pass
 
 class ToxTest(unittest.TestCase):
     def setUp(self):
-        self.alice = TestTox()
-        self.bob = TestTox()
+        self.alice = AliceTox()
+        self.bob = BobTox()
 
         self.alice.bootstrap_from_address(SERVER[0], 1, SERVER[1], SERVER[2])
         self.bob.bootstrap_from_address(SERVER[0], 1, SERVER[1], SERVER[2])
@@ -88,14 +93,14 @@ class ToxTest(unittest.TestCase):
             self.add_friend_norequest(pk)
             self.fr = True
 
-        TestTox.on_friend_request = on_friend_request
+        AliceTox.on_friend_request = on_friend_request
 
         alice_addr = self.alice.get_address()
         self.alice.fr = False
         self.bob.add_friend(alice_addr, MSG)
 
         assert self.wait_callback(self.alice, 'fr')
-        TestTox.on_friend_request = Tox.on_friend_request
+        AliceTox.on_friend_request = Tox.on_friend_request
 
         self.bid = self.alice.get_friend_id(bob_addr)
         self.aid = self.bob.get_friend_id(alice_addr)
@@ -142,12 +147,12 @@ class ToxTest(unittest.TestCase):
             assert new_message == MSG
             self.sm = True
 
-        TestTox.on_status_message = on_status_message
+        BobTox.on_status_message = on_status_message
         self.bob.sm = False
 
         self.alice.set_status_message(MSG)
         assert self.wait_callback(self.bob, 'sm')
-        TestTox.on_status_message = Tox.on_status_message
+        BobTox.on_status_message = Tox.on_status_message
 
         assert self.alice.get_self_status_message() == MSG
         assert self.bob.get_status_message(self.aid) == MSG
@@ -170,10 +175,10 @@ class ToxTest(unittest.TestCase):
 
         self.alice.set_user_status(Tox.USERSTATUS_BUSY)
 
-        TestTox.on_user_status = on_user_status
+        BobTox.on_user_status = on_user_status
         self.bob.us = False
         assert self.wait_callback(self.bob, 'us')
-        TestTox.on_user_status = Tox.on_user_status
+        BobTox.on_user_status = Tox.on_user_status
 
         assert self.alice.get_self_user_status() == Tox.USERSTATUS_BUSY
         assert self.bob.get_user_status(self.aid) == Tox.USERSTATUS_BUSY
@@ -191,12 +196,12 @@ class ToxTest(unittest.TestCase):
             assert status == False
             self.cs = True
 
-        TestTox.on_connection_status = on_connection_status
+        BobTox.on_connection_status = on_connection_status
         self.bob.cs = False
         self.alice.kill()
         self.alice = Tox()
         assert self.wait_callback(self.bob, 'cs')
-        TestTox.on_connection_status = Tox.on_connection_status
+        BobTox.on_connection_status = Tox.on_connection_status
 
         assert self.bob.get_friend_connection_status(self.aid) == False
 
@@ -276,14 +281,14 @@ class ToxTest(unittest.TestCase):
             assert newname == NEWNAME
             self.nc = True
 
-        TestTox.on_name_change = on_name_change
+        BobTox.on_name_change = on_name_change
 
         self.bob.nc = False
         self.alice.set_name(NEWNAME)
 
         assert self.wait_callback(self.bob, 'nc')
         assert self.bob.get_name(self.aid) == NEWNAME
-        TestTox.on_name_change = Tox.on_name_change
+        BobTox.on_name_change = Tox.on_name_change
 
     def test_friend_message_and_action(self):
         """
@@ -306,7 +311,7 @@ class ToxTest(unittest.TestCase):
             assert message == MSG
             self.fm = True
 
-        TestTox.on_friend_message = on_friend_message
+        AliceTox.on_friend_message = on_friend_message
 
         self.ensure_exec(self.bob.send_message, (self.aid, MSG))
         self.alice.fm = False
@@ -316,7 +321,7 @@ class ToxTest(unittest.TestCase):
         self.alice.fm = False
         assert self.wait_callback(self.alice, 'fm')
 
-        TestTox.on_friend_message = Tox.on_friend_message
+        AliceTox.on_friend_message = Tox.on_friend_message
 
         self.loop(50)
 
@@ -331,9 +336,10 @@ class ToxTest(unittest.TestCase):
                 assert receipt == MID
             self.rr = True
 
-        TestTox.on_read_receipt = on_read_receipt
+        BobTox.on_read_receipt = on_read_receipt
         self.bob.rr = False
         assert self.wait_callback(self.bob, 'rr')
+        BobTox.on_read_receipt = Tox.on_read_receipt
 
         #: Test action
         ACTION = 'Kick'
@@ -343,7 +349,7 @@ class ToxTest(unittest.TestCase):
             assert action == ACTION
             self.fa = True
 
-        TestTox.on_action = on_action
+        AliceTox.on_action = on_action
 
         self.ensure_exec(self.bob.send_action, (self.aid, ACTION))
         self.alice.fa = False
@@ -353,7 +359,7 @@ class ToxTest(unittest.TestCase):
         self.alice.fa = False
         assert self.wait_callback(self.alice, 'fa')
 
-        TestTox.on_action = Tox.on_action
+        AliceTox.on_action = Tox.on_action
 
         #: Test delete friend
         self.alice.del_friend(self.bid)
@@ -391,14 +397,14 @@ class ToxTest(unittest.TestCase):
             self.join_groupchat(fid, pk)
             self.gi = True
 
-        TestTox.on_group_invite = on_group_invite
+        AliceTox.on_group_invite = on_group_invite
 
         def on_group_namelist_change(self, gid, peer_number, change):
             assert gid == group_id
             assert change == Tox.CHAT_CHANGE_PEER_ADD
             self.gn = True
 
-        TestTox.on_group_namelist_change = on_group_namelist_change
+        AliceTox.on_group_namelist_change = on_group_namelist_change
 
         self.alice.gi = False
         self.alice.gn = False
@@ -409,8 +415,8 @@ class ToxTest(unittest.TestCase):
         if not self.alice.gn:
             assert self.wait_callback(self.alice, 'gn')
 
-        TestTox.on_group_invite = Tox.on_group_invite
-        TestTox.on_group_namelist_change = Tox.on_group_namelist_change
+        AliceTox.on_group_invite = Tox.on_group_invite
+        AliceTox.on_group_namelist_change = Tox.on_group_namelist_change
 
         #: Test group number of peers
         self.loop(50)
@@ -424,11 +430,11 @@ class ToxTest(unittest.TestCase):
             if change == Tox.CHAT_CHANGE_PEER_NAME:
                 self.gn = True
 
-        TestTox.on_group_namelist_change = on_group_namelist_change
+        AliceTox.on_group_namelist_change = on_group_namelist_change
         self.alice.gn = False
 
         assert self.wait_callback(self.alice, 'gn')
-        TestTox.on_group_namelist_change = Tox.on_group_namelist_change
+        AliceTox.on_group_namelist_change = Tox.on_group_namelist_change
 
         peernames = [self.bob.group_peername(group_id, i) for i in
                      range(self.bob.group_number_peers(group_id))]
@@ -448,13 +454,13 @@ class ToxTest(unittest.TestCase):
                 assert message == MSG
                 self.gm = True
 
-        TestTox.on_group_message = on_group_message
+        AliceTox.on_group_message = on_group_message
         self.alice.gm = False
 
         self.ensure_exec(self.bob.group_message_send, (group_id, MSG))
 
         self.wait_callback(self.alice, 'gm')
-        TestTox.on_group_message = Tox.on_group_message
+        AliceTox.on_group_message = Tox.on_group_message
 
         #: Test chatlist
         assert len(self.bob.get_chatlist()) == self.bob.count_chatlist()
@@ -463,6 +469,95 @@ class ToxTest(unittest.TestCase):
         assert self.bob.count_chatlist() == 1
         self.bob.del_groupchat(group_id)
         assert self.bob.count_chatlist() == 0
+
+    def test_file_transfer(self):
+        """
+        t:file_data_remaining
+        t:file_data_size
+        t:file_send_control
+        t:file_send_data
+        t:new_file_sender
+        t:on_file_control
+        t:on_file_data
+        t:on_file_send_request
+        """
+        self.bob_add_alice_as_friend()
+
+        FILE = os.urandom(1024 * 1024)
+        FILE_NAME = "test.bin"
+        FILE_SIZE = len(FILE)
+
+        m = hashlib.md5()
+        m.update(FILE)
+        FILE_DIGEST = m.hexdigest()
+
+        BID = self.bid
+        CONTEXT = {'FILE': '', 'RECEIVED': 0, 'START': False, 'SENT': 0}
+
+        def on_file_send_request(self, fid, filenumber, size, filename):
+            assert fid == BID
+            assert size == FILE_SIZE
+            assert filename == FILE_NAME
+            self.file_send_control(fid, 1, filenumber, Tox.FILECONTROL_ACCEPT)
+
+        def on_file_control(self, fid, receive_send, file_number, ct, data):
+            assert fid == BID
+            if receive_send == 0 and ct == Tox.FILECONTROL_FINISHED:
+                assert CONTEXT['RECEIVED'] == FILE_SIZE
+                m = hashlib.md5()
+                m.update(CONTEXT['FILE'])
+                assert m.hexdigest() == FILE_DIGEST
+                self.completed = True
+
+        def on_file_data(self, fid, file_number, data):
+            assert fid == BID
+            CONTEXT['FILE'] += data
+            CONTEXT['RECEIVED'] += len(data)
+            if CONTEXT['RECEIVED'] < FILE_SIZE:
+                assert self.file_data_remaining(fid, file_number, 1) == \
+                        FILE_SIZE - CONTEXT['RECEIVED']
+
+        AliceTox.on_file_send_request = on_file_send_request
+        AliceTox.on_file_control = on_file_control
+        AliceTox.on_file_data = on_file_data
+
+        def on_file_control2(self, fid, receive_send, file_number, ct, data):
+            if receive_send == 1 and ct == Tox.FILECONTROL_ACCEPT:
+                CONTEXT['START'] = True
+
+        BobTox.on_file_control = on_file_control2
+
+        self.alice.completed = False
+        BLK = self.bob.file_data_size(self.aid)
+        FN = self.bob.new_file_sender(self.aid, FILE_SIZE, FILE_NAME)
+
+        while not self.alice.completed:
+            if CONTEXT['START']:
+                try:
+                    for i in range(100):
+                        if CONTEXT['SENT'] == FILE_SIZE:
+                            self.bob.file_send_control(self.aid, 0, FN,
+                                    Tox.FILECONTROL_FINISHED)
+                            CONTEXT['START'] = False
+                            break
+                        else:
+                            ed = CONTEXT['SENT'] + BLK
+                            if ed > FILE_SIZE:
+                                ed = FILE_SIZE
+                            self.bob.file_send_data(self.aid, FN,
+                                    FILE[CONTEXT['SENT']:ed])
+                            CONTEXT['SENT'] = ed
+                except:
+                    pass
+
+            self.alice.do()
+            self.bob.do()
+            sleep(0.02)
+
+        AliceTox.on_file_send_request = Tox.on_file_send_request
+        AliceTox.on_file_control = Tox.on_file_control
+        AliceTox.on_file_data = Tox.on_file_data
+        BobTox.on_file_control = Tox.on_file_control
 
 if __name__ == '__main__':
     methods = set([x for x in dir(Tox)
