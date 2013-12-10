@@ -63,15 +63,14 @@ class ToxTest(unittest.TestCase):
 
         while True:
             try:
-                method(*args)
+                ret = method(*args)
                 break
             except:
                 self.loop(10)
-                if count > THRESHOLD:
-                    return False
+                assert count < THRESHOLD
                 count += 1
 
-        return True
+        return ret
 
     def bob_add_alice_as_friend(self):
         """
@@ -290,10 +289,12 @@ class ToxTest(unittest.TestCase):
         """
         t:on_action
         t:on_friend_message
+        t:on_read_receipt
         t:send_action
         t:send_action_withid
         t:send_message
         t:send_message_withid
+        t:set_send_receipts
         """
         self.bob_add_alice_as_friend()
 
@@ -316,6 +317,23 @@ class ToxTest(unittest.TestCase):
         assert self.wait_callback(self.alice, 'fm')
 
         TestTox.on_friend_message = Tox.on_friend_message
+
+        self.loop(50)
+
+        self.bob.set_send_receipts(self.aid, True)
+        MID = self.ensure_exec(self.bob.send_message, (self.aid, MSG))
+
+        checked = {'checked': False}
+        def on_read_receipt(self, fid, receipt):
+            assert fid == BID
+            if not checked['checked']:
+                checked['checked'] = True
+                assert receipt == MID
+            self.rr = True
+
+        TestTox.on_read_receipt = on_read_receipt
+        self.bob.rr = False
+        assert self.wait_callback(self.bob, 'rr')
 
         #: Test action
         ACTION = 'Kick'
@@ -385,7 +403,7 @@ class ToxTest(unittest.TestCase):
         self.alice.gi = False
         self.alice.gn = False
 
-        assert self.ensure_exec(self.bob.invite_friend, (self.aid, group_id))
+        self.ensure_exec(self.bob.invite_friend, (self.aid, group_id))
 
         assert self.wait_callback(self.alice, 'gi')
         if not self.alice.gn:
@@ -433,7 +451,7 @@ class ToxTest(unittest.TestCase):
         TestTox.on_group_message = on_group_message
         self.alice.gm = False
 
-        assert self.ensure_exec(self.bob.group_message_send, (group_id, MSG))
+        self.ensure_exec(self.bob.group_message_send, (group_id, MSG))
 
         self.wait_callback(self.alice, 'gm')
         TestTox.on_group_message = Tox.on_group_message
