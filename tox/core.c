@@ -1582,9 +1582,9 @@ PyMethodDef Tox_methods[] = {
     "    :meth:`.set_user_status`"
   },
   {
-    "set_sends_receipts", (PyCFunction)ToxCore_set_send_receipts,
+    "set_send_receipts", (PyCFunction)ToxCore_set_send_receipts,
     METH_VARARGS,
-    "set_sends_receipts(friend_number, yesno)\n"
+    "set_send_receipts(friend_number, yesno)\n"
     "Sets whether we send read receipts for friendnumber. *yesno* should be "
     "a boolean value."
   },
