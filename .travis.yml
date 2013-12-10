@@ -13,7 +13,8 @@ before_script:
   - cd libsodium
   - git checkout tags/0.4.2
   - ./autogen.sh
-  - ./configure && make -j3
+  - ./configure --prefix=/usr
+  - make -j2
   - sudo make install
   - cd ..
 # creating librarys' links and updating cache
@@ -21,7 +22,7 @@ before_script:
   - git clone https://github.com/irungentoo/ProjectTox-Core.git toxcore
   - cd toxcore
   - autoreconf -i
-  - ./configure --disable-tests --disable-ntox --disable-dht-bootstrap-daemon
+  - ./configure --prefix=/usr --disable-tests --disable-ntox --disable-dht-bootstrap-daemon
   - make -j2
   - sudo make install
   - cd ..
