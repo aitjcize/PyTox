@@ -1,3 +1,4 @@
+import re
 import unittest
 
 from tox import Tox
@@ -22,16 +23,25 @@ class ToxTest(unittest.TestCase):
         self.loop_until_connected()
 
     def tearDown(self):
+        """
+        t:kill
+        """
         self.alice.kill()
         self.bob.kill()
 
     def loop(self, n):
+        """
+        t:do
+        """
         for i in range(n):
             self.alice.do()
             self.bob.do()
             sleep(0.02)
 
     def loop_until_connected(self):
+        """
+        t:isconnected
+        """
         while not self.alice.isconnected() or not self.bob.isconnected():
             self.loop(50)
 
@@ -48,6 +58,12 @@ class ToxTest(unittest.TestCase):
         return True
 
     def bob_add_alice_as_friend(self):
+        """
+        t:add_friend
+        t:add_friend_norequest
+        t:on_friend_request
+        t:get_friend_id
+        """
         MSG = 'Hi, this is Bob.'
         bob_addr = self.bob.get_address()
 
@@ -70,24 +86,74 @@ class ToxTest(unittest.TestCase):
         self.aid = self.bob.get_friend_id(alice_addr)
 
     def test_boostrap(self):
+        """
+        t:bootstrap_from_address
+        """
         assert self.alice.isconnected()
         assert self.bob.isconnected()
 
     def test_get_address(self):
+        """
+        t:get_address
+        """
         assert len(self.alice.get_address()) == ADDR_SIZE
         assert len(self.bob.get_address()) == ADDR_SIZE
 
+    def test_self_name(self):
+        """
+        t:set_name
+        t:get_self_name
+        """
+        self.alice.set_name('Alice')
+        self.loop(10)
+        assert self.alice.get_self_name() == 'Alice'
+
+    def test_self_status_message(self):
+        """
+        t:set_status_message
+        t:get_self_status_message
+        """
+        MSG = 'Happy'
+        self.alice.set_status_message(MSG)
+        self.loop(10)
+        assert self.alice.get_self_status_message() == MSG
+
+    def test_tox(self):
+        """
+        t:size
+        t:save
+        t:load
+        """
+        assert self.alice.size() > 0
+        data = self.alice.save()
+        assert data != None
+        addr = self.alice.get_address()
+
+        self.alice.kill()
+        self.alice = Tox()
+        self.alice.load(data)
+        assert addr == self.alice.get_address()
+
+    def test_self_user_status(self):
+        """
+        t:set_user_status
+        t:get_self_user_status
+        """
+        self.alice.set_user_status(Tox.USERSTATUS_BUSY)
+        self.loop(10)
+        assert self.alice.get_self_user_status() == Tox.USERSTATUS_BUSY
+
     def test_friend(self):
         """
-        add_friend
-        add_friend_norequest
-        friend_exists
-        get_friend_id
-        on_action
-        on_friend_message
-        on_friend_request
-        send_action
-        send_message
+        t:del_friend
+        t:friend_exists
+        t:get_client_id
+        t:get_friendlist
+        t:get_name
+        t:on_action
+        t:on_friend_message
+        t:send_action
+        t:send_message
         """
 
         #: Test friend request
@@ -96,8 +162,19 @@ class ToxTest(unittest.TestCase):
         assert self.alice.friend_exists(self.bid)
         assert self.bob.friend_exists(self.aid)
 
+        #: Test friend exists
         assert not self.alice.friend_exists(self.bid + 1)
         assert not self.bob.friend_exists(self.aid + 1)
+
+        #: Test get_cliend_id
+        assert self.alice.get_client_id(self.bid) == \
+                self.bob.get_address()[:CLIENT_ID_SIZE]
+        assert self.bob.get_client_id(self.aid) == \
+                self.alice.get_address()[:CLIENT_ID_SIZE]
+
+        #: Test get_friendlist
+        assert [self.bid] == self.alice.get_friendlist()
+        assert [self.aid] == self.bob.get_friendlist()
 
         #: Test friend name
         NEWNAME = 'Jenny'
@@ -113,8 +190,8 @@ class ToxTest(unittest.TestCase):
         self.alice.set_name(NEWNAME)
 
         assert self.wait_callback(self.bob, 'nc')
+        assert self.bob.get_name(self.aid) == NEWNAME
         TestTox.on_name_change = Tox.on_name_change
-        self.alice.set_name('Alice')
 
         #: Test message
         MSG = 'Hi, Bob!'
@@ -148,17 +225,22 @@ class ToxTest(unittest.TestCase):
         assert self.wait_callback(self.alice, 'fa')
         TestTox.on_action = Tox.on_action
 
+        #: Test delete friend
+        self.alice.del_friend(self.bid)
+        self.loop(10)
+        assert not self.alice.friend_exists(self.bid)
+
     def test_group(self):
         """
-        add_groupchat
-        group_message_send
-        group_number_peers
-        group_peername
-        invite_friend
-        join_groupchat
-        on_group_invite
-        on_group_message
-        on_group_namelist_change
+        t:add_groupchat
+        t:group_message_send
+        t:group_number_peers
+        t:group_peername
+        t:invite_friend
+        t:join_groupchat
+        t:on_group_invite
+        t:on_group_message
+        t:on_group_namelist_change
         """
         self.bob_add_alice_as_friend()
 
@@ -251,3 +333,14 @@ class ToxTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+    methods = set([x for x in dir(Tox)
+                     if not x[0].isupper() and not x[0] == '_'])
+    docs = "".join([getattr(ToxTest, x).__doc__ for x in dir(ToxTest)
+            if getattr(ToxTest, x).__doc__ != None])
+
+    tested = set(re.findall(r't:(.*?)\n', docs))
+    not_tested = methods.difference(tested)
+
+    print('Test Converage: %.2f%%' % (len(tested) * 100.0 / len(methods)))
+    print('Not tested:\n    %s' % "\n    ".join(sorted(list(not_tested))))
