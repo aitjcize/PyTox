@@ -25,6 +25,12 @@
 
 PyObject* ToxCoreError;
 
+#define CHECK_TOX(self)                                        \
+  if ((self)->tox == NULL) {                                   \
+    PyErr_SetString(ToxCoreError, "toxcore object killed.");   \
+    return NULL;                                               \
+  }
+
 static void bytes_to_hex_string(uint8_t* digest, int length,
     uint8_t* hex_digest)
 {
@@ -279,6 +285,10 @@ static int ToxCore_init(ToxCore* self, PyObject* args, PyObject* kwds)
 static int
 ToxCore_dealloc(ToxCore* self)
 {
+  if (self->tox) {
+    tox_kill(self->tox);
+    self->tox = NULL;
+  }
   return 0;
 }
 
@@ -291,6 +301,8 @@ ToxCore_callback_stub(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_getaddress(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   uint8_t address[TOX_FRIEND_ADDRESS_SIZE];
   uint8_t address_hex[TOX_FRIEND_ADDRESS_SIZE * 2 + 1];
   memset(address_hex, 0, TOX_FRIEND_ADDRESS_SIZE * 2 + 1);
@@ -305,6 +317,8 @@ ToxCore_getaddress(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_add_friend(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   uint8_t* address = NULL;
   int addr_length = 0;
   uint8_t* data = NULL;
@@ -362,6 +376,8 @@ ToxCore_add_friend(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_add_friend_norequest(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   uint8_t* address = NULL;
   int addr_length = 0;
 
@@ -385,6 +401,8 @@ ToxCore_add_friend_norequest(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_get_friend_id(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   uint8_t* id = NULL;
   int addr_length = 0;
 
@@ -407,6 +425,8 @@ ToxCore_get_friend_id(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_get_client_id(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   uint8_t pk[TOX_CLIENT_ID_SIZE + 1];
   pk[TOX_CLIENT_ID_SIZE] = 0;
 
@@ -428,6 +448,8 @@ ToxCore_get_client_id(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_delfriend(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendid = 0;
 
   if (!PyArg_ParseTuple(args, "i", &friendid)) {
@@ -445,6 +467,8 @@ ToxCore_delfriend(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_get_friend_connection_status(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendid = 0;
 
   if (!PyArg_ParseTuple(args, "i", &friendid)) {
@@ -463,6 +487,8 @@ ToxCore_get_friend_connection_status(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_friend_exists(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendid = 0;
 
   if (!PyArg_ParseTuple(args, "i", &friendid)) {
@@ -477,6 +503,8 @@ ToxCore_friend_exists(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_sendmessage(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendid = 0;
   int length = 0;
   uint8_t* message = NULL;
@@ -497,6 +525,8 @@ ToxCore_sendmessage(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_sendmessage_withid(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendid = 0;
   int length = 0;
   uint32_t id = 0;
@@ -519,6 +549,8 @@ ToxCore_sendmessage_withid(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_send_action(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendid = 0;
   int length = 0;
   uint8_t* action = NULL;
@@ -539,6 +571,8 @@ ToxCore_send_action(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_send_action_withid(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendid = 0;
   int length = 0;
   uint32_t id = 0;
@@ -561,6 +595,8 @@ ToxCore_send_action_withid(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_set_name(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   uint8_t* name = 0;
   int length = 0;
 
@@ -579,6 +615,8 @@ ToxCore_set_name(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_get_self_name(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   uint8_t buf[TOX_MAX_NAME_LENGTH];
   memset(buf, 0, TOX_MAX_NAME_LENGTH);
 
@@ -593,6 +631,8 @@ ToxCore_get_self_name(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_get_name(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendid = 0;
   uint8_t buf[TOX_MAX_NAME_LENGTH];
   memset(buf, 0, TOX_MAX_NAME_LENGTH);
@@ -612,6 +652,8 @@ ToxCore_get_name(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_set_status_message(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   uint8_t* message;
   int length;
   if (!PyArg_ParseTuple(args, "s#", &message, &length)) {
@@ -629,6 +671,8 @@ ToxCore_set_status_message(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_set_user_status(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int status = 0;
 
   if (!PyArg_ParseTuple(args, "i", &status)) {
@@ -647,6 +691,8 @@ ToxCore_set_user_status(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_get_status_message_size(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendid = 0;
   if (!PyArg_ParseTuple(args, "i", &friendid)) {
     return NULL;
@@ -659,6 +705,8 @@ ToxCore_get_status_message_size(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_get_status_message(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   uint8_t buf[TOX_MAX_STATUSMESSAGE_LENGTH];
   int friendid = 0;
 
@@ -684,6 +732,8 @@ ToxCore_get_status_message(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_get_self_status_message(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   uint8_t buf[TOX_MAX_STATUSMESSAGE_LENGTH];
   memset(buf, 0, TOX_MAX_STATUSMESSAGE_LENGTH);
 
@@ -703,6 +753,8 @@ ToxCore_get_self_status_message(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_get_user_status(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendid = 0;
   if (!PyArg_ParseTuple(args, "i", &friendid)) {
     return NULL;
@@ -716,6 +768,8 @@ ToxCore_get_user_status(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_get_self_user_status(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int status = tox_get_self_user_status(self->tox);
   return PyLong_FromLong(status);
 }
@@ -723,6 +777,8 @@ ToxCore_get_self_user_status(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_set_send_receipts(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendid = 0;
   int yesno = 0;
 
@@ -738,6 +794,8 @@ ToxCore_set_send_receipts(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_count_friendlist(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   uint32_t count = tox_count_friendlist(self->tox);
   return PyLong_FromUnsignedLong(count);
 }
@@ -745,6 +803,8 @@ ToxCore_count_friendlist(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_get_friendlist(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   PyObject* plist = NULL;
   uint32_t count = tox_count_friendlist(self->tox);
   int* list = (int*)malloc(count * sizeof(int));
@@ -767,6 +827,8 @@ ToxCore_get_friendlist(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_add_groupchat(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int ret = tox_add_groupchat(self->tox);
   if (ret == -1) {
     PyErr_SetString(ToxCoreError, "failed to add groupchat");
@@ -778,6 +840,8 @@ ToxCore_add_groupchat(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_del_groupchat(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int groupid = 0;
 
   if (!PyArg_ParseTuple(args, "i", &groupid)) {
@@ -794,6 +858,8 @@ ToxCore_del_groupchat(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_group_peername(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   uint8_t buf[TOX_MAX_NAME_LENGTH];
   memset(buf, 0, TOX_MAX_NAME_LENGTH);
 
@@ -814,6 +880,8 @@ ToxCore_group_peername(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_invite_friend(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendnumber = 0;
   int groupid = 0;
   if (!PyArg_ParseTuple(args, "ii", &friendnumber, &groupid)) {
@@ -830,6 +898,8 @@ ToxCore_invite_friend(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_join_groupchat(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   uint8_t* public_key = NULL;
   int length = 0;
   int friendnumber = 0;
@@ -852,6 +922,8 @@ ToxCore_join_groupchat(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_group_message_send(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int groupid = 0;
   uint8_t* message = NULL;
   uint32_t length = 0;
@@ -870,6 +942,8 @@ ToxCore_group_message_send(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_group_number_peers(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int groupid = 0;
 
   if (!PyArg_ParseTuple(args, "i", &groupid)) {
@@ -884,6 +958,8 @@ ToxCore_group_number_peers(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_group_get_names(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int groupid = 0;
   if (!PyArg_ParseTuple(args, "i", &groupid)) {
     return NULL;
@@ -917,6 +993,8 @@ ToxCore_group_get_names(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_count_chatlist(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   uint32_t n = tox_count_chatlist(self->tox);
   return PyLong_FromUnsignedLong(n);
 }
@@ -924,6 +1002,8 @@ ToxCore_count_chatlist(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_get_chatlist(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   PyObject* plist = NULL;
   uint32_t count = tox_count_chatlist(self->tox);
   int* list = (int*)malloc(count * sizeof(int));
@@ -946,6 +1026,8 @@ ToxCore_get_chatlist(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_new_filesender(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendnumber = 0;
   int filesize = 0;
   uint8_t* filename = 0;
@@ -970,6 +1052,8 @@ ToxCore_new_filesender(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_file_sendcontrol(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendnumber = 0;
   uint8_t send_receive = 0;
   int filenumber = 0;
@@ -997,6 +1081,8 @@ ToxCore_file_sendcontrol(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_file_senddata(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendnumber = 0;
   int filenumber = 0;
   uint8_t* data = NULL;
@@ -1022,6 +1108,8 @@ ToxCore_file_senddata(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_file_data_size(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendnumber = 0;
   if (!PyArg_ParseTuple(args, "i", &friendnumber)) {
     return NULL;
@@ -1040,6 +1128,8 @@ ToxCore_file_data_size(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_file_dataremaining(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int friendnumber = 0;
   int filenumber = 0;
   uint8_t send_receive = 0;
@@ -1064,6 +1154,8 @@ ToxCore_file_dataremaining(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_bootstrap_from_address(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   int ipv6enabled = TOX_ENABLE_IPV6_DEFAULT;
   uint16_t port = 0;
   uint8_t* public_key = NULL;
@@ -1092,6 +1184,8 @@ ToxCore_bootstrap_from_address(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_isconnected(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   if (tox_isconnected(self->tox)) {
     Py_RETURN_TRUE;
   } else {
@@ -1102,7 +1196,10 @@ ToxCore_isconnected(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_kill(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   tox_kill(self->tox);
+  self->tox = NULL;
 
   Py_RETURN_NONE;
 }
@@ -1110,6 +1207,8 @@ ToxCore_kill(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_do(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   tox_do(self->tox);
 
   if (PyErr_Occurred()) {
@@ -1121,6 +1220,8 @@ ToxCore_do(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_size(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   uint32_t size = tox_size(self->tox);
 
   return PyLong_FromUnsignedLong(size);
@@ -1129,6 +1230,8 @@ ToxCore_size(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_save(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   PyObject* res = NULL;
   int size = tox_size(self->tox);
   uint8_t* buf = (uint8_t*)malloc(size);
@@ -1139,7 +1242,7 @@ ToxCore_save(ToxCore* self, PyObject* args)
 
   tox_save(self->tox, buf);
 
-  // The PyString_* functions were split in Python 3.* into 
+  // The PyString_* functions were split in Python 3.* into
   // PyUnicode_ for string data and PyBytes_ for binary data
 #if PY_MAJOR_VERSION < 3
   res = PyString_FromStringAndSize((const char*)buf, size);
@@ -1154,6 +1257,8 @@ ToxCore_save(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_save_to_file(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   char* filename;
   if (!PyArg_ParseTuple(args, "s", &filename)) {
     return NULL;
@@ -1186,6 +1291,8 @@ ToxCore_save_to_file(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_load(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   uint8_t* data = NULL;
   int length = 0;
 
@@ -1204,6 +1311,8 @@ ToxCore_load(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_load_from_file(ToxCore* self, PyObject* args)
 {
+  CHECK_TOX(self);
+
   char* filename = NULL;
 
   if (!PyArg_ParseTuple(args, "s", &filename)) {
