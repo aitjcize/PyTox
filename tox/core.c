@@ -388,7 +388,6 @@ ToxCore_add_friend_norequest(ToxCore* self, PyObject* args)
   uint8_t pk[TOX_FRIEND_ADDRESS_SIZE];
   hex_string_to_bytes(address, TOX_FRIEND_ADDRESS_SIZE, pk);
 
-  // return friend_id on success, else -1.
   int res = tox_add_friend_norequest(self->tox, pk);
   if (res == -1) {
     PyErr_SetString(ToxCoreError, "failed to add friend");
@@ -477,7 +476,7 @@ ToxCore_get_friend_connection_status(ToxCore* self, PyObject* args)
 
   int ret = tox_get_friend_connection_status(self->tox, friendid);
   if (ret == -1) {
-    PyErr_SetString(ToxCoreError, "failed get connection status");
+    PyErr_SetString(ToxCoreError, "failed to get connection status");
     return NULL;
   }
 
@@ -1634,7 +1633,7 @@ PyMethodDef Tox_methods[] = {
   {
     "group_number_peers", (PyCFunction)ToxCore_group_number_peers, METH_VARARGS,
     "group_number_peers(group_number)\n"
-    "Return the number of peers in the group chat on success."
+    "Return the number of peers in the group chat."
   },
   {
     "group_get_names", (PyCFunction)ToxCore_group_get_names, METH_VARARGS,
