@@ -93,7 +93,7 @@ PyObject* PyByteString_FromString(const char *str) {
 #else
   res = PyBytes_FromString(str);
 #endif
-  return res;  
+  return res;
 }
 
 /* core.Tox definition */
@@ -111,35 +111,35 @@ static void callback_friend_request(uint8_t* public_key, uint8_t* data,
   bytes_to_hex_string(public_key, TOX_CLIENT_ID_SIZE, buf);
 
   PyObject_CallMethod((PyObject*)self, "on_friend_request", "ss#", buf, data,
-      length - 1);
+      length > 0? length - 1: 0);
 }
 
 static void callback_friend_message(Tox *tox, int friendnumber,
     uint8_t* message, uint16_t length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_friend_message", "is#", friendnumber,
-      message, length - 1);
+      message, length > 0? length - 1: 0);
 }
 
 static void callback_action(Tox *tox, int friendnumber, uint8_t* action,
     uint16_t length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_friend_action", "is#", friendnumber,
-      action, length - 1);
+      action, length > 0? length - 1: 0);
 }
 
 static void callback_name_change(Tox *tox, int friendnumber, uint8_t* newname,
     uint16_t length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_name_change", "is#", friendnumber,
-      newname, length - 1);
+      newname, length > 0? length - 1: 0);
 }
 
 static void callback_status_message(Tox *tox, int friendnumber,
     uint8_t *newstatus, uint16_t length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_status_message", "is#", friendnumber,
-      newstatus, length - 1);
+      newstatus, length > 0? length - 1: 0);
 }
 
 static void callback_user_status(Tox *tox, int friendnumber,
@@ -178,7 +178,7 @@ static void callback_group_message(Tox *tox, int groupid,
     int friendgroupid, uint8_t* message, uint16_t length, void *self)
 {
   PyObject_CallMethod((PyObject*)self, "on_group_message", "iis#", groupid,
-      friendgroupid, message, length - 1);
+      friendgroupid, message, length > 0? length - 1: 0);
 }
 
 static void callback_group_namelist_change(Tox *tox, int groupid,
