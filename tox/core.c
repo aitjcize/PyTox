@@ -240,13 +240,13 @@ static int init_helper(ToxCore* self, PyObject* args)
   Tox* tox = tox_new(ipv6enabled);
   if (tox == NULL) {
       fprintf(stderr, "Warning: failed to initialize toxcore with ipv6, "
-          "trying ipv4.");
+          "trying ipv4.\n");
 
       tox = tox_new(0);
       if (tox == NULL) {
         PyErr_SetString(ToxCoreError, "failed to initialize toxcore");
+        return -1;
       }
-      return -1;
   }
 
   tox_callback_friend_request(tox, callback_friend_request, self);
