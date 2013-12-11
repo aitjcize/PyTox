@@ -292,7 +292,7 @@ class ToxTest(unittest.TestCase):
 
     def test_friend_message_and_action(self):
         """
-        t:on_action
+        t:on_friend_action
         t:on_friend_message
         t:on_read_receipt
         t:send_action
@@ -344,12 +344,12 @@ class ToxTest(unittest.TestCase):
         #: Test action
         ACTION = 'Kick'
         BID = self.bid
-        def on_action(self, fid, action):
+        def on_friend_action(self, fid, action):
             assert fid == BID
             assert action == ACTION
             self.fa = True
 
-        AliceTox.on_action = on_action
+        AliceTox.on_friend_action = on_friend_action
 
         self.ensure_exec(self.bob.send_action, (self.aid, ACTION))
         self.alice.fa = False
@@ -359,7 +359,7 @@ class ToxTest(unittest.TestCase):
         self.alice.fa = False
         assert self.wait_callback(self.alice, 'fa')
 
-        AliceTox.on_action = Tox.on_action
+        AliceTox.on_friend_action = Tox.on_friend_action
 
         #: Test delete friend
         self.alice.del_friend(self.bid)

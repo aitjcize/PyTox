@@ -124,8 +124,8 @@ static void callback_friend_message(Tox *tox, int friendnumber,
 static void callback_action(Tox *tox, int friendnumber, uint8_t* action,
     uint16_t length, void* self)
 {
-  PyObject_CallMethod((PyObject*)self, "on_action", "is#", friendnumber, action,
-      length - 1);
+  PyObject_CallMethod((PyObject*)self, "on_friend_action", "is#", friendnumber,
+      action, length - 1);
 }
 
 static void callback_name_change(Tox *tox, int friendnumber, uint8_t* newname,
@@ -241,7 +241,7 @@ static int init_helper(ToxCore* self, PyObject* args)
 
   tox_callback_friend_request(tox, callback_friend_request, self);
   tox_callback_friend_message(tox, callback_friend_message, self);
-  tox_callback_action(tox, callback_action, self);
+  tox_callback_friend_action(tox, callback_action, self);
   tox_callback_name_change(tox, callback_name_change, self);
   tox_callback_status_message(tox, callback_status_message, self);
   tox_callback_user_status(tox, callback_user_status, self);
@@ -1359,8 +1359,8 @@ PyMethodDef Tox_methods[] = {
     "nothing."
   },
   {
-    "on_action", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
-    "on_action(friend_number, action)\n"
+    "on_friend_action", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_friend_action(friend_number, action)\n"
     "Callback for receiving friend actions, default implementation does "
     "nothing."
   },
