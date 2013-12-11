@@ -510,7 +510,7 @@ ToxCore_friend_exists(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_sendmessage(ToxCore* self, PyObject* args)
+ToxCore_send_message(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -532,7 +532,7 @@ ToxCore_sendmessage(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_sendmessage_withid(ToxCore* self, PyObject* args)
+ToxCore_send_message_withid(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -1501,12 +1501,12 @@ PyMethodDef Tox_methods[] = {
     "Checks if there exists a friend with given friendnumber."
   },
   {
-    "send_message", (PyCFunction)ToxCore_sendmessage, METH_VARARGS,
+    "send_message", (PyCFunction)ToxCore_send_message, METH_VARARGS,
     "send_message(friend_number, message)\n"
     "Send a text chat message to an online friend."
   },
   {
-    "send_message_withid", (PyCFunction)ToxCore_sendmessage_withid,
+    "send_message_withid", (PyCFunction)ToxCore_send_message_withid,
     METH_VARARGS,
     "send_message_withid(friend_number, id, message)\n"
     "Send a text chat message to an online friend with id."
