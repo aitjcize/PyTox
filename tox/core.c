@@ -239,8 +239,13 @@ static int init_helper(ToxCore* self, PyObject* args)
 
   Tox* tox = tox_new(ipv6enabled);
   if (tox == NULL) {
-      PyErr_SetString(ToxCoreError, "failed to initialize toxcore, "
-          "try disabling ipv6.");
+      fprintf(stderr, "Warning: failed to initialize toxcore with ipv6, "
+          "trying ipv4.");
+
+      tox = tox_new(0);
+      if (tox == NULL) {
+        PyErr_SetString(ToxCoreError, "failed to initialize toxcore");
+      }
       return -1;
   }
 
