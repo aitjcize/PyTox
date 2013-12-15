@@ -277,6 +277,12 @@ in this class.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="tox.Tox.group_action_send">
+<tt class="descname">group_action_send</tt><big>(</big><em>group_number</em>, <em>action</em><big>)</big><a class="headerlink" href="#tox.Tox.group_action_send" title="Permalink to this definition">¶</a></dt>
+<dd><p>send a group action.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="tox.Tox.group_get_names">
 <tt class="descname">group_get_names</tt><big>(</big><em>group_number</em><big>)</big><a class="headerlink" href="#tox.Tox.group_get_names" title="Permalink to this definition">¶</a></dt>
 <dd><p>List all the peers in the group chat.</p>
@@ -387,6 +393,12 @@ in this class.</p>
 <dt id="tox.Tox.on_friend_request">
 <tt class="descname">on_friend_request</tt><big>(</big><em>address</em>, <em>message</em><big>)</big><a class="headerlink" href="#tox.Tox.on_friend_request" title="Permalink to this definition">¶</a></dt>
 <dd><p>Callback for receiving friend requests, default implementation does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tox.Tox.on_group_action">
+<tt class="descname">on_group_action</tt><big>(</big><em>group_number</em>, <em>friend_group_number</em>, <em>action</em><big>)</big><a class="headerlink" href="#tox.Tox.on_group_action" title="Permalink to this definition">¶</a></dt>
+<dd><p>Callback for receiving group actions, default implementation does nothing.</p>
 </dd></dl>
 
 <dl class="method">
