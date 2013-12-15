@@ -10,6 +10,8 @@ Welcome to PyTox's documentation!
    :target: https://travis-ci.org/aitjcize/PyTox
 .. image:: https://pypip.in/v/PyTox/badge.png
    :target: https://pypi.python.org/pypi/PyTox
+.. image:: https://pypip.in/d/PyTox/badge.png
+   :target: https://crate.io/packages/PyTox
 
 About
 -----
