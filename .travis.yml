@@ -27,6 +27,5 @@ before_script:
   - sudo make install
   - cd ..
 script:
-  - python setup.py build
-  - sudo python setup.py install --prefix=/usr
+  - pip install .
   - python tests/tests.py
