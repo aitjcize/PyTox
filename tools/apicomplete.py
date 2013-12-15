@@ -26,15 +26,9 @@ for function in res:
         incl += 1
     else:
         excl.append(function)
-       
-       
+
+
 print("PyTox includes %d out of %d functions found in tox.h" % (incl, len(res)))
 print("Not included are the functions:")
 for item in excl:
     print("  %s" % item[:-1])
-
-
-
-
-
-
