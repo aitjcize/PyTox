@@ -181,6 +181,13 @@ static void callback_group_message(Tox *tox, int groupid,
       friendgroupid, message, length > 0? length - 1: 0);
 }
 
+static void callback_group_action(Tox *tox, int groupid,
+    int friendgroupid, uint8_t* action, uint16_t length, void *self)
+{
+  PyObject_CallMethod((PyObject*)self, "on_group_action", "iis#", groupid,
+      friendgroupid, action, length > 0? length - 1: 0);
+}
+
 static void callback_group_namelist_change(Tox *tox, int groupid,
     int peernumber, uint8_t change, void* self)
 {
@@ -259,6 +266,7 @@ static int init_helper(ToxCore* self, PyObject* args)
   tox_callback_connection_status(tox, callback_connection_status, self);
   tox_callback_group_invite(tox, callback_group_invite, self);
   tox_callback_group_message(tox, callback_group_message, self);
+  tox_callback_group_action(tox, callback_group_action, self);
   tox_callback_group_namelist_change(tox, callback_group_namelist_change, self);
   tox_callback_file_send_request(tox, callback_file_send_request, self);
   tox_callback_file_control(tox, callback_file_control, self);
@@ -949,6 +957,26 @@ ToxCore_group_message_send(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
+ToxCore_group_action_send(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  int groupid = 0;
+  uint8_t* action = NULL;
+  uint32_t length = 0;
+
+  if (!PyArg_ParseTuple(args, "is#", &groupid, &action, &length)) {
+    return NULL;
+  }
+
+  if (tox_group_action_send(self->tox, groupid, action, length + 1) == -1) {
+    PyErr_SetString(ToxCoreError, "failed to send group action");
+  }
+
+  Py_RETURN_NONE;
+}
+
+static PyObject*
 ToxCore_group_number_peers(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
@@ -1421,6 +1449,12 @@ PyMethodDef Tox_methods[] = {
     "nothing."
   },
   {
+    "on_group_action", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_group_action(group_number, friend_group_number, action)\n"
+    "Callback for receiving group actions, default implementation does "
+    "nothing."
+  },
+  {
     "on_group_namelist_change", (PyCFunction)ToxCore_callback_stub,
     METH_VARARGS,
     "on_group_namelist_change(group_number, peer_number, change)\n"
@@ -1639,6 +1673,11 @@ PyMethodDef Tox_methods[] = {
     "group_message_send", (PyCFunction)ToxCore_group_message_send, METH_VARARGS,
     "group_message_send(group_number, message)\n"
     "send a group message."
+  },
+  {
+    "group_action_send", (PyCFunction)ToxCore_group_action_send, METH_VARARGS,
+    "group_action_send(group_number, action)\n"
+    "send a group action."
   },
   {
     "group_number_peers", (PyCFunction)ToxCore_group_number_peers, METH_VARARGS,

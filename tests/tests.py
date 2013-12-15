@@ -372,12 +372,14 @@ class ToxTest(unittest.TestCase):
         t:count_chatlist
         t:del_groupchat
         t:get_chatlist
+        t:group_action_send
         t:group_get_names
         t:group_message_send
         t:group_number_peers
         t:group_peername
         t:invite_friend
         t:join_groupchat
+        t:on_group_action
         t:on_group_invite
         t:on_group_message
         t:on_group_namelist_change
@@ -461,6 +463,24 @@ class ToxTest(unittest.TestCase):
 
         self.wait_callback(self.alice, 'gm')
         AliceTox.on_group_message = Tox.on_group_message
+
+        #: Test group action
+        AID = self.aid
+        BID = self.bid
+        MSG = 'Group action test'
+        def on_group_action(self, gid, fgid, action):
+            if fgid == AID:
+                assert gid == group_id
+                assert action == MSG
+                self.ga = True
+
+        AliceTox.on_group_action = on_group_action
+        self.alice.ga = False
+
+        self.ensure_exec(self.bob.group_action_send, (group_id, MSG))
+
+        self.wait_callback(self.alice, 'ga')
+        AliceTox.on_group_action = Tox.on_group_action
 
         #: Test chatlist
         assert len(self.bob.get_chatlist()) == self.bob.count_chatlist()
