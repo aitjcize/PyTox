@@ -233,8 +233,12 @@ class ToxTest(unittest.TestCase):
         self.alice = Tox()
 
         #: Test invalid file
-        with self.assertRaises(OperationFailedError):
+        try:
             self.alice.load_from_file('not_exists')
+        except OperationFailedError:
+            pass
+        else:
+            assert False
 
         self.alice.load_from_file('data')
 
@@ -512,7 +516,7 @@ class ToxTest(unittest.TestCase):
         FILE_DIGEST = m.hexdigest()
 
         BID = self.bid
-        CONTEXT = {'FILE': '', 'RECEIVED': 0, 'START': False, 'SENT': 0}
+        CONTEXT = {'FILE': bytes(), 'RECEIVED': 0, 'START': False, 'SENT': 0}
 
         def on_file_send_request(self, fid, filenumber, size, filename):
             assert fid == BID
