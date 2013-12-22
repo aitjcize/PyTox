@@ -1266,7 +1266,12 @@ ToxCore_save(ToxCore* self, PyObject* args)
 #if PY_MAJOR_VERSION < 3
     PyString_AsStringAndSize(keyobj, (char**)&key, &key_len);
 #else
+# if PY_MINOR_VERSION == 2
+    key = PyUnicode_AS_DATA(keyobj);
+    key_len = PyUnicode_GET_DATA_SIZE(keyobj);
+# else
     key = PyUnicode_AsUTF8AndSize(keyobj, &key_len);
+# endif
 #endif
   } else if (keyobj != Py_None) {
     PyErr_SetString(ToxCoreError, "invalid passphrase type");
@@ -1319,7 +1324,12 @@ ToxCore_save_to_file(ToxCore* self, PyObject* args)
 #if PY_MAJOR_VERSION < 3
     PyString_AsStringAndSize(keyobj, (char**)&key, &key_len);
 #else
+# if PY_MINOR_VERSION == 2
+    key = PyUnicode_AS_DATA(keyobj);
+    key_len = PyUnicode_GET_DATA_SIZE(keyobj);
+# else
     key = PyUnicode_AsUTF8AndSize(keyobj, &key_len);
+# endif
 #endif
   } else if (keyobj != Py_None) {
     PyErr_SetString(ToxCoreError, "invalid passphrase type");
@@ -1384,7 +1394,12 @@ ToxCore_load(ToxCore* self, PyObject* args)
 #if PY_MAJOR_VERSION < 3
     PyString_AsStringAndSize(keyobj, (char**)&key, &key_len);
 #else
+# if PY_MINOR_VERSION == 2
+    key = PyUnicode_AS_DATA(keyobj);
+    key_len = PyUnicode_GET_DATA_SIZE(keyobj);
+# else
     key = PyUnicode_AsUTF8AndSize(keyobj, &key_len);
+# endif
 #endif
   } else if (keyobj != Py_None) {
     PyErr_SetString(ToxCoreError, "invalid passphrase type");
@@ -1424,7 +1439,12 @@ ToxCore_load_from_file(ToxCore* self, PyObject* args)
 #if PY_MAJOR_VERSION < 3
     PyString_AsStringAndSize(keyobj, (char**)&key, &key_len);
 #else
+# if PY_MINOR_VERSION == 2
+    key = PyUnicode_AS_DATA(keyobj);
+    key_len = PyUnicode_GET_DATA_SIZE(keyobj);
+# else
     key = PyUnicode_AsUTF8AndSize(keyobj, &key_len);
+# endif
 #endif
   } else if (keyobj != Py_None) {
     PyErr_SetString(ToxCoreError, "invalid passphrase type");
