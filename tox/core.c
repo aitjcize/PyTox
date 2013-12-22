@@ -1269,10 +1269,18 @@ ToxCore_save(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  char* key = NULL;
-  int key_len = 0;
+  PyObject* keyobj = Py_None;
+  uint8_t* key = NULL;
+  Py_ssize_t key_len = 0;
 
-  if (!PyArg_ParseTuple(args, "|s#", &key, &key_len)) {
+  if (!PyArg_ParseTuple(args, "|O", &keyobj)) {
+    return NULL;
+  }
+
+  if (PyString_Check(keyobj)) {
+    PyString_AsStringAndSize(keyobj, (char**)&key, &key_len);
+  } else if (keyobj != Py_None) {
+    PyErr_SetString(ToxCoreError, "invalid passphrase type");
     return NULL;
   }
 
@@ -1314,11 +1322,19 @@ ToxCore_save_to_file(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
+  PyObject* keyobj = Py_None;
   char* filename = NULL;
-  char* key = NULL;
-  int key_len = 0;
+  uint8_t* key = NULL;
+  Py_ssize_t key_len = 0;
 
-  if (!PyArg_ParseTuple(args, "s|s#", &filename, &key, &key_len)) {
+  if (!PyArg_ParseTuple(args, "s|O", &filename, &keyobj)) {
+    return NULL;
+  }
+
+  if (PyString_Check(keyobj)) {
+    PyString_AsStringAndSize(keyobj, (char**)&key, &key_len);
+  } else if (keyobj != Py_None) {
+    PyErr_SetString(ToxCoreError, "invalid passphrase type");
     return NULL;
   }
 
@@ -1367,11 +1383,19 @@ ToxCore_load(ToxCore* self, PyObject* args)
 
   uint8_t* data = NULL;
   int length = 0;
-  char* key = NULL;
-  int key_len = 0;
+  PyObject* keyobj = Py_None;
+  uint8_t* key = NULL;
+  Py_ssize_t key_len = 0;
 
-  if (!PyArg_ParseTuple(args, "s#|s#", &data, &length, &key, &key_len)) {
+  if (!PyArg_ParseTuple(args, "s#|O", &data, &length, &keyobj)) {
     PyErr_SetString(ToxCoreError, "no data specified");
+    return NULL;
+  }
+
+  if (PyString_Check(keyobj)) {
+    PyString_AsStringAndSize(keyobj, (char**)&key, &key_len);
+  } else if (keyobj != Py_None) {
+    PyErr_SetString(ToxCoreError, "invalid passphrase type");
     return NULL;
   }
 
@@ -1396,10 +1420,18 @@ ToxCore_load_from_file(ToxCore* self, PyObject* args)
   CHECK_TOX(self);
 
   char* filename = NULL;
-  char* key = NULL;
-  int key_len = 0;
+  PyObject* keyobj = Py_None;
+  uint8_t* key = NULL;
+  Py_ssize_t key_len = 0;
 
-  if (!PyArg_ParseTuple(args, "s|s#", &filename, &key, &key_len)) {
+  if (!PyArg_ParseTuple(args, "s|O", &filename, &keyobj)) {
+    return NULL;
+  }
+
+  if (PyString_Check(keyobj)) {
+    PyString_AsStringAndSize(keyobj, (char**)&key, &key_len);
+  } else if (keyobj != Py_None) {
+    PyErr_SetString(ToxCoreError, "invalid passphrase type");
     return NULL;
   }
 
