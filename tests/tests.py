@@ -244,6 +244,23 @@ class ToxTest(unittest.TestCase):
 
         assert addr == self.alice.get_address()
 
+        self.alice.save_to_file('data', 'apple')
+
+        self.alice.kill()
+        self.alice = Tox()
+
+        #: Test wrong key
+        try:
+            self.alice.load_from_file('data', 'orange')
+        except OperationFailedError:
+            pass
+        else:
+            assert False
+
+        self.alice.load_from_file('data', 'apple')
+
+        assert addr == self.alice.get_address()
+
     def test_friend(self):
         """
         t:count_friendlist

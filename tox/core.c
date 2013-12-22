@@ -1269,18 +1269,36 @@ ToxCore_save(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  PyObject* res = NULL;
-  int size = tox_size(self->tox);
+  char* key = NULL;
+  int key_len = 0;
+
+  if (!PyArg_ParseTuple(args, "|s#", &key, &key_len)) {
+    return NULL;
+  }
+
+  int size = 0;
+  if (key) {
+    size = tox_size_encrypted(self->tox);
+  } else {
+    size = tox_size(self->tox);
+  }
   uint8_t* buf = (uint8_t*)malloc(size);
 
   if (buf == NULL) {
     return PyErr_NoMemory();
   }
 
-  tox_save(self->tox, buf);
+  if (key) {
+    if (tox_save_encrypted(self->tox, buf, key, key_len) == -1) {
+      PyErr_SetString(ToxCoreError, "tox_save_encrypted(): failed");
+      free(buf);
+      return NULL;
+    }
+  } else {
+    tox_save(self->tox, buf);
+  }
 
-  // The PyString_* functions were split in Python 3.* into
-  // PyUnicode_ for string data and PyBytes_ for binary data
+  PyObject* res = NULL;
 #if PY_MAJOR_VERSION < 3
   res = PyString_FromStringAndSize((const char*)buf, size);
 #else
@@ -1296,24 +1314,41 @@ ToxCore_save_to_file(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  char* filename;
-  if (!PyArg_ParseTuple(args, "s", &filename)) {
+  char* filename = NULL;
+  char* key = NULL;
+  int key_len = 0;
+
+  if (!PyArg_ParseTuple(args, "s|s#", &filename, &key, &key_len)) {
     return NULL;
   }
 
-  int size = tox_size(self->tox);
+  int size = 0;
+  if (key) {
+    size = tox_size_encrypted(self->tox);
+  } else {
+    size = tox_size(self->tox);
+  }
+
   uint8_t* buf = (uint8_t*)malloc(size);
 
   if (buf == NULL) {
     return PyErr_NoMemory();
   }
 
-  tox_save(self->tox, buf);
+  if (key) {
+    if (tox_save_encrypted(self->tox, buf, key, key_len) == -1) {
+      PyErr_SetString(ToxCoreError, "tox_save_encrypted(): failed");
+      free(buf);
+      return NULL;
+    }
+  } else {
+    tox_save(self->tox, buf);
+  }
 
   FILE* fp = fopen(filename, "w");
 
   if (fp == NULL) {
-    PyErr_SetString(ToxCoreError, "tox_save(): can't open file for saving");
+    PyErr_SetString(ToxCoreError, "fopen(): can't open file for saving");
     return NULL;
   }
 
@@ -1332,17 +1367,27 @@ ToxCore_load(ToxCore* self, PyObject* args)
 
   uint8_t* data = NULL;
   int length = 0;
+  char* key = NULL;
+  int key_len = 0;
 
-  if (!PyArg_ParseTuple(args, "s#", &data, &length)) {
+  if (!PyArg_ParseTuple(args, "s#|s#", &data, &length, &key, &key_len)) {
     PyErr_SetString(ToxCoreError, "no data specified");
     return NULL;
   }
 
-  if (tox_load(self->tox, data, length) == -1) {
-    Py_RETURN_FALSE;
+  if (key) {
+    if (tox_load_encrypted(self->tox, data, length, key, key_len) == -1) {
+      PyErr_SetString(ToxCoreError, "tox_load_encrypted(): load failed");
+      return NULL;
+    }
   } else {
-    Py_RETURN_TRUE;
+    if (tox_load(self->tox, data, length) == -1) {
+      PyErr_SetString(ToxCoreError, "tox_load(): load failed");
+      return NULL;
+    }
   }
+
+  Py_RETURN_NONE;
 }
 
 static PyObject*
@@ -1351,8 +1396,10 @@ ToxCore_load_from_file(ToxCore* self, PyObject* args)
   CHECK_TOX(self);
 
   char* filename = NULL;
+  char* key = NULL;
+  int key_len = 0;
 
-  if (!PyArg_ParseTuple(args, "s", &filename)) {
+  if (!PyArg_ParseTuple(args, "s|s#", &filename, &key, &key_len)) {
     return NULL;
   }
 
@@ -1373,14 +1420,26 @@ ToxCore_load_from_file(ToxCore* self, PyObject* args)
   if (fread(data, length, 1, fp) != 1) {
     PyErr_SetString(ToxCoreError,
         "tox_load(): corrupted data file");
+    free(data);
     return NULL;
   }
 
-  if (tox_load(self->tox, data, length) == -1) {
-    Py_RETURN_FALSE;
+  if (key) {
+    if (tox_load_encrypted(self->tox, data, length, key, key_len) == -1) {
+      PyErr_SetString(ToxCoreError, "tox_load_encrypted(): load failed");
+      free(data);
+      return NULL;
+    }
   } else {
-    Py_RETURN_TRUE;
+    if (tox_load(self->tox, data, length) == -1) {
+      PyErr_SetString(ToxCoreError, "tox_load(): load failed");
+      free(data);
+      return NULL;
+    }
   }
+
+  free(data);
+  Py_RETURN_NONE;
 }
 
 PyMethodDef Tox_methods[] = {
@@ -1770,23 +1829,23 @@ PyMethodDef Tox_methods[] = {
     "return size of messenger data (for saving)."
   },
   {
-    "save", (PyCFunction)ToxCore_save, METH_NOARGS,
-    "save()\n"
+    "save", (PyCFunction)ToxCore_save, METH_VARARGS,
+    "save([passphrase=None])\n"
     "Return messenger blob in str."
   },
   {
     "save_to_file", (PyCFunction)ToxCore_save_to_file, METH_VARARGS,
-    "save_to_file(filename)\n"
+    "save_to_file(filename[, passphrase=None])\n"
     "Save the messenger to a file."
   },
   {
     "load", (PyCFunction)ToxCore_load, METH_VARARGS,
-    "load(blob)\n"
+    "load(blob[, passphrase=None])\n"
     "Load the messenger from *blob*."
   },
   {
     "load_from_file", (PyCFunction)ToxCore_load_from_file, METH_VARARGS,
-    "load_from_file(filename)\n"
+    "load_from_file(filename[, passphrase=None])\n"
     "Load the messenger from file."
   },
   {NULL}
