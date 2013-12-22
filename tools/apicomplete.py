@@ -16,7 +16,7 @@ PYTOXURL="https://raw.github.com/aitjcize/PyTox/master/tox/core.c"
 toxsrc = urlopen(TOXURL).read()
 pytoxsrc = urlopen(PYTOXURL).read()
 
-res = re.findall("[\\n|n][a-z0-9]+ (tox\_[\_a-z]+\()", str(toxsrc))
+res = re.findall(r"\n[_a-z0-9]+ (tox_[\_a-z]+\()", str(toxsrc))
 
 incl = 0
 excl = []
