@@ -31,6 +31,16 @@ PyObject* ToxCoreError;
     return NULL;                                               \
   }
 
+#if PY_MAJOR_VERSION < 3
+  #define PYSTRING_FromString PyString_FromString
+  #define PYSTRING_FromStringAndSize PyString_FromStringAndSize
+  #define PYSTRING_Check PyString_Check
+#else
+  #define PYSTRING_FromString PyUnicode_FromString
+  #define PYSTRING_FromStringAndSize PyBytes_FromStringAndSize
+  #define PYSTRING_Check PyUnicode_Check
+#endif
+
 static void bytes_to_hex_string(uint8_t* digest, int length,
     uint8_t* hex_digest)
 {
@@ -70,40 +80,6 @@ static void hex_string_to_bytes(uint8_t* hexstr, int length, uint8_t* bytes)
     bytes[i] = (hex_char_to_int(hexstr[2 * i]) << 4)
              | (hex_char_to_int(hexstr[2 * i + 1]));
   }
-}
-
-/* Helper functions for Python 2 and 3 compability */
-
-// PyString_ functions were deprecated in Python 3 in favour
-// of PyUnicode_for string data and PyBytes_ for binary data:
-PyObject* PyUnicodeString_FromString(const char *str) {
-  PyObject* res;
-#if PY_MAJOR_VERSION < 3
-  res = PyString_FromString(str);
-#else
-  res = PyUnicode_FromString(str);
-#endif
-  return res;
-}
-
-int PyUnicodeString_Check(PyObject* obj) {
-  int res;
-#if PY_MAJOR_VERSION < 3
-  res = PyString_Check(obj);
-#else
-  res = PyUnicode_Check(obj);
-#endif
-  return res;
-}
-
-PyObject* PyByteString_FromString(const char *str) {
-  PyObject* res;
-#if PY_MAJOR_VERSION < 3
-  res = PyString_FromString(str);
-#else
-  res = PyBytes_FromString(str);
-#endif
-  return res;
 }
 
 /* core.Tox definition */
@@ -338,8 +314,7 @@ ToxCore_getaddress(ToxCore* self, PyObject* args)
   tox_get_address(self->tox, address);
   bytes_to_hex_string(address, TOX_FRIEND_ADDRESS_SIZE, address_hex);
 
-  PyObject* res = PyUnicodeString_FromString((const char*)address_hex);
-  return res;
+  return PYSTRING_FromString((const char*)address_hex);
 }
 
 static PyObject*
@@ -469,7 +444,7 @@ ToxCore_get_client_id(ToxCore* self, PyObject* args)
   tox_get_client_id(self->tox, friendid, pk);
   bytes_to_hex_string(pk, TOX_CLIENT_ID_SIZE, hex);
 
-  return PyUnicodeString_FromString((const char*)hex);
+  return PYSTRING_FromString((const char*)hex);
 }
 
 static PyObject*
@@ -652,7 +627,7 @@ ToxCore_get_self_name(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  return PyUnicodeString_FromString((const char*)buf);
+  return PYSTRING_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -673,7 +648,7 @@ ToxCore_get_name(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  return PyUnicodeString_FromString((const char*)buf);
+  return PYSTRING_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -753,7 +728,7 @@ ToxCore_get_status_message(ToxCore* self, PyObject* args)
 
   buf[TOX_MAX_STATUSMESSAGE_LENGTH -1] = 0;
 
-  return PyUnicodeString_FromString((const char*)buf);
+  return PYSTRING_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -774,7 +749,7 @@ ToxCore_get_self_status_message(ToxCore* self, PyObject* args)
 
   buf[TOX_MAX_STATUSMESSAGE_LENGTH -1] = 0;
 
-  return PyUnicodeString_FromString((const char*)buf);
+  return PYSTRING_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -901,7 +876,7 @@ ToxCore_group_peername(ToxCore* self, PyObject* args)
     PyErr_SetString(ToxCoreError, "failed to get group peername");
   }
 
-  return PyUnicodeString_FromString((const char*)buf);
+  return PYSTRING_FromString((const char*)buf);
 }
 
 static PyObject*
@@ -1029,7 +1004,7 @@ ToxCore_group_get_names(ToxCore* self, PyObject* args)
 
   int i = 0;
   for (i = 0; i < n2; ++i) {
-    PyList_Append(list, PyUnicodeString_FromString((const char*)names[i]));
+    PyList_Append(list, PYSTRING_FromString((const char*)names[i]));
   }
 
   free(names);
@@ -1287,8 +1262,12 @@ ToxCore_save(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  if (PyUnicodeString_Check(keyobj)) {
+  if (PYSTRING_Check(keyobj)) {
+#if PY_MAJOR_VERSION < 3
     PyString_AsStringAndSize(keyobj, (char**)&key, &key_len);
+#else
+    key = PyUnicode_AsUTF8AndSize(keyobj, &key_len);
+#endif
   } else if (keyobj != Py_None) {
     PyErr_SetString(ToxCoreError, "invalid passphrase type");
     return NULL;
@@ -1316,12 +1295,7 @@ ToxCore_save(ToxCore* self, PyObject* args)
     tox_save(self->tox, buf);
   }
 
-  PyObject* res = NULL;
-#if PY_MAJOR_VERSION < 3
-  res = PyString_FromStringAndSize((const char*)buf, size);
-#else
-  res = PyBytes_FromStringAndSize((const char*)buf, size);
-#endif
+  PyObject* res = PYSTRING_FromStringAndSize((const char*)buf, size);
   free(buf);
 
   return res;
@@ -1341,8 +1315,12 @@ ToxCore_save_to_file(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  if (PyUnicodeString_Check(keyobj)) {
+  if (PYSTRING_Check(keyobj)) {
+#if PY_MAJOR_VERSION < 3
     PyString_AsStringAndSize(keyobj, (char**)&key, &key_len);
+#else
+    key = PyUnicode_AsUTF8AndSize(keyobj, &key_len);
+#endif
   } else if (keyobj != Py_None) {
     PyErr_SetString(ToxCoreError, "invalid passphrase type");
     return NULL;
@@ -1402,8 +1380,12 @@ ToxCore_load(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  if (PyUnicodeString_Check(keyobj)) {
+  if (PYSTRING_Check(keyobj)) {
+#if PY_MAJOR_VERSION < 3
     PyString_AsStringAndSize(keyobj, (char**)&key, &key_len);
+#else
+    key = PyUnicode_AsUTF8AndSize(keyobj, &key_len);
+#endif
   } else if (keyobj != Py_None) {
     PyErr_SetString(ToxCoreError, "invalid passphrase type");
     return NULL;
@@ -1438,8 +1420,12 @@ ToxCore_load_from_file(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  if (PyUnicodeString_Check(keyobj)) {
+  if (PYSTRING_Check(keyobj)) {
+#if PY_MAJOR_VERSION < 3
     PyString_AsStringAndSize(keyobj, (char**)&key, &key_len);
+#else
+    key = PyUnicode_AsUTF8AndSize(keyobj, &key_len);
+#endif
   } else if (keyobj != Py_None) {
     PyErr_SetString(ToxCoreError, "invalid passphrase type");
     return NULL;
