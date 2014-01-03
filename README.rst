@@ -53,3 +53,9 @@ Contributing
 
 .. image:: https://cruel-carlota.pagodabox.com/f7c9269a8398926d869e54744b334c26
    :target: http://githalytics.com/aitjcize/PyTox.git
+
+
+.. image:: https://d2weczhvl823v0.cloudfront.net/aitjcize/pytox/trend.png
+   :alt: Bitdeli badge
+   :target: https://bitdeli.com/free
+
