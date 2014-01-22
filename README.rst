@@ -21,14 +21,14 @@ PyTox provides a Pythonic binding, i.e Object-oriented instead of C style, raise
     
         def on_friendrequest(self, pk, message):
             print 'Friend request from %s: %s' % (pk, message)
-            self.addfriend_norequest(pk)
+            self.add_friend_norequest(pk)
             print 'Accepted.'
     
         def on_friendmessage(self, friendId, message):
             name = self.getname(friendId)
             print '%s: %s' % (name, message)
             print 'EchoBot: %s' % message
-            self.sendmessage(friendId, message)
+            self.send_message(friendId, message)
 
 As you can see callbacks are mapped into class method instead of using it the the c ways. For more details please refer to `examples/echo.py <https://github.com/aitjcize/PyTox/blob/master/examples/echo.py>`_.
 
