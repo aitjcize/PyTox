@@ -52,7 +52,7 @@ class ToxTest(unittest.TestCase):
 
     def wait_callback(self, obj, attr):
         count = 0
-        THRESHOLD = 10
+        THRESHOLD = 30
 
         while not getattr(obj, attr):
             self.loop(50)
@@ -64,7 +64,7 @@ class ToxTest(unittest.TestCase):
 
     def ensure_exec(self, method, args):
         count = 0
-        THRESHOLD = 10
+        THRESHOLD = 50
 
         while True:
             try:
@@ -105,7 +105,22 @@ class ToxTest(unittest.TestCase):
         self.bid = self.alice.get_friend_id(bob_addr)
         self.aid = self.bob.get_friend_id(alice_addr)
 
-        self.loop(50)
+        #: Wait until both are online
+        def on_connection_status(self, friend_id, status):
+            assert status == True
+            self.cs = True
+
+        AliceTox.on_connection_status = on_connection_status
+        BobTox.on_connection_status = on_connection_status
+
+        self.alice.cs = False
+        self.bob.cs = False
+
+        assert self.wait_callback(self.alice, 'cs')
+        assert self.wait_callback(self.bob, 'cs')
+
+        AliceTox.on_connection_status = Tox.on_connection_status
+        BobTox.on_connection_status = Tox.on_connection_status
 
     def test_boostrap(self):
         """
@@ -344,8 +359,7 @@ class ToxTest(unittest.TestCase):
 
         AliceTox.on_friend_message = Tox.on_friend_message
 
-        self.loop(50)
-
+        #: Test send receipts
         self.bob.set_send_receipts(self.aid, True)
         MID = self.ensure_exec(self.bob.send_message, (self.aid, MSG))
 
