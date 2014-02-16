@@ -52,7 +52,7 @@ class ToxTest(unittest.TestCase):
 
     def wait_callback(self, obj, attr):
         count = 0
-        THRESHOLD = 50
+        THRESHOLD = 60
 
         while not getattr(obj, attr):
             self.loop(50)
@@ -64,7 +64,7 @@ class ToxTest(unittest.TestCase):
 
     def ensure_exec(self, method, args):
         count = 0
-        THRESHOLD = 50
+        THRESHOLD = 60
 
         while True:
             try:
