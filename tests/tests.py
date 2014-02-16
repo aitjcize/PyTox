@@ -482,7 +482,7 @@ class ToxTest(unittest.TestCase):
 
         self.ensure_exec(self.bob.group_message_send, (group_id, MSG))
 
-        self.wait_callback(self.alice, 'gm')
+        assert self.wait_callback(self.alice, 'gm')
         AliceTox.on_group_message = Tox.on_group_message
 
         #: Test group action
@@ -500,7 +500,7 @@ class ToxTest(unittest.TestCase):
 
         self.ensure_exec(self.bob.group_action_send, (group_id, MSG))
 
-        self.wait_callback(self.alice, 'ga')
+        assert self.wait_callback(self.alice, 'ga')
         AliceTox.on_group_action = Tox.on_group_action
 
         #: Test chatlist
