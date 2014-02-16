@@ -201,7 +201,8 @@ static void callback_file_send_request(Tox *m, int friendnumber,
     uint16_t filename_length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_file_send_request", "iiKs#",
-      friendnumber, filenumber, filesize, filename, filename_length);
+      friendnumber, filenumber, filesize, filename,
+      filename_length > 0? filename_length - 1: 0);
 }
 
 static void callback_file_control(Tox *m, int friendnumber,
@@ -1066,7 +1067,7 @@ ToxCore_new_filesender(ToxCore* self, PyObject* args)
   CHECK_TOX(self);
 
   int friendnumber = 0;
-  int filesize = 0;
+  uint64_t filesize = 0;
   uint8_t* filename = 0;
   int filename_length = 0;
 
@@ -1076,7 +1077,7 @@ ToxCore_new_filesender(ToxCore* self, PyObject* args)
   }
 
   int ret = tox_new_file_sender(self->tox, friendnumber, filesize, filename,
-      filename_length);
+      filename_length + 1);
 
   if (ret == -1) {
     PyErr_SetString(ToxCoreError, "tox_new_file_sender() failed");
