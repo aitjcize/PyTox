@@ -9,8 +9,6 @@ PyTox
 =====
 Python binding for `Project Tox <https://github.com/irungentoo/ProjectTox-Core>`_.
 
-**NOTICE: Travis-CI currently build failed since tox network is under the transistion to the new toxcore, the test should pass after most tox users update their core.**
-
 PyTox provides a Pythonic binding, i.e Object-oriented instead of C style, raise exception instead of returning error code. A simple example is as follows:
 
 .. code-block:: python
