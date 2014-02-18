@@ -284,6 +284,7 @@ class ToxTest(unittest.TestCase):
         t:get_client_id
         t:get_friendlist
         t:get_name
+        t:get_num_online_friends
         t:on_name_change
         """
 
@@ -308,6 +309,8 @@ class ToxTest(unittest.TestCase):
         assert self.bob.get_friendlist() == [self.aid]
         assert self.alice.count_friendlist() == 1
         assert self.bob.count_friendlist() == 1
+        assert self.alice.get_num_online_friends() == 1
+        assert self.bob.get_num_online_friends() == 1
 
         #: Test friend name
         NEWNAME = 'Jenny'

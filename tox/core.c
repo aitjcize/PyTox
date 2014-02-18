@@ -819,6 +819,15 @@ ToxCore_count_friendlist(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
+ToxCore_get_num_online_friends(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  uint32_t count = tox_get_num_online_friends(self->tox);
+  return PyLong_FromUnsignedLong(count);
+}
+
+static PyObject*
 ToxCore_get_friendlist(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
@@ -1724,6 +1733,12 @@ PyMethodDef Tox_methods[] = {
     METH_NOARGS,
     "count_friendlist()\n"
     "Return the number of friends."
+  },
+  {
+    "get_num_online_friends", (PyCFunction)ToxCore_get_num_online_friends,
+    METH_NOARGS,
+    "get_num_online_friends()\n"
+    "Return the number of online friends."
   },
   {
     "get_friendlist", (PyCFunction)ToxCore_get_friendlist,
