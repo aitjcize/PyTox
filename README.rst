@@ -19,12 +19,12 @@ PyTox provides a Pythonic binding, i.e Object-oriented instead of C style, raise
                 self.do()
                 time.sleep(0.03)
     
-        def on_friendrequest(self, pk, message):
+        def on_friend_request(self, pk, message):
             print 'Friend request from %s: %s' % (pk, message)
             self.add_friend_norequest(pk)
             print 'Accepted.'
     
-        def on_friendmessage(self, friendId, message):
+        def on_friend_message(self, friendId, message):
             name = self.getname(friendId)
             print '%s: %s' % (name, message)
             print 'EchoBot: %s' % message
