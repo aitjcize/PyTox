@@ -1,4 +1,3 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -14,7 +13,7 @@
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
+        URL_ROOT:    './',
         VERSION:     '0.0.9',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
@@ -233,6 +232,12 @@ in this class.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="tox.Tox.get_num_online_friends">
+<tt class="descname">get_num_online_friends</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.Tox.get_num_online_friends" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of online friends.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="tox.Tox.get_self_name">
 <tt class="descname">get_self_name</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.Tox.get_self_name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get your nickname.</p>
@@ -248,7 +253,7 @@ in this class.</p>
 <dt id="tox.Tox.get_self_user_status">
 <tt class="descname">get_self_user_status</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.Tox.get_self_user_status" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get user status of youself.</p>
-<div class="admonition-see-also admonition seealso">
+<div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <p class="last"><a class="reference internal" href="#tox.Tox.set_user_status" title="tox.Tox.set_user_status"><tt class="xref py py-meth docutils literal"><span class="pre">set_user_status()</span></tt></a></p>
 </div>
@@ -270,7 +275,7 @@ in this class.</p>
 <dt id="tox.Tox.get_user_status">
 <tt class="descname">get_user_status</tt><big>(</big><em>friend_number</em><big>)</big><a class="headerlink" href="#tox.Tox.get_user_status" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get friend status.</p>
-<div class="admonition-see-also admonition seealso">
+<div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <p class="last"><a class="reference internal" href="#tox.Tox.set_user_status" title="tox.Tox.set_user_status"><tt class="xref py py-meth docutils literal"><span class="pre">set_user_status()</span></tt></a></p>
 </div>
@@ -359,7 +364,7 @@ in this class.</p>
 <dt id="tox.Tox.on_file_control">
 <tt class="descname">on_file_control</tt><big>(</big><em>friend_number</em>, <em>receive_send</em>, <em>file_number</em>, <em>control_type</em>, <em>data</em><big>)</big><a class="headerlink" href="#tox.Tox.on_file_control" title="Permalink to this definition">¶</a></dt>
 <dd><p>Callback for receiving file send control, default implementation does nothing. See <a class="reference internal" href="#tox.Tox.file_send_control" title="tox.Tox.file_send_control"><tt class="xref py py-meth docutils literal"><span class="pre">file_send_control()</span></tt></a> for the meaning of <em>receive_send</em> and <em>control_type</em>.</p>
-<div class="admonition-see-also admonition seealso">
+<div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <p class="last"><a class="reference internal" href="#tox.Tox.file_send_control" title="tox.Tox.file_send_control"><tt class="xref py py-meth docutils literal"><span class="pre">file_send_control()</span></tt></a></p>
 </div>
@@ -464,7 +469,7 @@ in this class.</p>
 <dt id="tox.Tox.on_user_status">
 <tt class="descname">on_user_status</tt><big>(</big><em>friend_number</em>, <em>kind</em><big>)</big><a class="headerlink" href="#tox.Tox.on_user_status" title="Permalink to this definition">¶</a></dt>
 <dd><p>Callback for receiving friend status changes, default implementation does nothing.</p>
-<div class="admonition-see-also admonition seealso">
+<div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <p class="last"><a class="reference internal" href="#tox.Tox.set_user_status" title="tox.Tox.set_user_status"><tt class="xref py py-meth docutils literal"><span class="pre">set_user_status()</span></tt></a></p>
 </div>
@@ -608,7 +613,7 @@ in this class.</p>
     </div>
     <div class="footer">
         &copy; Copyright 2013, Wei-Ning Huang.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
     </div>
   </body>
 </html>
