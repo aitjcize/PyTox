@@ -443,7 +443,7 @@ class ToxTest(unittest.TestCase):
         def on_typing_change(self, fid, is_typing):
             assert fid == AID
             assert is_typing == True
-            #assert self.get_is_typing(fid) == True
+            assert self.get_is_typing(fid) == True
             self.ut = True
 
         BobTox.on_typing_change = on_typing_change
