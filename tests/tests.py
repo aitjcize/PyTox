@@ -62,6 +62,18 @@ class ToxTest(unittest.TestCase):
 
         return True
 
+    def wait_callbacks(self, obj, attrs):
+        count = 0
+        THRESHOLD = 200
+
+        while not all([getattr(obj, attr) for attr in attrs]):
+            self.loop(50)
+            if count >= THRESHOLD:
+                return False
+            count += 1
+
+        return True
+
     def ensure_exec(self, method, args):
         count = 0
         THRESHOLD = 100
@@ -110,17 +122,26 @@ class ToxTest(unittest.TestCase):
             assert status == True
             self.cs = True
 
+        def on_user_status(self, friend_id, new_status):
+            self.us = True
+
         AliceTox.on_connection_status = on_connection_status
         BobTox.on_connection_status = on_connection_status
+        AliceTox.on_user_status = on_user_status
+        BobTox.on_user_status = on_user_status
 
         self.alice.cs = False
         self.bob.cs = False
+        self.alice.us = False
+        self.bob.us = False
 
-        assert self.wait_callback(self.alice, 'cs')
-        assert self.wait_callback(self.bob, 'cs')
+        assert self.wait_callbacks(self.alice, ['cs', 'us'])
+        assert self.wait_callbacks(self.bob, ['cs', 'us'])
 
         AliceTox.on_connection_status = Tox.on_connection_status
         BobTox.on_connection_status = Tox.on_connection_status
+        AliceTox.on_user_status = Tox.on_user_status
+        BobTox.on_user_status = Tox.on_user_status
 
     def test_boostrap(self):
         """
@@ -333,12 +354,15 @@ class ToxTest(unittest.TestCase):
         """
         t:on_friend_action
         t:on_friend_message
+        t:on_typing_change
         t:on_read_receipt
         t:send_action
         t:send_action_withid
         t:send_message
         t:send_message_withid
         t:set_send_receipts
+        t:set_user_is_typing
+        t:get_is_typing
         """
         self.bob_add_alice_as_friend()
 
@@ -376,8 +400,22 @@ class ToxTest(unittest.TestCase):
 
         BobTox.on_read_receipt = on_read_receipt
         self.bob.rr = False
+        self.bob.set_send_receipts(self.aid, False)
         assert self.wait_callback(self.bob, 'rr')
         BobTox.on_read_receipt = Tox.on_read_receipt
+
+        #: Test typing status
+        def on_typing_change(self, fid, is_typing):
+            assert fid == BID
+            assert is_typing == True
+            assert self.get_is_typing(fid) == True
+            self.ut = True
+
+        BobTox.on_read_receipt = on_typing_change
+        self.alice.ut = False
+        self.alice.set_user_is_typing(self.bid, True)
+        assert self.wait_callback(self.bob, 'ut')
+        BobTox.on_read_receipt = Tox.on_typing_change
 
         #: Test action
         ACTION = 'Kick'

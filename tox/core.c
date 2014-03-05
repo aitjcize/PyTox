@@ -150,6 +150,13 @@ static void callback_user_status(Tox *tox, int friendnumber,
       kind);
 }
 
+static void callback_typing_change(Tox *tox, int friendnumber,
+    int is_typing, void* self)
+{
+  PyObject_CallMethod((PyObject*)self, "on_typing_change", "iO", friendnumber,
+      PyBool_FromLong(is_typing));
+}
+
 static void callback_read_receipt(Tox *tox, int friendnumber, uint32_t receipt,
     void* self)
 {
@@ -264,6 +271,7 @@ static int init_helper(ToxCore* self, PyObject* args)
   tox_callback_name_change(tox, callback_name_change, self);
   tox_callback_status_message(tox, callback_status_message, self);
   tox_callback_user_status(tox, callback_user_status, self);
+  tox_callback_typing_change(tox, callback_typing_change, self);
   tox_callback_read_receipt(tox, callback_read_receipt, self);
   tox_callback_connection_status(tox, callback_connection_status, self);
   tox_callback_group_invite(tox, callback_group_invite, self);
@@ -790,6 +798,40 @@ ToxCore_get_self_user_status(ToxCore* self, PyObject* args)
 
   int status = tox_get_self_user_status(self->tox);
   return PyLong_FromLong(status);
+}
+
+static PyObject*
+ToxCore_set_user_is_typing(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  int friendid = 0;
+  int is_typing = 0;
+
+  if (!PyArg_ParseTuple(args, "ii", &friendid, &is_typing)) {
+    return NULL;
+  }
+
+  int status = tox_set_user_is_typing(self->tox, friendid, is_typing);
+  return PyLong_FromLong(status);
+}
+
+static PyObject*
+ToxCore_get_is_typing(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  int friendid = 0;
+
+  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+    return NULL;
+  }
+
+  if (tox_get_is_typing(self->tox, friendid)) {
+    Py_RETURN_TRUE;
+  } else {
+    Py_RETURN_FALSE;
+  }
 }
 
 static PyObject*
@@ -1519,6 +1561,12 @@ PyMethodDef Tox_methods[] = {
     "    :meth:`.set_user_status`"
   },
   {
+    "on_typing_change", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_typing_change(friend_number, is_typing)\n"
+    "Callback for receiving friend status changes, default implementation "
+    "does nothing.\n\n"
+  },
+  {
     "on_read_receipt", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
     "on_read_receipt(friend_number, receipt)\n"
     "Callback for receiving read receipt, default implementation does nothing."
@@ -1720,6 +1768,18 @@ PyMethodDef Tox_methods[] = {
     "Get user status of youself.\n\n"
     ".. seealso ::\n"
     "    :meth:`.set_user_status`"
+  },
+  {
+    "set_user_is_typing", (PyCFunction)ToxCore_set_user_is_typing,
+    METH_VARARGS,
+    "set_user_is_typing(friend_number, is_typing)\n"
+    "Set user typing status.\n\n"
+  },
+  {
+    "get_is_typing", (PyCFunction)ToxCore_get_is_typing,
+    METH_VARARGS,
+    "get_is_typing(friend_number)\n"
+    "Return True is user is typing.\n\n"
   },
   {
     "set_send_receipts", (PyCFunction)ToxCore_set_send_receipts,
