@@ -10,6 +10,6 @@ typedef struct {
   Tox* tox;
 } ToxCore;
 
-void ToxCore_install_dict();
+void ToxCore_install_dict(void);
 
 #endif /* __CORE_H__ */
