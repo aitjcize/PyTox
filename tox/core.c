@@ -23,7 +23,7 @@
 #include "core.h"
 #include "util.h"
 
-PyObject* ToxCoreError;
+extern PyObject* ToxOpError;
 
 static void callback_friend_request(uint8_t* public_key, uint8_t* data,
     uint16_t length, void* self)
@@ -182,7 +182,7 @@ static int init_helper(ToxCore* self, PyObject* args)
 
       tox = tox_new(0);
       if (tox == NULL) {
-        PyErr_SetString(ToxCoreError, "failed to initialize toxcore");
+        PyErr_SetString(ToxOpError, "failed to initialize toxcore");
         return -1;
       }
   }
@@ -286,30 +286,30 @@ ToxCore_add_friend(ToxCore* self, PyObject* args)
 
   switch (ret) {
   case TOX_FAERR_TOOLONG:
-    PyErr_SetString(ToxCoreError, "message too long");
+    PyErr_SetString(ToxOpError, "message too long");
     break;
   case TOX_FAERR_NOMESSAGE:
-    PyErr_SetString(ToxCoreError, "no message specified");
+    PyErr_SetString(ToxOpError, "no message specified");
     break;
   case TOX_FAERR_OWNKEY:
-    PyErr_SetString(ToxCoreError, "user's own key");
+    PyErr_SetString(ToxOpError, "user's own key");
     break;
   case TOX_FAERR_ALREADYSENT:
-    PyErr_SetString(ToxCoreError, "friend request already sent or already "
+    PyErr_SetString(ToxOpError, "friend request already sent or already "
         "a friend");
     break;
   case TOX_FAERR_UNKNOWN:
-    PyErr_SetString(ToxCoreError, "unknown error");
+    PyErr_SetString(ToxOpError, "unknown error");
     break;
   case TOX_FAERR_BADCHECKSUM:
-    PyErr_SetString(ToxCoreError, "bad checksum in address");
+    PyErr_SetString(ToxOpError, "bad checksum in address");
     break;
   case TOX_FAERR_SETNEWNOSPAM:
-    PyErr_SetString(ToxCoreError, "the friend was already there but the "
+    PyErr_SetString(ToxOpError, "the friend was already there but the "
         "nospam was different");
     break;
   case TOX_FAERR_NOMEM:
-    PyErr_SetString(ToxCoreError, "increasing the friend list size fails");
+    PyErr_SetString(ToxOpError, "increasing the friend list size fails");
     break;
   default:
     success = 1;
@@ -339,7 +339,7 @@ ToxCore_add_friend_norequest(ToxCore* self, PyObject* args)
 
   int res = tox_add_friend_norequest(self->tox, pk);
   if (res == -1) {
-    PyErr_SetString(ToxCoreError, "failed to add friend");
+    PyErr_SetString(ToxOpError, "failed to add friend");
     return NULL;
   }
 
@@ -363,7 +363,7 @@ ToxCore_get_friend_id(ToxCore* self, PyObject* args)
 
   int ret = tox_get_friend_id(self->tox, pk);
   if (ret == -1) {
-    PyErr_SetString(ToxCoreError, "no such friend");
+    PyErr_SetString(ToxOpError, "no such friend");
     return NULL;
   }
 
@@ -405,7 +405,7 @@ ToxCore_delfriend(ToxCore* self, PyObject* args)
   }
 
   if (tox_del_friend(self->tox, friendid) == -1) {
-    PyErr_SetString(ToxCoreError, "failed to delete friend");
+    PyErr_SetString(ToxOpError, "failed to delete friend");
     return NULL;
   }
 
@@ -425,7 +425,7 @@ ToxCore_get_friend_connection_status(ToxCore* self, PyObject* args)
 
   int ret = tox_get_friend_connection_status(self->tox, friendid);
   if (ret == -1) {
-    PyErr_SetString(ToxCoreError, "failed to get connection status");
+    PyErr_SetString(ToxOpError, "failed to get connection status");
     return NULL;
   }
 
@@ -463,7 +463,7 @@ ToxCore_send_message(ToxCore* self, PyObject* args)
 
   uint32_t ret = tox_send_message(self->tox, friendid, message, length + 1);
   if (ret == 0) {
-    PyErr_SetString(ToxCoreError, "failed to send message");
+    PyErr_SetString(ToxOpError, "failed to send message");
     return NULL;
   }
 
@@ -487,7 +487,7 @@ ToxCore_send_message_withid(ToxCore* self, PyObject* args)
   uint32_t ret = tox_send_message_withid(self->tox, friendid, id,message,
       length + 1);
   if (ret == 0) {
-    PyErr_SetString(ToxCoreError, "failed to send message with id");
+    PyErr_SetString(ToxOpError, "failed to send message with id");
     return NULL;
   }
 
@@ -509,7 +509,7 @@ ToxCore_send_action(ToxCore* self, PyObject* args)
 
   uint32_t ret = tox_send_action(self->tox, friendid, action, length + 1);
   if (ret == 0) {
-    PyErr_SetString(ToxCoreError, "failed to send action");
+    PyErr_SetString(ToxOpError, "failed to send action");
     return NULL;
   }
 
@@ -533,7 +533,7 @@ ToxCore_send_action_withid(ToxCore* self, PyObject* args)
   uint32_t ret = tox_send_action_withid(self->tox, friendid, id, action,
       length + 1);
   if (ret == 0) {
-    PyErr_SetString(ToxCoreError, "failed to send action with id");
+    PyErr_SetString(ToxOpError, "failed to send action with id");
     return NULL;
   }
 
@@ -553,7 +553,7 @@ ToxCore_set_name(ToxCore* self, PyObject* args)
   }
 
   if (tox_set_name(self->tox, name, length + 1) == -1) {
-    PyErr_SetString(ToxCoreError, "failed to set_name");
+    PyErr_SetString(ToxOpError, "failed to set_name");
     return NULL;
   }
 
@@ -569,7 +569,7 @@ ToxCore_get_self_name(ToxCore* self, PyObject* args)
   memset(buf, 0, TOX_MAX_NAME_LENGTH);
 
   if (tox_get_self_name(self->tox, buf, TOX_MAX_NAME_LENGTH) == 0) {
-    PyErr_SetString(ToxCoreError, "failed to get self name");
+    PyErr_SetString(ToxOpError, "failed to get self name");
     return NULL;
   }
 
@@ -590,7 +590,7 @@ ToxCore_get_name(ToxCore* self, PyObject* args)
   }
 
   if (tox_get_name(self->tox, friendid, buf) == -1) {
-    PyErr_SetString(ToxCoreError, "failed to get name");
+    PyErr_SetString(ToxOpError, "failed to get name");
     return NULL;
   }
 
@@ -609,7 +609,7 @@ ToxCore_set_status_message(ToxCore* self, PyObject* args)
   }
 
   if (tox_set_status_message(self->tox, message, length + 1) == -1) {
-    PyErr_SetString(ToxCoreError, "failed to set status_message");
+    PyErr_SetString(ToxOpError, "failed to set status_message");
     return NULL;
   }
 
@@ -628,7 +628,7 @@ ToxCore_set_user_status(ToxCore* self, PyObject* args)
   }
 
   if (tox_set_user_status(self->tox, status) == -1) {
-    PyErr_SetString(ToxCoreError, "failed to set status");
+    PyErr_SetString(ToxOpError, "failed to set status");
     return NULL;
   }
 
@@ -668,7 +668,7 @@ ToxCore_get_status_message(ToxCore* self, PyObject* args)
       TOX_MAX_STATUSMESSAGE_LENGTH);
 
   if (ret == -1) {
-    PyErr_SetString(ToxCoreError, "failed to get status_message");
+    PyErr_SetString(ToxOpError, "failed to get status_message");
     return NULL;
   }
 
@@ -689,7 +689,7 @@ ToxCore_get_self_status_message(ToxCore* self, PyObject* args)
       TOX_MAX_STATUSMESSAGE_LENGTH);
 
   if (ret == -1) {
-    PyErr_SetString(ToxCoreError, "failed to get self status_message");
+    PyErr_SetString(ToxOpError, "failed to get self status_message");
     return NULL;
   }
 
@@ -822,7 +822,7 @@ ToxCore_add_groupchat(ToxCore* self, PyObject* args)
 
   int ret = tox_add_groupchat(self->tox);
   if (ret == -1) {
-    PyErr_SetString(ToxCoreError, "failed to add groupchat");
+    PyErr_SetString(ToxOpError, "failed to add groupchat");
   }
 
   return PyLong_FromLong(ret);
@@ -840,7 +840,7 @@ ToxCore_del_groupchat(ToxCore* self, PyObject* args)
   }
 
   if (tox_del_groupchat(self->tox, groupid) == -1) {
-    PyErr_SetString(ToxCoreError, "failed to del groupchat");
+    PyErr_SetString(ToxOpError, "failed to del groupchat");
   }
 
   Py_RETURN_NONE;
@@ -862,7 +862,7 @@ ToxCore_group_peername(ToxCore* self, PyObject* args)
 
   int ret = tox_group_peername(self->tox, groupid, peernumber, buf);
   if (ret == -1) {
-    PyErr_SetString(ToxCoreError, "failed to get group peername");
+    PyErr_SetString(ToxOpError, "failed to get group peername");
   }
 
   return PYSTRING_FromString((const char*)buf);
@@ -880,7 +880,7 @@ ToxCore_invite_friend(ToxCore* self, PyObject* args)
   }
 
   if (tox_invite_friend(self->tox, friendnumber, groupid) == -1) {
-    PyErr_SetString(ToxCoreError, "failed to invite friend");
+    PyErr_SetString(ToxOpError, "failed to invite friend");
   }
 
   Py_RETURN_NONE;
@@ -904,7 +904,7 @@ ToxCore_join_groupchat(ToxCore* self, PyObject* args)
 
   int ret = tox_join_groupchat(self->tox, friendnumber, pk);
   if (ret == -1) {
-    PyErr_SetString(ToxCoreError, "failed to join group chat");
+    PyErr_SetString(ToxOpError, "failed to join group chat");
   }
 
   return PyLong_FromLong(ret);
@@ -924,7 +924,7 @@ ToxCore_group_message_send(ToxCore* self, PyObject* args)
   }
 
   if (tox_group_message_send(self->tox, groupid, message, length + 1) == -1) {
-    PyErr_SetString(ToxCoreError, "failed to send group message");
+    PyErr_SetString(ToxOpError, "failed to send group message");
   }
 
   Py_RETURN_NONE;
@@ -944,7 +944,7 @@ ToxCore_group_action_send(ToxCore* self, PyObject* args)
   }
 
   if (tox_group_action_send(self->tox, groupid, action, length + 1) == -1) {
-    PyErr_SetString(ToxCoreError, "failed to send group action");
+    PyErr_SetString(ToxOpError, "failed to send group action");
   }
 
   Py_RETURN_NONE;
@@ -982,7 +982,7 @@ ToxCore_group_get_names(ToxCore* self, PyObject* args)
 
   int n2 = tox_group_get_names(self->tox, groupid, names, n);
   if (n2 == -1) {
-    PyErr_SetString(ToxCoreError, "failed to get group member names");
+    PyErr_SetString(ToxOpError, "failed to get group member names");
     return NULL;
   }
 
@@ -1053,7 +1053,7 @@ ToxCore_new_filesender(ToxCore* self, PyObject* args)
       filename_length + 1);
 
   if (ret == -1) {
-    PyErr_SetString(ToxCoreError, "tox_new_file_sender() failed");
+    PyErr_SetString(ToxOpError, "tox_new_file_sender() failed");
     return NULL;
   }
 
@@ -1082,7 +1082,7 @@ ToxCore_file_sendcontrol(ToxCore* self, PyObject* args)
       filenumber, message_id, data, data_length);
 
   if (ret == -1) {
-    PyErr_SetString(ToxCoreError, "tox_file_send_control() failed");
+    PyErr_SetString(ToxOpError, "tox_file_send_control() failed");
     return NULL;
   }
 
@@ -1109,7 +1109,7 @@ ToxCore_file_senddata(ToxCore* self, PyObject* args)
       data_length);
 
   if (ret == -1) {
-    PyErr_SetString(ToxCoreError, "tox_file_send_data() failed");
+    PyErr_SetString(ToxOpError, "tox_file_send_data() failed");
     return NULL;
   }
 
@@ -1129,7 +1129,7 @@ ToxCore_file_data_size(ToxCore* self, PyObject* args)
   int ret = tox_file_data_size(self->tox, friendnumber);
 
   if (ret == -1) {
-    PyErr_SetString(ToxCoreError, "tox_file_data_size() failed");
+    PyErr_SetString(ToxOpError, "tox_file_data_size() failed");
     return NULL;
   }
 
@@ -1155,7 +1155,7 @@ ToxCore_file_data_remaining(ToxCore* self, PyObject* args)
       send_receive);
 
   if (!ret) {
-    PyErr_SetString(ToxCoreError, "tox_file_data_remaining() failed");
+    PyErr_SetString(ToxOpError, "tox_file_data_remaining() failed");
     return NULL;
   }
 
@@ -1185,7 +1185,7 @@ ToxCore_bootstrap_from_address(ToxCore* self, PyObject* args)
       htons(port), pk);
 
   if (!ret) {
-    PyErr_SetString(ToxCoreError, "failed to resolve address");
+    PyErr_SetString(ToxOpError, "failed to resolve address");
     return NULL;
   }
 
@@ -1254,7 +1254,7 @@ ToxCore_save(ToxCore* self, PyObject* args)
   if (PYSTRING_Check(keyobj)) {
     PyStringUnicode_AsStringAnsSize(keyobj, (char**)&key, &key_len);
   } else if (keyobj != Py_None) {
-    PyErr_SetString(ToxCoreError, "invalid passphrase type");
+    PyErr_SetString(ToxOpError, "invalid passphrase type");
     return NULL;
   }
 
@@ -1272,7 +1272,7 @@ ToxCore_save(ToxCore* self, PyObject* args)
 
   if (key) {
     if (tox_save_encrypted(self->tox, buf, key, key_len) == -1) {
-      PyErr_SetString(ToxCoreError, "tox_save_encrypted(): failed");
+      PyErr_SetString(ToxOpError, "tox_save_encrypted(): failed");
       free(buf);
       return NULL;
     }
@@ -1303,7 +1303,7 @@ ToxCore_save_to_file(ToxCore* self, PyObject* args)
   if (PYSTRING_Check(keyobj)) {
     PyStringUnicode_AsStringAnsSize(keyobj, (char**)&key, &key_len);
   } else if (keyobj != Py_None) {
-    PyErr_SetString(ToxCoreError, "invalid passphrase type");
+    PyErr_SetString(ToxOpError, "invalid passphrase type");
     return NULL;
   }
 
@@ -1322,7 +1322,7 @@ ToxCore_save_to_file(ToxCore* self, PyObject* args)
 
   if (key) {
     if (tox_save_encrypted(self->tox, buf, key, key_len) == -1) {
-      PyErr_SetString(ToxCoreError, "tox_save_encrypted(): failed");
+      PyErr_SetString(ToxOpError, "tox_save_encrypted(): failed");
       free(buf);
       return NULL;
     }
@@ -1333,7 +1333,7 @@ ToxCore_save_to_file(ToxCore* self, PyObject* args)
   FILE* fp = fopen(filename, "w");
 
   if (fp == NULL) {
-    PyErr_SetString(ToxCoreError, "fopen(): can't open file for saving");
+    PyErr_SetString(ToxOpError, "fopen(): can't open file for saving");
     return NULL;
   }
 
@@ -1357,25 +1357,25 @@ ToxCore_load(ToxCore* self, PyObject* args)
   Py_ssize_t key_len = 0;
 
   if (!PyArg_ParseTuple(args, "s#|O", &data, &length, &keyobj)) {
-    PyErr_SetString(ToxCoreError, "no data specified");
+    PyErr_SetString(ToxOpError, "no data specified");
     return NULL;
   }
 
   if (PYSTRING_Check(keyobj)) {
     PyStringUnicode_AsStringAnsSize(keyobj, (char**)&key, &key_len);
   } else if (keyobj != Py_None) {
-    PyErr_SetString(ToxCoreError, "invalid passphrase type");
+    PyErr_SetString(ToxOpError, "invalid passphrase type");
     return NULL;
   }
 
   if (key) {
     if (tox_load_encrypted(self->tox, data, length, key, key_len) == -1) {
-      PyErr_SetString(ToxCoreError, "tox_load_encrypted(): load failed");
+      PyErr_SetString(ToxOpError, "tox_load_encrypted(): load failed");
       return NULL;
     }
   } else {
     if (tox_load(self->tox, data, length) == -1) {
-      PyErr_SetString(ToxCoreError, "tox_load(): load failed");
+      PyErr_SetString(ToxOpError, "tox_load(): load failed");
       return NULL;
     }
   }
@@ -1400,13 +1400,13 @@ ToxCore_load_from_file(ToxCore* self, PyObject* args)
   if (PYSTRING_Check(keyobj)) {
     PyStringUnicode_AsStringAnsSize(keyobj, (char**)&key, &key_len);
   } else if (keyobj != Py_None) {
-    PyErr_SetString(ToxCoreError, "invalid passphrase type");
+    PyErr_SetString(ToxOpError, "invalid passphrase type");
     return NULL;
   }
 
   FILE* fp = fopen(filename, "r");
   if (fp == NULL) {
-    PyErr_SetString(ToxCoreError,
+    PyErr_SetString(ToxOpError,
         "tox_load(): failed to open file for reading");
     return NULL;
   }
@@ -1419,7 +1419,7 @@ ToxCore_load_from_file(ToxCore* self, PyObject* args)
   uint8_t* data = (uint8_t*)malloc(length * sizeof(char));
 
   if (fread(data, length, 1, fp) != 1) {
-    PyErr_SetString(ToxCoreError,
+    PyErr_SetString(ToxOpError,
         "tox_load(): corrupted data file");
     free(data);
     return NULL;
@@ -1427,13 +1427,13 @@ ToxCore_load_from_file(ToxCore* self, PyObject* args)
 
   if (key) {
     if (tox_load_encrypted(self->tox, data, length, key, key_len) == -1) {
-      PyErr_SetString(ToxCoreError, "tox_load_encrypted(): load failed");
+      PyErr_SetString(ToxOpError, "tox_load_encrypted(): load failed");
       free(data);
       return NULL;
     }
   } else {
     if (tox_load(self->tox, data, length) == -1) {
-      PyErr_SetString(ToxCoreError, "tox_load(): load failed");
+      PyErr_SetString(ToxOpError, "tox_load(): load failed");
       free(data);
       return NULL;
     }

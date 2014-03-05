@@ -32,7 +32,7 @@ typedef struct {
   ToxAv* av;
 } ToxAV;
 
-PyObject* ToxAVError;
+extern PyObject* ToxOpError;
 
 static int init_helper(ToxAV* self, PyObject* args)
 {
@@ -53,7 +53,7 @@ static int init_helper(ToxAV* self, PyObject* args)
   self->av = toxav_new(self->tox, self, width, height);
 
   if (self->av == NULL) {
-    PyErr_SetString(ToxAVError, "failed to allocate toxav");
+    PyErr_SetString(ToxOpError, "failed to allocate toxav");
     return -1;
   }
 

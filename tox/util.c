@@ -1,5 +1,7 @@
 #include "util.h"
 
+PyObject* ToxOpError;
+
 void bytes_to_hex_string(uint8_t* digest, int length, uint8_t* hex_digest)
 {
   hex_digest[2 * length] = 0;

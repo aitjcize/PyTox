@@ -24,11 +24,9 @@
 
 #include <stdio.h>
 
+extern PyObject* ToxOpError;
 extern PyTypeObject ToxCoreType;
-extern PyObject* ToxCoreError;
-
 extern PyTypeObject ToxAVType;
-extern PyObject* ToxAVError;
 
 extern void ToxCore_install_dict();
 
@@ -71,8 +69,8 @@ PyMODINIT_FUNC inittox(void)
   Py_INCREF(&ToxCoreType);
   PyModule_AddObject(m, "Tox", (PyObject*)&ToxCoreType);
 
-  ToxCoreError = PyErr_NewException("tox.OperationFailedError", NULL, NULL);
-  PyModule_AddObject(m, "CoreOperationFailedError", (PyObject*)ToxCoreError);
+  ToxOpError = PyErr_NewException("tox.OperationFailedError", NULL, NULL);
+  PyModule_AddObject(m, "OperationFailedError", (PyObject*)ToxOpError);
 
   // Initialize toxav
   if (PyType_Ready(&ToxAVType) < 0) {
@@ -82,9 +80,6 @@ PyMODINIT_FUNC inittox(void)
 
   Py_INCREF(&ToxAVType);
   PyModule_AddObject(m, "ToxAV", (PyObject*)&ToxAVType);
-
-  ToxAVError = PyErr_NewException("toxav.OperationFailedError", NULL, NULL);
-  PyModule_AddObject(m, "AVOperationFailedError", (PyObject*)ToxAVError);
 
 #if PY_MAJOR_VERSION >= 3
   return m;

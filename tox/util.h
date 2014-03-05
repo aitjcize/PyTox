@@ -27,7 +27,7 @@
 
 #define CHECK_TOX(self)                                        \
   if ((self)->tox == NULL) {                                   \
-    PyErr_SetString(ToxCoreError, "toxcore object killed.");   \
+    PyErr_SetString(ToxOpError, "toxcore object killed.");     \
     return NULL;                                               \
   }
 
