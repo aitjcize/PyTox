@@ -14,21 +14,22 @@ before_script:
   - git checkout tags/0.4.2
   - ./autogen.sh
   - ./configure --prefix=/usr
-  - make -j2
+  - make -j2 > /dev/null
   - sudo make install > /dev/null
   - cd ..
   # installing libopus, needed for audio encoding/decoding
   - wget http://downloads.xiph.org/releases/opus/opus-1.0.3.tar.gz > /dev/null
   - tar xzf opus-1.0.3.tar.gz > /dev/null
   - cd opus-1.0.3
-  - ./configure > /dev/null
+  - ./configure
   - make -j3 > /dev/null
   - sudo make install > /dev/null
   - cd ..
   # installing vpx
+  - sudo apt-get install yasm
   - git clone http://git.chromium.org/webm/libvpx.git > /dev/null
   - cd libvpx
-  - ./configure > /dev/null
+  - ./configure
   - make -j3 >/dev/null
   - sudo make install > /dev/null
   - cd ..
