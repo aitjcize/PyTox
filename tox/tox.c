@@ -21,14 +21,13 @@
  */
 
 #include <Python.h>
-
 #include <stdio.h>
+
+#include "core.h"
 
 extern PyObject* ToxOpError;
 extern PyTypeObject ToxCoreType;
 extern PyTypeObject ToxAVType;
-
-extern void ToxCore_install_dict();
 
 #if PY_MAJOR_VERSION >= 3
 struct PyModuleDef moduledef = {
