@@ -6,8 +6,6 @@ import unittest
 from tox import Tox, OperationFailedError
 from time import sleep
 
-SERVER = ["54.199.139.199", 33445, "7F9C31FE850E97CEFD4C4591DF93FC757C7C12549DDD55F8EEAECC34FE76C029"]
-
 ADDR_SIZE = 76
 CLIENT_ID_SIZE = 64
 
@@ -21,9 +19,6 @@ class ToxTest(unittest.TestCase):
     def setUp(self):
         self.alice = AliceTox()
         self.bob = BobTox()
-
-        self.alice.bootstrap_from_address(SERVER[0], 1, SERVER[1], SERVER[2])
-        self.bob.bootstrap_from_address(SERVER[0], 1, SERVER[1], SERVER[2])
 
         self.loop_until_connected()
 
