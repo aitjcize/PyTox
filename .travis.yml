@@ -8,16 +8,31 @@ compiler:
   - gcc
   - clang
 before_script:
-# installing libsodium, needed for Core
+  # installing libsodium, needed for Core
   - git clone git://github.com/jedisct1/libsodium.git
   - cd libsodium
   - git checkout tags/0.4.2
   - ./autogen.sh
   - ./configure --prefix=/usr
   - make -j2
-  - sudo make install
+  - sudo make install > /dev/null
   - cd ..
-# creating librarys' links and updating cache
+  # installing libopus, needed for audio encoding/decoding
+  - wget http://downloads.xiph.org/releases/opus/opus-1.0.3.tar.gz > /dev/null
+  - tar xzf opus-1.0.3.tar.gz > /dev/null
+  - cd opus-1.0.3
+  - ./configure > /dev/null
+  - make -j3 > /dev/null
+  - sudo make install > /dev/null
+  - cd ..
+  # installing vpx
+  - git clone http://git.chromium.org/webm/libvpx.git > /dev/null
+  - cd libvpx
+  - ./configure > /dev/null
+  - make -j3 >/dev/null
+  - sudo make install > /dev/null
+  - cd ..
+  # creating librarys' links and updating cache
   - sudo ldconfig
   - git clone https://github.com/irungentoo/ProjectTox-Core.git toxcore
   - cd toxcore
