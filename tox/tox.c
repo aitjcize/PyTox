@@ -27,6 +27,9 @@
 extern PyTypeObject ToxCoreType;
 extern PyObject* ToxCoreError;
 
+extern PyTypeObject ToxAVType;
+extern PyObject* ToxAVError;
+
 extern void ToxCore_install_dict();
 
 #if PY_MAJOR_VERSION >= 3
@@ -59,7 +62,7 @@ PyMODINIT_FUNC inittox(void)
 
   ToxCore_install_dict();
 
-  // Initialize tox.core
+  // Initialize toxcore
   if (PyType_Ready(&ToxCoreType) < 0) {
     fprintf(stderr, "Invalid PyTypeObject `ToxCoreType'\n");
     goto error;
@@ -69,7 +72,19 @@ PyMODINIT_FUNC inittox(void)
   PyModule_AddObject(m, "Tox", (PyObject*)&ToxCoreType);
 
   ToxCoreError = PyErr_NewException("tox.OperationFailedError", NULL, NULL);
-  PyModule_AddObject(m, "OperationFailedError", (PyObject*)ToxCoreError);
+  PyModule_AddObject(m, "CoreOperationFailedError", (PyObject*)ToxCoreError);
+
+  // Initialize toxav
+  if (PyType_Ready(&ToxAVType) < 0) {
+    fprintf(stderr, "Invalid PyTypeObject `ToxAVType'\n");
+    goto error;
+  }
+
+  Py_INCREF(&ToxAVType);
+  PyModule_AddObject(m, "ToxAV", (PyObject*)&ToxAVType);
+
+  ToxAVError = PyErr_NewException("toxav.OperationFailedError", NULL, NULL);
+  PyModule_AddObject(m, "AVOperationFailedError", (PyObject*)ToxAVError);
 
 #if PY_MAJOR_VERSION >= 3
   return m;

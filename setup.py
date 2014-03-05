@@ -12,7 +12,8 @@ setup(
         Extension("tox", [
                 "tox/tox.c",
                 "tox/core.c",
+                "tox/av.c",
                 "tox/util.c",
-       ], libraries=['toxcore'])
+       ], libraries=['toxcore', 'toxav'])
     ]
 )

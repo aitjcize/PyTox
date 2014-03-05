@@ -20,18 +20,10 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <Python.h>
-#include <tox/tox.h>
-
+#include "core.h"
 #include "util.h"
 
 PyObject* ToxCoreError;
-
-/* core.Tox definition */
-typedef struct {
-  PyObject_HEAD
-  Tox* tox;
-} ToxCore;
 
 static void callback_friend_request(uint8_t* public_key, uint8_t* data,
     uint16_t length, void* self)
@@ -1891,7 +1883,7 @@ PyTypeObject ToxCoreType = {
   PyObject_HEAD_INIT(NULL)
   0,                         /*ob_size*/
 #endif
-  "core.Tox",                /*tp_name*/
+  "Tox",                     /*tp_name*/
   sizeof(ToxCore),           /*tp_basicsize*/
   0,                         /*tp_itemsize*/
   (destructor)ToxCore_dealloc, /*tp_dealloc*/
