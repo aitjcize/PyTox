@@ -29,7 +29,7 @@ before_script:
   - sudo apt-get install yasm
   - git clone http://git.chromium.org/webm/libvpx.git > /dev/null
   - cd libvpx
-  - ./configure
+  - ./configure --enable-shared > /dev/null
   - make -j3 >/dev/null
   - sudo make install > /dev/null
   - cd ..
