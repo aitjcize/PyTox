@@ -50,7 +50,7 @@ static int init_helper(ToxAV* self, PyObject* args)
   }
 
   self->tox = ((ToxCore*)core)->tox;
-  self->av = toxav_new(self->tox, self, width, height);
+  self->av = toxav_new(self->tox, width, height);
 
   if (self->av == NULL) {
     PyErr_SetString(ToxOpError, "failed to allocate toxav");
