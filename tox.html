@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>tox Module &mdash; PyTox 0.0.10 documentation</title>
+    <title>tox Module &mdash; PyTox 0.0.11 documentation</title>
     
     <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.10',
+        VERSION:     '0.0.11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="PyTox 0.0.10 documentation" href="index.html" />
+    <link rel="top" title="PyTox 0.0.11 documentation" href="index.html" />
     <link rel="prev" title="Welcome to PyTox’s documentation!" href="index.html" />
 <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
@@ -58,7 +58,7 @@
         <li class="right" >
           <a href="index.html" title="Welcome to PyTox’s documentation!"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">PyTox 0.0.10 documentation</a> &raquo;</li> 
+        <li><a href="index.html">PyTox 0.0.11 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -232,9 +232,21 @@ in this class.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="tox.Tox.get_last_online">
+<tt class="descname">get_last_online</tt><big>(</big><em>friend_number</em><big>)</big><a class="headerlink" href="#tox.Tox.get_last_online" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns datetime.datetime object representing the last time <em>friend_number</em> was seen online, or None if never seen.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="tox.Tox.get_name">
 <tt class="descname">get_name</tt><big>(</big><em>friend_number</em><big>)</big><a class="headerlink" href="#tox.Tox.get_name" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get name of <em>friend_number</em>.</p>
+<dd><p>Get nickname of <em>friend_number</em>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tox.Tox.get_name_size">
+<tt class="descname">get_name_size</tt><big>(</big><em>friend_number</em><big>)</big><a class="headerlink" href="#tox.Tox.get_name_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get nickname length of <em>friend_number</em>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -250,9 +262,21 @@ in this class.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="tox.Tox.get_self_name_size">
+<tt class="descname">get_self_name_size</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.Tox.get_self_name_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get your nickname string length</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="tox.Tox.get_self_status_message">
 <tt class="descname">get_self_status_message</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.Tox.get_self_status_message" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get status message of yourself.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tox.Tox.get_self_status_message_size">
+<tt class="descname">get_self_status_message_size</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.Tox.get_self_status_message_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get status message string length of yourself.</p>
 </dd></dl>
 
 <dl class="method">
@@ -626,12 +650,12 @@ in this class.</p>
         <li class="right" >
           <a href="index.html" title="Welcome to PyTox’s documentation!"
              >previous</a> |</li>
-        <li><a href="index.html">PyTox 0.0.10 documentation</a> &raquo;</li> 
+        <li><a href="index.html">PyTox 0.0.11 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2013, Wei-Ning Huang.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
 </html>
