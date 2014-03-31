@@ -34,35 +34,35 @@ static void callback_friend_request(Tox* tox, uint8_t* public_key,
   bytes_to_hex_string(public_key, TOX_CLIENT_ID_SIZE, buf);
 
   PyObject_CallMethod((PyObject*)self, "on_friend_request", "ss#", buf, data,
-      length > 0? length - 1: 0);
+      length);
 }
 
 static void callback_friend_message(Tox *tox, int32_t friendnumber,
     uint8_t* message, uint16_t length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_friend_message", "is#", friendnumber,
-      message, length > 0? length - 1: 0);
+      message, length);
 }
 
 static void callback_action(Tox *tox, int32_t friendnumber, uint8_t* action,
     uint16_t length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_friend_action", "is#", friendnumber,
-      action, length > 0? length - 1: 0);
+      action, length);
 }
 
 static void callback_name_change(Tox *tox, int32_t friendnumber,
     uint8_t* newname, uint16_t length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_name_change", "is#", friendnumber,
-      newname, length > 0? length - 1: 0);
+      newname, length);
 }
 
 static void callback_status_message(Tox *tox, int32_t friendnumber,
     uint8_t *newstatus, uint16_t length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_status_message", "is#", friendnumber,
-      newstatus, length > 0? length - 1: 0);
+      newstatus, length);
 }
 
 static void callback_user_status(Tox *tox, int32_t friendnumber,
@@ -108,14 +108,14 @@ static void callback_group_message(Tox *tox, int groupid,
     int friendgroupid, uint8_t* message, uint16_t length, void *self)
 {
   PyObject_CallMethod((PyObject*)self, "on_group_message", "iis#", groupid,
-      friendgroupid, message, length > 0? length - 1: 0);
+      friendgroupid, message, length);
 }
 
 static void callback_group_action(Tox *tox, int groupid,
     int friendgroupid, uint8_t* action, uint16_t length, void *self)
 {
   PyObject_CallMethod((PyObject*)self, "on_group_action", "iis#", groupid,
-      friendgroupid, action, length > 0? length - 1: 0);
+      friendgroupid, action, length);
 }
 
 static void callback_group_namelist_change(Tox *tox, int groupid,
@@ -131,7 +131,7 @@ static void callback_file_send_request(Tox *m, int32_t friendnumber,
 {
   PyObject_CallMethod((PyObject*)self, "on_file_send_request", "iiKs#",
       friendnumber, filenumber, filesize, filename,
-      filename_length > 0? filename_length - 1: 0);
+      filename_length);
 }
 
 static void callback_file_control(Tox *m, int32_t friendnumber,
@@ -281,7 +281,7 @@ ToxCore_add_friend(ToxCore* self, PyObject* args)
   uint8_t pk[TOX_FRIEND_ADDRESS_SIZE];
   hex_string_to_bytes(address, TOX_FRIEND_ADDRESS_SIZE, pk);
 
-  int ret = tox_add_friend(self->tox, pk, data, data_length + 1);
+  int ret = tox_add_friend(self->tox, pk, data, data_length);
   int success = 0;
 
   switch (ret) {
@@ -461,7 +461,7 @@ ToxCore_send_message(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  uint32_t ret = tox_send_message(self->tox, friendid, message, length + 1);
+  uint32_t ret = tox_send_message(self->tox, friendid, message, length);
   if (ret == 0) {
     PyErr_SetString(ToxOpError, "failed to send message");
     return NULL;
@@ -485,7 +485,7 @@ ToxCore_send_message_withid(ToxCore* self, PyObject* args)
   }
 
   uint32_t ret = tox_send_message_withid(self->tox, friendid, id,message,
-      length + 1);
+      length);
   if (ret == 0) {
     PyErr_SetString(ToxOpError, "failed to send message with id");
     return NULL;
@@ -507,7 +507,7 @@ ToxCore_send_action(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  uint32_t ret = tox_send_action(self->tox, friendid, action, length + 1);
+  uint32_t ret = tox_send_action(self->tox, friendid, action, length);
   if (ret == 0) {
     PyErr_SetString(ToxOpError, "failed to send action");
     return NULL;
@@ -531,7 +531,7 @@ ToxCore_send_action_withid(ToxCore* self, PyObject* args)
   }
 
   uint32_t ret = tox_send_action_withid(self->tox, friendid, id, action,
-      length + 1);
+      length);
   if (ret == 0) {
     PyErr_SetString(ToxOpError, "failed to send action with id");
     return NULL;
@@ -552,7 +552,7 @@ ToxCore_set_name(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  if (tox_set_name(self->tox, name, length + 1) == -1) {
+  if (tox_set_name(self->tox, name, length) == -1) {
     PyErr_SetString(ToxOpError, "failed to set_name");
     return NULL;
   }
@@ -608,7 +608,7 @@ ToxCore_set_status_message(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  if (tox_set_status_message(self->tox, message, length + 1) == -1) {
+  if (tox_set_status_message(self->tox, message, length) == -1) {
     PyErr_SetString(ToxOpError, "failed to set status_message");
     return NULL;
   }
@@ -923,7 +923,7 @@ ToxCore_group_message_send(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  if (tox_group_message_send(self->tox, groupid, message, length + 1) == -1) {
+  if (tox_group_message_send(self->tox, groupid, message, length) == -1) {
     PyErr_SetString(ToxOpError, "failed to send group message");
   }
 
@@ -943,7 +943,7 @@ ToxCore_group_action_send(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  if (tox_group_action_send(self->tox, groupid, action, length + 1) == -1) {
+  if (tox_group_action_send(self->tox, groupid, action, length) == -1) {
     PyErr_SetString(ToxOpError, "failed to send group action");
   }
 
@@ -1050,7 +1050,7 @@ ToxCore_new_filesender(ToxCore* self, PyObject* args)
   }
 
   int ret = tox_new_file_sender(self->tox, friendnumber, filesize, filename,
-      filename_length + 1);
+      filename_length);
 
   if (ret == -1) {
     PyErr_SetString(ToxOpError, "tox_new_file_sender() failed");
