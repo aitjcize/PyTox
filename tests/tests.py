@@ -156,14 +156,17 @@ class ToxTest(unittest.TestCase):
         """
         t:set_name
         t:get_self_name
+        t:get_self_name_size
         """
         self.alice.set_name('Alice')
         self.loop(10)
         assert self.alice.get_self_name() == 'Alice'
+        assert self.alice.get_self_name_size() == len('Alice')
 
     def test_status_message(self):
         """
         t:get_self_status_message
+        t:get_self_status_message_size
         t:get_status_message
         t:get_status_message_size
         t:on_status_message
@@ -186,6 +189,7 @@ class ToxTest(unittest.TestCase):
         BobTox.on_status_message = Tox.on_status_message
 
         assert self.alice.get_self_status_message() == MSG
+        assert self.alice.get_self_status_message_size() == len(MSG)
         assert self.bob.get_status_message(self.aid) == MSG
         assert self.bob.get_status_message_size(self.aid) == len(MSG)
 
@@ -299,7 +303,9 @@ class ToxTest(unittest.TestCase):
         t:friend_exists
         t:get_client_id
         t:get_friendlist
+        t:get_last_online
         t:get_name
+        t:get_name_size
         t:get_num_online_friends
         t:on_name_change
         """
@@ -343,7 +349,12 @@ class ToxTest(unittest.TestCase):
 
         assert self.wait_callback(self.bob, 'nc')
         assert self.bob.get_name(self.aid) == NEWNAME
+        assert self.bob.get_name_size(self.aid) == len(NEWNAME)
         BobTox.on_name_change = Tox.on_name_change
+
+        #: Test last online
+        assert self.alice.get_last_online(self.bid) != None
+        assert self.bob.get_last_online(self.aid) != None
 
     def test_friend_message_and_action(self):
         """

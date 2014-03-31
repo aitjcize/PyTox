@@ -577,6 +577,20 @@ ToxCore_get_self_name(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
+ToxCore_get_self_name_size(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  int ret = tox_get_self_name_size(self->tox);
+  if (ret == -1) {
+    PyErr_SetString(ToxOpError, "failed to get self name size");
+    return NULL;
+  }
+
+  return PyLong_FromUnsignedLong(ret);
+}
+
+static PyObject*
 ToxCore_get_name(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
@@ -595,6 +609,26 @@ ToxCore_get_name(ToxCore* self, PyObject* args)
   }
 
   return PYSTRING_FromString((const char*)buf);
+}
+
+static PyObject*
+ToxCore_get_name_size(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  int friendid = 0;
+
+  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+    return NULL;
+  }
+
+  int ret = tox_get_name_size(self->tox, friendid);
+  if (ret == -1) {
+    PyErr_SetString(ToxOpError, "failed to get name size");
+    return NULL;
+  }
+
+  return PyLong_FromUnsignedLong(ret);
 }
 
 static PyObject*
@@ -699,6 +733,20 @@ ToxCore_get_self_status_message(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
+ToxCore_get_self_status_message_size(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  int ret = tox_get_self_status_message_size(self->tox);
+  if (ret == -1) {
+    PyErr_SetString(ToxOpError, "failed to get self status_message size");
+    return NULL;
+  }
+
+  return PyLong_FromLong(ret);
+}
+
+static PyObject*
 ToxCore_get_user_status(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
@@ -720,6 +768,30 @@ ToxCore_get_self_user_status(ToxCore* self, PyObject* args)
 
   int status = tox_get_self_user_status(self->tox);
   return PyLong_FromLong(status);
+}
+
+static PyObject*
+ToxCore_get_last_online(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  int friendid = 0;
+  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+    return NULL;
+  }
+
+  uint64_t status = tox_get_last_online(self->tox, friendid);
+
+  if (status == 0) {
+    Py_RETURN_NONE;
+  }
+
+  PyObject* datetime = PyImport_ImportModule("datetime");
+  PyObject* datetimeClass = PyObject_GetAttrString(datetime, "datetime");
+  PyObject* ret = PyObject_CallMethod(datetimeClass, "fromtimestamp", "K",
+      status);
+
+  return ret;
 }
 
 static PyObject*
@@ -1633,9 +1705,19 @@ PyMethodDef Tox_methods[] = {
     "Get your nickname."
   },
   {
+    "get_self_name_size", (PyCFunction)ToxCore_get_self_name_size, METH_NOARGS,
+    "get_self_name_size()\n"
+    "Get your nickname string length"
+  },
+  {
     "get_name", (PyCFunction)ToxCore_get_name, METH_VARARGS,
     "get_name(friend_number)\n"
-    "Get name of *friend_number*."
+    "Get nickname of *friend_number*."
+  },
+  {
+    "get_name_size", (PyCFunction)ToxCore_get_name_size, METH_VARARGS,
+    "get_name_size(friend_number)\n"
+    "Get nickname length of *friend_number*."
   },
   {
     "set_status_message", (PyCFunction)ToxCore_set_status_message, METH_VARARGS,
@@ -1677,6 +1759,13 @@ PyMethodDef Tox_methods[] = {
     "Get status message of yourself."
   },
   {
+    "get_self_status_message_size",
+    (PyCFunction)ToxCore_get_self_status_message_size,
+    METH_NOARGS,
+    "get_self_status_message_size()\n"
+    "Get status message string length of yourself."
+  },
+  {
     "get_user_status", (PyCFunction)ToxCore_get_user_status,
     METH_VARARGS,
     "get_user_status(friend_number)\n"
@@ -1686,11 +1775,18 @@ PyMethodDef Tox_methods[] = {
   },
   {
     "get_self_user_status", (PyCFunction)ToxCore_get_self_user_status,
-    METH_VARARGS,
+    METH_NOARGS,
     "get_self_user_status()\n"
     "Get user status of youself.\n\n"
     ".. seealso ::\n"
     "    :meth:`.set_user_status`"
+  },
+  {
+    "get_last_online", (PyCFunction)ToxCore_get_last_online,
+    METH_VARARGS,
+    "get_last_online(friend_number)\n"
+    "returns datetime.datetime object representing the last time "
+    "*friend_number* was seen online, or None if never seen."
   },
   {
     "set_user_is_typing", (PyCFunction)ToxCore_set_user_is_typing,
