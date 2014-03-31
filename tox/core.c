@@ -647,7 +647,7 @@ ToxCore_get_status_message_size(ToxCore* self, PyObject* args)
   }
 
   int ret = tox_get_status_message_size(self->tox, friendid);
-  return PyLong_FromLong(ret - 1);
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
@@ -978,7 +978,8 @@ ToxCore_group_get_names(ToxCore* self, PyObject* args)
 
   int n = tox_group_number_peers(self->tox, groupid);
   uint8_t (*names)[TOX_MAX_NAME_LENGTH] = (uint8_t(*)[TOX_MAX_NAME_LENGTH])
-    malloc(sizeof(uint8_t*) * n * TOX_MAX_NAME_LENGTH);
+    malloc(sizeof(uint8_t) * n * TOX_MAX_NAME_LENGTH);
+  memset((void*)names, 0, sizeof(uint8_t) * n * TOX_MAX_NAME_LENGTH);
 
   int n2 = tox_group_get_names(self->tox, groupid, names, n);
   if (n2 == -1) {
