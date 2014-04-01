@@ -37,7 +37,7 @@
   #define PYSTRING_Check PyString_Check
 #else
   #define PYSTRING_FromString PyUnicode_FromString
-  #define PYSTRING_FromStringAndSize PyBytes_FromStringAndSize
+  #define PYSTRING_FromStringAndSize PyUnicode_FromStringAndSize
   #define PYSTRING_Check PyUnicode_Check
 #endif
 

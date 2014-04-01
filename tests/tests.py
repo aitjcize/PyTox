@@ -303,7 +303,6 @@ class ToxTest(unittest.TestCase):
         t:friend_exists
         t:get_client_id
         t:get_friendlist
-        t:get_last_online
         t:get_name
         t:get_name_size
         t:get_num_online_friends
@@ -351,10 +350,6 @@ class ToxTest(unittest.TestCase):
         assert self.bob.get_name(self.aid) == NEWNAME
         assert self.bob.get_name_size(self.aid) == len(NEWNAME)
         BobTox.on_name_change = Tox.on_name_change
-
-        #: Test last online
-        assert self.alice.get_last_online(self.bid) != None
-        assert self.bob.get_last_online(self.aid) != None
 
     def test_friend_message_and_action(self):
         """
@@ -419,6 +414,7 @@ class ToxTest(unittest.TestCase):
         t:set_send_receipts
         t:set_user_is_typing
         t:get_is_typing
+        t:get_last_online
         """
         self.bob_add_alice_as_friend()
 
@@ -458,6 +454,9 @@ class ToxTest(unittest.TestCase):
         assert self.wait_callback(self.bob, 'ut')
         BobTox.on_typing_change = Tox.on_typing_change
 
+        #: Test last online
+        assert self.alice.get_last_online(self.bid) != None
+        assert self.bob.get_last_online(self.aid) != None
 
     def test_group(self):
         """
