@@ -1049,11 +1049,11 @@ ToxCore_group_get_names(ToxCore* self, PyObject* args)
   }
 
   int n = tox_group_number_peers(self->tox, groupid);
+  uint16_t* lengths = (uint16_t*)malloc(sizeof(uint16_t) * n);
   uint8_t (*names)[TOX_MAX_NAME_LENGTH] = (uint8_t(*)[TOX_MAX_NAME_LENGTH])
     malloc(sizeof(uint8_t) * n * TOX_MAX_NAME_LENGTH);
-  memset((void*)names, 0, sizeof(uint8_t) * n * TOX_MAX_NAME_LENGTH);
 
-  int n2 = tox_group_get_names(self->tox, groupid, names, n);
+  int n2 = tox_group_get_names(self->tox, groupid, names, lengths, n);
   if (n2 == -1) {
     PyErr_SetString(ToxOpError, "failed to get group member names");
     return NULL;
@@ -1066,10 +1066,12 @@ ToxCore_group_get_names(ToxCore* self, PyObject* args)
 
   int i = 0;
   for (i = 0; i < n2; ++i) {
-    PyList_Append(list, PYSTRING_FromString((const char*)names[i]));
+    PyList_Append(list,
+        PYSTRING_FromStringAndSize((const char*)names[i], lengths[i]));
   }
 
   free(names);
+  free(lengths);
 
   return list;
 }
