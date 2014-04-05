@@ -1355,11 +1355,7 @@ ToxCore_save(ToxCore* self, PyObject* args)
     tox_save(self->tox, buf);
   }
 
-#if PY_MAJOR_VERSION < 3
-  PyObject* res = PyString_FromStringAndSize((const char*)buf, size);
-#else
-  PyObject* res = PyBytes_FromStringAndSize((const char*)buf, size);
-#endif
+  PyObject* res = PYBYTES_FromStringAndSize((const char*)buf, size);
   free(buf);
 
   return res;

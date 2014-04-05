@@ -35,10 +35,14 @@
   #define PYSTRING_FromString PyString_FromString
   #define PYSTRING_FromStringAndSize PyString_FromStringAndSize
   #define PYSTRING_Check PyString_Check
+
+  #define PYBYTES_FromStringAndSize PyString_FromStringAndSize
 #else
   #define PYSTRING_FromString PyUnicode_FromString
   #define PYSTRING_FromStringAndSize PyUnicode_FromStringAndSize
   #define PYSTRING_Check PyUnicode_Check
+
+  #define PYBYTES_FromStringAndSize PyBytes_FromStringAndSize
 #endif
 
 void bytes_to_hex_string(uint8_t* digest, int length, uint8_t* hex_digest);

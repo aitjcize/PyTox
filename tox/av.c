@@ -24,20 +24,22 @@
 #include <tox/toxav.h>
 
 #include "core.h"
+#include "util.h"
 
 /* ToxAV definition */
 typedef struct {
   PyObject_HEAD
-  Tox* tox;
+  PyObject* core;
   ToxAv* av;
 } ToxAV;
 
 extern PyObject* ToxOpError;
 
-#define CALLBACK_DEF(name)                                    \
+#define CALLBACK_DEF(name)                                   \
   void ToxAV_callback_##name(void* self)                     \
-  {                                                           \
-    PyObject_CallMethod((PyObject*)self, "on_" # name, NULL); \
+  {                                                          \
+    fprintf(stderr, #name ": %p\n", self); \
+    PyObject_CallMethod((PyObject*)self, #name, NULL);       \
   }
 
 CALLBACK_DEF(on_invite);
@@ -67,8 +69,10 @@ static int init_helper(ToxAV* self, PyObject* args)
     return -1;
   }
 
-  self->tox = ((ToxCore*)core)->tox;
-  self->av = toxav_new(self->tox, width, height);
+  self->core = core;
+  Py_INCREF(self->core);
+
+  self->av = toxav_new(((ToxCore*)self->core)->tox, width, height);
 
 #define REG_CALLBACK(id, name) \
   toxav_register_callstate_callback(ToxAV_callback_##name, id, self)
@@ -121,6 +125,7 @@ static int
 ToxAV_dealloc(ToxAV* self)
 {
   if (self->av) {
+    Py_DECREF(self->core);
     toxav_kill(self->av);
     self->av = NULL;
   }
@@ -298,21 +303,94 @@ ToxAV_kill_transmission(ToxAV* self, PyObject* args)
 static PyObject*
 ToxAV_recv_video(ToxAV* self, PyObject* args)
 {
+  vpx_image_t* image = NULL;
+
+  int ret = toxav_recv_video(self->av, &image);
+  if (ret != 0) {
+    ToxAV_set_Error(ret);
+    return NULL;
+  }
+
+  PyObject* d = PyDict_New();
+  PyDict_SetItemString(d, "w", PyLong_FromLong(image->w));
+  PyDict_SetItemString(d, "h", PyLong_FromLong(image->h));
+  PyDict_SetItemString(d, "d_w", PyLong_FromLong(image->d_w));
+  PyDict_SetItemString(d, "d_h", PyLong_FromLong(image->d_h));
+  PyDict_SetItemString(d, "x_chroma_shift",
+      PyLong_FromLong(image->x_chroma_shift));
+  PyDict_SetItemString(d, "y_chroma_shift",
+      PyLong_FromLong(image->y_chroma_shift));
+  PyDict_SetItemString(d, "data",
+      PYBYTES_FromStringAndSize(image->img_data, 4 * image->w * image->h));
+  vpx_img_free(image);
+
+  return d;
 }
 
 static PyObject*
 ToxAV_recv_audio(ToxAV* self, PyObject* args)
 {
+  int16_t PCM[AUDIO_FRAME_SIZE] = { 0 };
+
+  int ret = toxav_recv_audio(self->av, AUDIO_FRAME_SIZE, PCM);
+  if (ret < 0) {
+    ToxAV_set_Error(ret);
+    return NULL;
+  }
+
+  if (ret == 0) {
+    Py_RETURN_NONE;
+  }
+
+  PyObject* d = PyDict_New();
+  PyDict_SetItemString(d, "frame_size", PyLong_FromLong(AUDIO_FRAME_SIZE));
+  PyDict_SetItemString(d, "size", PyLong_FromLong(ret));
+  PyDict_SetItemString(d, "data",
+      PYBYTES_FromStringAndSize((char*)PCM, AUDIO_FRAME_SIZE));
+
+  return d;
 }
 
 static PyObject*
 ToxAV_send_video(ToxAV* self, PyObject* args)
 {
+  int d_w = 0, d_h = 0, len = 0;
+  char* data = NULL;
+
+  if (!PyArg_ParseTuple(args, "iis#", &d_w, &d_h, &data, &len)) {
+    return NULL;
+  }
+  vpx_image_t* image = NULL;
+  vpx_img_wrap(image, VPX_IMG_FMT_RGB32, d_w, d_h, 32, data);
+
+  int ret = toxav_send_video(self->av, image);
+  if (ret != 0) {
+    ToxAV_set_Error(ret);
+    return NULL;
+  }
+
+  vpx_img_free(image);
+
+  Py_RETURN_NONE;
 }
 
 static PyObject*
 ToxAV_send_audio(ToxAV* self, PyObject* args)
 {
+  int frame_size = 0, len = 0;
+  char* data = NULL;
+
+  if (!PyArg_ParseTuple(args, "is#",  &frame_size, &data, &len)) {
+    return NULL;
+  }
+
+  int ret = toxav_send_audio(self->av, (int16_t*)data, frame_size);
+  if (ret != 0) {
+    ToxAV_set_Error(ret);
+    return NULL;
+  }
+
+  Py_RETURN_NONE;
 }
 
 static PyObject*
@@ -372,11 +450,17 @@ ToxAV_capability_supported(ToxAV* self, PyObject* args)
 static PyObject*
 ToxAV_get_tox(ToxAV* self, PyObject* args)
 {
+  Py_INCREF(self->core);
+  return self->core;
+}
+
+void ToxAV_callback_stub(void* user)
+{
 }
 
 #define METHOD_DEF(name)                                       \
   {                                                            \
-    #name, (PyCFunction)ToxAV_callback_##name, METH_NOARGS, "" \
+    #name, (PyCFunction)ToxAV_callback_stub, METH_NOARGS, "" \
   }
 
 PyMethodDef ToxAV_methods[] = {
