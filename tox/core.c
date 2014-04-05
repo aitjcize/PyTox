@@ -381,13 +381,13 @@ ToxCore_get_client_id(ToxCore* self, PyObject* args)
   uint8_t hex[TOX_CLIENT_ID_SIZE * 2 + 1];
   memset(hex, 0, TOX_CLIENT_ID_SIZE * 2 + 1);
 
-  int friendid = 0;
+  int friend_num = 0;
 
-  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+  if (!PyArg_ParseTuple(args, "i", &friend_num)) {
     return NULL;
   }
 
-  tox_get_client_id(self->tox, friendid, pk);
+  tox_get_client_id(self->tox, friend_num, pk);
   bytes_to_hex_string(pk, TOX_CLIENT_ID_SIZE, hex);
 
   return PYSTRING_FromString((const char*)hex);
@@ -398,13 +398,13 @@ ToxCore_delfriend(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int friendid = 0;
+  int friend_num = 0;
 
-  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+  if (!PyArg_ParseTuple(args, "i", &friend_num)) {
     return NULL;
   }
 
-  if (tox_del_friend(self->tox, friendid) == -1) {
+  if (tox_del_friend(self->tox, friend_num) == -1) {
     PyErr_SetString(ToxOpError, "failed to delete friend");
     return NULL;
   }
@@ -417,13 +417,13 @@ ToxCore_get_friend_connection_status(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int friendid = 0;
+  int friend_num = 0;
 
-  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+  if (!PyArg_ParseTuple(args, "i", &friend_num)) {
     return NULL;
   }
 
-  int ret = tox_get_friend_connection_status(self->tox, friendid);
+  int ret = tox_get_friend_connection_status(self->tox, friend_num);
   if (ret == -1) {
     PyErr_SetString(ToxOpError, "failed to get connection status");
     return NULL;
@@ -437,13 +437,13 @@ ToxCore_friend_exists(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int friendid = 0;
+  int friend_num = 0;
 
-  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+  if (!PyArg_ParseTuple(args, "i", &friend_num)) {
     return NULL;
   }
 
-  int ret = tox_friend_exists(self->tox, friendid);
+  int ret = tox_friend_exists(self->tox, friend_num);
 
   return PyBool_FromLong(ret);
 }
@@ -453,15 +453,15 @@ ToxCore_send_message(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int friendid = 0;
+  int friend_num = 0;
   int length = 0;
   uint8_t* message = NULL;
 
-  if (!PyArg_ParseTuple(args, "is#", &friendid, &message, &length)) {
+  if (!PyArg_ParseTuple(args, "is#", &friend_num, &message, &length)) {
     return NULL;
   }
 
-  uint32_t ret = tox_send_message(self->tox, friendid, message, length);
+  uint32_t ret = tox_send_message(self->tox, friend_num, message, length);
   if (ret == 0) {
     PyErr_SetString(ToxOpError, "failed to send message");
     return NULL;
@@ -475,16 +475,16 @@ ToxCore_send_message_withid(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int friendid = 0;
+  int friend_num = 0;
   int length = 0;
   uint32_t id = 0;
   uint8_t* message = NULL;
 
-  if (!PyArg_ParseTuple(args, "iIs#", &friendid, &id, &message, &length)) {
+  if (!PyArg_ParseTuple(args, "iIs#", &friend_num, &id, &message, &length)) {
     return NULL;
   }
 
-  uint32_t ret = tox_send_message_withid(self->tox, friendid, id,message,
+  uint32_t ret = tox_send_message_withid(self->tox, friend_num, id,message,
       length);
   if (ret == 0) {
     PyErr_SetString(ToxOpError, "failed to send message with id");
@@ -499,15 +499,15 @@ ToxCore_send_action(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int friendid = 0;
+  int friend_num = 0;
   int length = 0;
   uint8_t* action = NULL;
 
-  if (!PyArg_ParseTuple(args, "is#", &friendid, &action, &length)) {
+  if (!PyArg_ParseTuple(args, "is#", &friend_num, &action, &length)) {
     return NULL;
   }
 
-  uint32_t ret = tox_send_action(self->tox, friendid, action, length);
+  uint32_t ret = tox_send_action(self->tox, friend_num, action, length);
   if (ret == 0) {
     PyErr_SetString(ToxOpError, "failed to send action");
     return NULL;
@@ -521,16 +521,16 @@ ToxCore_send_action_withid(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int friendid = 0;
+  int friend_num = 0;
   int length = 0;
   uint32_t id = 0;
   uint8_t* action = NULL;
 
-  if (!PyArg_ParseTuple(args, "iIs#", &friendid, &id, &action, &length)) {
+  if (!PyArg_ParseTuple(args, "iIs#", &friend_num, &id, &action, &length)) {
     return NULL;
   }
 
-  uint32_t ret = tox_send_action_withid(self->tox, friendid, id, action,
+  uint32_t ret = tox_send_action_withid(self->tox, friend_num, id, action,
       length);
   if (ret == 0) {
     PyErr_SetString(ToxOpError, "failed to send action with id");
@@ -595,15 +595,15 @@ ToxCore_get_name(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int friendid = 0;
+  int friend_num = 0;
   uint8_t buf[TOX_MAX_NAME_LENGTH];
   memset(buf, 0, TOX_MAX_NAME_LENGTH);
 
-  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+  if (!PyArg_ParseTuple(args, "i", &friend_num)) {
     return NULL;
   }
 
-  if (tox_get_name(self->tox, friendid, buf) == -1) {
+  if (tox_get_name(self->tox, friend_num, buf) == -1) {
     PyErr_SetString(ToxOpError, "failed to get name");
     return NULL;
   }
@@ -616,13 +616,13 @@ ToxCore_get_name_size(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int friendid = 0;
+  int friend_num = 0;
 
-  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+  if (!PyArg_ParseTuple(args, "i", &friend_num)) {
     return NULL;
   }
 
-  int ret = tox_get_name_size(self->tox, friendid);
+  int ret = tox_get_name_size(self->tox, friend_num);
   if (ret == -1) {
     PyErr_SetString(ToxOpError, "failed to get name size");
     return NULL;
@@ -675,12 +675,12 @@ ToxCore_get_status_message_size(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int friendid = 0;
-  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+  int friend_num = 0;
+  if (!PyArg_ParseTuple(args, "i", &friend_num)) {
     return NULL;
   }
 
-  int ret = tox_get_status_message_size(self->tox, friendid);
+  int ret = tox_get_status_message_size(self->tox, friend_num);
   return PyLong_FromLong(ret);
 }
 
@@ -690,15 +690,15 @@ ToxCore_get_status_message(ToxCore* self, PyObject* args)
   CHECK_TOX(self);
 
   uint8_t buf[TOX_MAX_STATUSMESSAGE_LENGTH];
-  int friendid = 0;
+  int friend_num = 0;
 
   memset(buf, 0, TOX_MAX_STATUSMESSAGE_LENGTH);
 
-  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+  if (!PyArg_ParseTuple(args, "i", &friend_num)) {
     return NULL;
   }
 
-  int ret = tox_get_status_message(self->tox, friendid, buf,
+  int ret = tox_get_status_message(self->tox, friend_num, buf,
       TOX_MAX_STATUSMESSAGE_LENGTH);
 
   if (ret == -1) {
@@ -751,12 +751,12 @@ ToxCore_get_user_status(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int friendid = 0;
-  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+  int friend_num = 0;
+  if (!PyArg_ParseTuple(args, "i", &friend_num)) {
     return NULL;
   }
 
-  int status = tox_get_user_status(self->tox, friendid);
+  int status = tox_get_user_status(self->tox, friend_num);
 
   return PyLong_FromLong(status);
 }
@@ -775,12 +775,12 @@ ToxCore_get_last_online(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int friendid = 0;
-  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+  int friend_num = 0;
+  if (!PyArg_ParseTuple(args, "i", &friend_num)) {
     return NULL;
   }
 
-  uint64_t status = tox_get_last_online(self->tox, friendid);
+  uint64_t status = tox_get_last_online(self->tox, friend_num);
 
   if (status == 0) {
     Py_RETURN_NONE;
@@ -799,14 +799,14 @@ ToxCore_set_user_is_typing(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int friendid = 0;
+  int friend_num = 0;
   int is_typing = 0;
 
-  if (!PyArg_ParseTuple(args, "ii", &friendid, &is_typing)) {
+  if (!PyArg_ParseTuple(args, "ii", &friend_num, &is_typing)) {
     return NULL;
   }
 
-  int status = tox_set_user_is_typing(self->tox, friendid, is_typing);
+  int status = tox_set_user_is_typing(self->tox, friend_num, is_typing);
   return PyLong_FromLong(status);
 }
 
@@ -815,13 +815,13 @@ ToxCore_get_is_typing(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int friendid = 0;
+  int friend_num = 0;
 
-  if (!PyArg_ParseTuple(args, "i", &friendid)) {
+  if (!PyArg_ParseTuple(args, "i", &friend_num)) {
     return NULL;
   }
 
-  if (tox_get_is_typing(self->tox, friendid)) {
+  if (tox_get_is_typing(self->tox, friend_num)) {
     Py_RETURN_TRUE;
   } else {
     Py_RETURN_FALSE;
@@ -833,14 +833,14 @@ ToxCore_set_send_receipts(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int friendid = 0;
+  int friend_num = 0;
   int yesno = 0;
 
-  if (!PyArg_ParseTuple(args, "ii", &friendid, &yesno)) {
+  if (!PyArg_ParseTuple(args, "ii", &friend_num, &yesno)) {
     return NULL;
   }
 
-  tox_set_sends_receipts(self->tox, friendid, yesno);
+  tox_set_sends_receipts(self->tox, friend_num, yesno);
 
   Py_RETURN_NONE;
 }
