@@ -343,10 +343,9 @@ ToxAV_recv_audio(ToxAV* self, PyObject* args)
   }
 
   PyObject* d = PyDict_New();
-  PyDict_SetItemString(d, "frame_size", PyLong_FromLong(AUDIO_FRAME_SIZE));
   PyDict_SetItemString(d, "size", PyLong_FromLong(ret));
   PyDict_SetItemString(d, "data",
-      PYBYTES_FromStringAndSize((char*)PCM, AUDIO_FRAME_SIZE));
+      PYBYTES_FromStringAndSize((char*)PCM, AUDIO_FRAME_SIZE * 2));
 
   return d;
 }
@@ -383,6 +382,7 @@ ToxAV_send_audio(ToxAV* self, PyObject* args)
   if (!PyArg_ParseTuple(args, "is#",  &frame_size, &data, &len)) {
     return NULL;
   }
+
 
   int ret = toxav_send_audio(self->av, (int16_t*)data, frame_size);
   if (ret != 0) {
@@ -576,3 +576,22 @@ PyTypeObject ToxAVType = {
   0,                         /* tp_alloc */
   ToxAV_new,                 /* tp_new */
 };
+
+void ToxAV_install_dict()
+{
+#define SET(name) \
+  PyDict_SetItemString(dict, #name, PyLong_FromLong(name));
+
+  PyObject* dict = PyDict_New();
+  SET(TypeAudio);
+  SET(TypeVideo);
+  SET(None);
+  SET(AudioEncoding);
+  SET(AudioDecoding);
+  SET(VideoEncoding);
+  SET(VideoDecoding);
+
+#undef SET
+
+  ToxAVType.tp_dict = dict;
+}

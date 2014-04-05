@@ -58,6 +58,7 @@ PyMODINIT_FUNC inittox(void)
   }
 
   ToxCore_install_dict();
+  ToxAV_install_dict();
 
   // Initialize toxcore
   if (PyType_Ready(&ToxCoreType) < 0) {

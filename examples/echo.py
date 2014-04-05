@@ -21,11 +21,48 @@
 # 
 
 from tox import Tox
+from tox import ToxAV
 
-from time import sleep
+from time import sleep, time
 from os.path import exists
+from threading import Thread
 
 SERVER = ["54.199.139.199", 33445, "7F9C31FE850E97CEFD4C4591DF93FC757C7C12549DDD55F8EEAECC34FE76C029"]
+
+class AV(ToxAV):
+    def __init__(self, core, width, height):
+        super(AV, self).__init__(core, width, height)
+        self.core = self.get_tox()
+        self.daemon = True
+        self.stop = True
+
+    def on_invite(self):
+        print 'Incoming call from %s ...' % self.core.get_name(
+                self.get_peer_id(0))
+        self.answer(self.TypeAudio)
+
+    def on_start(self):
+        self.prepare_transmission(False)
+        self.stop = False
+        self.thread = Thread(target=self.transmission)
+        self.thread.daemon = True
+        self.thread.start()
+
+    def on_end(self):
+        self.stop = True
+        self.thread.join()
+        self.kill_transmission()
+
+    def transmission(self):
+        print "Starting transmission..."
+
+        while not self.stop:
+            ret = self.recv_audio()
+            if ret:
+                self.send_audio(ret["size"], ret["data"])
+
+            sleep(0.001)
+
 
 class EchoBot(Tox):
     def __init__(self):
@@ -36,6 +73,7 @@ class EchoBot(Tox):
         print('ID: %s' % self.get_address())
 
         self.connect()
+        self.av = AV(self, 480, 320)
 
     def connect(self):
         print('connecting...')
@@ -50,7 +88,6 @@ class EchoBot(Tox):
 
                 if not checked and status:
                     print('Connected to DHT.')
-                    print('Waiting for friend request')
                     checked = True
 
                 if checked and not status:
@@ -59,7 +96,7 @@ class EchoBot(Tox):
                     checked = False
 
                 self.do()
-                sleep(0.02)
+                sleep(0.01)
         except KeyboardInterrupt:
             self.save_to_file('data')
 
