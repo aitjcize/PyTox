@@ -15,7 +15,7 @@ setup(
                 "tox/av.c",
                 "tox/util.c",
        ],
-       extra_compile_args=['-Wno-declaration-after-statement'],
+       extra_compile_args=['-g', '-Wno-declaration-after-statement'],
        libraries=['toxcore', 'toxav'])
     ]
 )

@@ -166,6 +166,8 @@ void ToxAV_set_Error(int ret)
   case ErrorTerminatingVideoRtp:
     msg = "Returned in toxav_kill_transmission()";
     break;
+  default:
+    msg = "Unknown error";
   }
 
   PyErr_SetString(ToxOpError, msg);
@@ -345,7 +347,7 @@ ToxAV_recv_audio(ToxAV* self, PyObject* args)
   PyObject* d = PyDict_New();
   PyDict_SetItemString(d, "size", PyLong_FromLong(ret));
   PyDict_SetItemString(d, "data",
-      PYBYTES_FromStringAndSize((char*)PCM, AUDIO_FRAME_SIZE * 2));
+      PYBYTES_FromStringAndSize((char*)PCM, AUDIO_FRAME_SIZE << 1));
 
   return d;
 }
@@ -421,7 +423,7 @@ ToxAV_get_peer_id(ToxAV* self, PyObject* args)
   }
 
   int ret = toxav_get_peer_id(self->av, peer);
-  if (ret != 0) {
+  if (ret < 0) {
     ToxAV_set_Error(ret);
     return NULL;
   }

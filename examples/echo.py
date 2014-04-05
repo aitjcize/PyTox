@@ -20,8 +20,8 @@
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 # 
 
-from tox import Tox
-from tox import ToxAV
+import sys
+from tox import Tox, ToxAV
 
 from time import sleep, time
 from os.path import exists
@@ -50,8 +50,12 @@ class AV(ToxAV):
 
     def on_end(self):
         self.stop = True
-        self.thread.join()
         self.kill_transmission()
+        self.thread.join()
+        print 'Call ended'
+
+    def on_peer_timeout(self):
+        self.stop_call()
 
     def transmission(self):
         print "Starting transmission..."
@@ -59,6 +63,8 @@ class AV(ToxAV):
         while not self.stop:
             ret = self.recv_audio()
             if ret:
+                sys.stdout.write('.')
+                sys.stdout.flush()
                 self.send_audio(ret["size"], ret["data"])
 
             sleep(0.001)
