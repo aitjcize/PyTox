@@ -27,7 +27,6 @@
 
 extern PyObject* ToxOpError;
 extern PyTypeObject ToxCoreType;
-extern PyTypeObject ToxAVType;
 
 #if PY_MAJOR_VERSION >= 3
 struct PyModuleDef moduledef = {
@@ -70,15 +69,6 @@ PyMODINIT_FUNC inittox(void)
 
   ToxOpError = PyErr_NewException("tox.OperationFailedError", NULL, NULL);
   PyModule_AddObject(m, "OperationFailedError", (PyObject*)ToxOpError);
-
-  // Initialize toxav
-  if (PyType_Ready(&ToxAVType) < 0) {
-    fprintf(stderr, "Invalid PyTypeObject `ToxAVType'\n");
-    goto error;
-  }
-
-  Py_INCREF(&ToxAVType);
-  PyModule_AddObject(m, "ToxAV", (PyObject*)&ToxAVType);
 
 #if PY_MAJOR_VERSION >= 3
   return m;

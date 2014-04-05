@@ -12,10 +12,9 @@ setup(
         Extension("tox", [
                 "tox/tox.c",
                 "tox/core.c",
-                "tox/av.c",
                 "tox/util.c",
        ],
        extra_compile_args=['-Wno-declaration-after-statement'],
-       libraries=['toxcore', 'toxav'])
+       libraries=['toxcore'])
     ]
 )
