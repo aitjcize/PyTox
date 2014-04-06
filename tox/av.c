@@ -31,6 +31,7 @@ typedef struct {
   PyObject_HEAD
   PyObject* core;
   ToxAv* av;
+  vpx_image_t* image;
 } ToxAV;
 
 extern PyObject* ToxOpError;
@@ -38,6 +39,7 @@ extern PyObject* ToxOpError;
 #define CALLBACK_DEF(name)                                   \
   void ToxAV_callback_##name(void* self)                     \
   {                                                          \
+    fprintf(stderr, "<%s>\n", #name); \
     PyObject_CallMethod((PyObject*)self, #name, NULL);       \
   }
 
@@ -90,6 +92,11 @@ static int init_helper(ToxAV* self, PyObject* args)
 
 #undef REG_CALLBACK
 
+
+  if (self->image == NULL) {
+    self->image = vpx_img_alloc(NULL, VPX_IMG_FMT_I420, width, height, 1);
+  }
+
   if (self->av == NULL) {
     PyErr_SetString(ToxOpError, "failed to allocate toxav");
     return -1;
@@ -103,6 +110,7 @@ ToxAV_new(PyTypeObject *type, PyObject* args, PyObject* kwds)
 {
   ToxAV* self = (ToxAV*)type->tp_alloc(type, 0);
   self->av = NULL;
+  self->image = NULL;
 
   if (init_helper(self, args) == -1) {
     return NULL;
@@ -128,6 +136,7 @@ ToxAV_dealloc(ToxAV* self)
     Py_DECREF(self->core);
     toxav_kill(self->av);
     self->av = NULL;
+    vpx_img_free(self->image);
   }
   return 0;
 }
@@ -314,18 +323,22 @@ ToxAV_recv_video(ToxAV* self, PyObject* args)
     return NULL;
   }
 
+  if (image == NULL) {
+    Py_RETURN_NONE;
+  }
+
+  int stride = image->d_w * image->d_h;
+  uint8_t* img = (uint8_t*)malloc(stride * 3);
+  memcpy(img, image->planes[VPX_PLANE_Y], stride);
+  memcpy(img + stride, image->planes[VPX_PLANE_U], stride);
+  memcpy(img + (stride << 1), image->planes[VPX_PLANE_V], stride);
+
   PyObject* d = PyDict_New();
-  PyDict_SetItemString(d, "w", PyLong_FromLong(image->w));
-  PyDict_SetItemString(d, "h", PyLong_FromLong(image->h));
   PyDict_SetItemString(d, "d_w", PyLong_FromLong(image->d_w));
   PyDict_SetItemString(d, "d_h", PyLong_FromLong(image->d_h));
-  PyDict_SetItemString(d, "x_chroma_shift",
-      PyLong_FromLong(image->x_chroma_shift));
-  PyDict_SetItemString(d, "y_chroma_shift",
-      PyLong_FromLong(image->y_chroma_shift));
-  PyDict_SetItemString(d, "data",
-      PYBYTES_FromStringAndSize(image->img_data, 4 * image->w * image->h));
+  PyDict_SetItemString(d, "data", PYBYTES_FromStringAndSize(img, stride * 3));
   vpx_img_free(image);
+  free(img);
 
   return d;
 }
@@ -362,16 +375,17 @@ ToxAV_send_video(ToxAV* self, PyObject* args)
   if (!PyArg_ParseTuple(args, "iis#", &d_w, &d_h, &data, &len)) {
     return NULL;
   }
-  vpx_image_t* image = NULL;
-  vpx_img_wrap(image, VPX_IMG_FMT_RGB32, d_w, d_h, 32, data);
 
-  int ret = toxav_send_video(self->av, image);
+  int stride = d_w * d_h;
+  memcpy(self->image->planes[VPX_PLANE_Y], data, stride);
+  memcpy(self->image->planes[VPX_PLANE_U], data + stride, stride);
+  memcpy(self->image->planes[VPX_PLANE_V], data + (stride << 1), stride);
+
+  int ret = toxav_send_video(self->av, self->image);
   if (ret != 0) {
     ToxAV_set_Error(ret);
     return NULL;
   }
-
-  vpx_img_free(image);
 
   Py_RETURN_NONE;
 }
@@ -385,7 +399,6 @@ ToxAV_send_audio(ToxAV* self, PyObject* args)
   if (!PyArg_ParseTuple(args, "is#",  &frame_size, &data, &len)) {
     return NULL;
   }
-
 
   int ret = toxav_send_audio(self->av, (int16_t*)data, frame_size);
   if (ret != 0) {
