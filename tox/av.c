@@ -456,12 +456,14 @@ ToxAV_get_tox(ToxAV* self, PyObject* args)
   return self->core;
 }
 
-void ToxAV_callback_stub(void* user)
+static PyObject*
+ToxAV_callback_stub(ToxAV* self, PyObject* args)
 {
+  Py_RETURN_NONE;
 }
 
-#define METHOD_DEF(name)                                       \
-  {                                                            \
+#define METHOD_DEF(name)                                     \
+  {                                                          \
     #name, (PyCFunction)ToxAV_callback_stub, METH_NOARGS, "" \
   }
 
