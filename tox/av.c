@@ -38,7 +38,6 @@ extern PyObject* ToxOpError;
 #define CALLBACK_DEF(name)                                   \
   void ToxAV_callback_##name(void* self)                     \
   {                                                          \
-    fprintf(stderr, #name ": %p\n", self); \
     PyObject_CallMethod((PyObject*)self, #name, NULL);       \
   }
 
@@ -112,7 +111,8 @@ ToxAV_new(PyTypeObject *type, PyObject* args, PyObject* kwds)
   return (PyObject*)self;
 }
 
-static int ToxAV_init(ToxAV* self, PyObject* args, PyObject* kwds)
+static int
+ToxAV_init(ToxAV* self, PyObject* args, PyObject* kwds)
 {
   // since __init__ in Python is optional(superclass need to call it
   // explicitly), we need to initialize self->tox in ToxAV_new instead of
@@ -132,7 +132,8 @@ ToxAV_dealloc(ToxAV* self)
   return 0;
 }
 
-void ToxAV_set_Error(int ret)
+static void
+ToxAV_set_Error(int ret)
 {
   const char* msg = NULL;
   switch(ret) {
