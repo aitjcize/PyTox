@@ -337,7 +337,7 @@ ToxAV_recv_video(ToxAV* self, PyObject* args)
   PyDict_SetItemString(d, "d_w", PyLong_FromLong(image->d_w));
   PyDict_SetItemString(d, "d_h", PyLong_FromLong(image->d_h));
   PyDict_SetItemString(d, "data", PYBYTES_FromStringAndSize(img, stride * 3));
-  vpx_img_free(image);
+
   free(img);
 
   return d;
