@@ -105,7 +105,7 @@ class AV(ToxAV):
                     if self.debug:
                         sys.stdout.write('.')
                         sys.stdout.flush()
-                    #self.astream.write(aret["data"])
+                    self.astream.write(aret["data"])
 
                 self.send_audio(960, self.astream.read(960))
             except Exception as e:
