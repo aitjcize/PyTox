@@ -46,7 +46,6 @@ extern PyObject* ToxOpError;
 #define CALLBACK_DEF(name)                                   \
   void ToxAV_callback_##name(void* self)                     \
   {                                                          \
-    fprintf(stderr, "<%s>\n", #name); \
     PyObject_CallMethod((PyObject*)self, #name, NULL);       \
   }
 
