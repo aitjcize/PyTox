@@ -32,6 +32,7 @@ typedef struct {
   PyObject* core;
   ToxAv* av;
   vpx_image_t* image;
+  ToxAvCodecSettings cs;
 } ToxAV;
 
 extern PyObject* ToxOpError;
@@ -58,6 +59,125 @@ CALLBACK_DEF(on_error);
 CALLBACK_DEF(on_request_timeout);
 CALLBACK_DEF(on_peer_timeout);
 
+static void i420_to_rgb(vpx_image_t *img, unsigned char *out)
+{
+    const int w = img->d_w;
+    const int w2 = w / 2;
+    const int pstride = w * 3;
+    const int h = img->d_h;
+    const int h2 = h / 2;
+
+    const int strideY = img->stride[0];
+    const int strideU = img->stride[1];
+    const int strideV = img->stride[2];
+    int posy, posx;
+
+    for (posy = 0; posy < h2; posy++) {
+        unsigned char *dst = out + pstride * (posy * 2);
+        unsigned char *dst2 = out + pstride * (posy * 2 + 1);
+        const unsigned char *srcY = img->planes[0] + strideY * posy * 2;
+        const unsigned char *srcY2 = img->planes[0] + strideY * (posy * 2 + 1);
+        const unsigned char *srcU = img->planes[1] + strideU * posy;
+        const unsigned char *srcV = img->planes[2] + strideV * posy;
+
+        for (posx = 0; posx < w2; posx++) {
+            unsigned char Y, U, V;
+            short R, G, B;
+            short iR, iG, iB;
+
+            U = *(srcU++);
+            V = *(srcV++);
+            iR = (351 * (V - 128)) / 256;
+            iG = - (179 * (V - 128)) / 256 - (86 * (U - 128)) / 256;
+            iB = (444 * (U - 128)) / 256;
+
+            Y = *(srcY++);
+            R = Y + iR ;
+            G = Y + iG ;
+            B = Y + iB ;
+            R = (R < 0 ? 0 : (R > 255 ? 255 : R));
+            G = (G < 0 ? 0 : (G > 255 ? 255 : G));
+            B = (B < 0 ? 0 : (B > 255 ? 255 : B));
+            *(dst++) = R;
+            *(dst++) = G;
+            *(dst++) = B;
+
+            Y = *(srcY2++);
+            R = Y + iR ;
+            G = Y + iG ;
+            B = Y + iB ;
+            R = (R < 0 ? 0 : (R > 255 ? 255 : R));
+            G = (G < 0 ? 0 : (G > 255 ? 255 : G));
+            B = (B < 0 ? 0 : (B > 255 ? 255 : B));
+            *(dst2++) = R;
+            *(dst2++) = G;
+            *(dst2++) = B;
+
+            Y = *(srcY++) ;
+            R = Y + iR ;
+            G = Y + iG ;
+            B = Y + iB ;
+            R = (R < 0 ? 0 : (R > 255 ? 255 : R));
+            G = (G < 0 ? 0 : (G > 255 ? 255 : G));
+            B = (B < 0 ? 0 : (B > 255 ? 255 : B));
+            *(dst++) = R;
+            *(dst++) = G;
+            *(dst++) = B;
+
+            Y = *(srcY2++);
+            R = Y + iR ;
+            G = Y + iG ;
+            B = Y + iB ;
+            R = (R < 0 ? 0 : (R > 255 ? 255 : R));
+            G = (G < 0 ? 0 : (G > 255 ? 255 : G));
+            B = (B < 0 ? 0 : (B > 255 ? 255 : B));
+            *(dst2++) = R;
+            *(dst2++) = G;
+            *(dst2++) = B;
+        }
+    }
+}
+
+static void rgb_to_i420(unsigned char* rgb, vpx_image_t *img)
+{
+  int image_size = img->d_w * img->d_h;
+  fprintf(stderr, "%d, %d\n", img->d_w, img->d_h);
+  int upos = image_size;
+  int vpos = upos + upos / 4;
+  int i = 0;
+  int line = 0;
+
+  for (line = 0; line < img->d_h; ++line) {
+    if (!(line % 2)) {
+      int x;
+      for (x = 0; x < img->d_w; x += 2) {
+        uint8_t r = rgb[3 * i];
+        uint8_t g = rgb[3 * i + 1];
+        uint8_t b = rgb[3 * i + 2];
+
+        img->planes[VPX_PLANE_Y][i++] = ((66*r + 129*g + 25*b) >> 8) + 16;
+        img->planes[VPX_PLANE_U][upos++] = ((-38*r + -74*g + 112*b) >> 8) + 128;
+        img->planes[VPX_PLANE_V][vpos++] = ((112*r + -94*g + -18*b) >> 8) + 128;
+
+        r = rgb[3 * i];
+        g = rgb[3 * i + 1];
+        b = rgb[3 * i + 2];
+
+        img->planes[VPX_PLANE_Y][i++] = ((66*r + 129*g + 25*b) >> 8) + 16;
+      }
+    } else {
+      int x;
+      for (x = 0; x < img->d_w; x += 1) {
+        uint8_t r = rgb[3 * i];
+        uint8_t g = rgb[3 * i + 1];
+        uint8_t b = rgb[3 * i + 2];
+
+        img->planes[VPX_PLANE_Y][i++] = ((66*r + 129*g + 25*b) >> 8) + 16;
+      }
+    }
+  }
+}
+
 static int init_helper(ToxAV* self, PyObject* args)
 {
   if (self->av) {
@@ -76,11 +196,11 @@ static int init_helper(ToxAV* self, PyObject* args)
   self->core = core;
   Py_INCREF(self->core);
 
-  ToxAvCodecSettings cs = av_DefaultSettings;
-  cs.video_height = height;
-  cs.video_width = width;
+  self->cs = av_DefaultSettings;
+  self->cs.video_height = height;
+  self->cs.video_width = width;
 
-  self->av = toxav_new(((ToxCore*)self->core)->tox, &cs);
+  self->av = toxav_new(((ToxCore*)self->core)->tox, &self->cs);
 
 #define REG_CALLBACK(id, name) \
   toxav_register_callstate_callback(ToxAV_callback_##name, id, self)
@@ -336,9 +456,7 @@ ToxAV_recv_video(ToxAV* self, PyObject* args)
 
   int stride = image->d_w * image->d_h;
   uint8_t* img = (uint8_t*)malloc(stride * 3);
-  memcpy(img, image->planes[VPX_PLANE_Y], stride);
-  memcpy(img + stride, image->planes[VPX_PLANE_U], stride);
-  memcpy(img + (stride << 1), image->planes[VPX_PLANE_V], stride);
+  i420_to_rgb(image, img);
 
   PyObject* d = PyDict_New();
   PyDict_SetItemString(d, "d_w", PyLong_FromLong(image->d_w));
@@ -378,17 +496,14 @@ ToxAV_recv_audio(ToxAV* self, PyObject* args)
 static PyObject*
 ToxAV_send_video(ToxAV* self, PyObject* args)
 {
-  int d_w = 0, d_h = 0, len = 0;
+  int len = 0;
   char* data = NULL;
 
-  if (!PyArg_ParseTuple(args, "iis#", &d_w, &d_h, &data, &len)) {
+  if (!PyArg_ParseTuple(args, "s#", &data, &len)) {
     return NULL;
   }
 
-  int stride = d_w * d_h;
-  memcpy(self->image->planes[VPX_PLANE_Y], data, stride);
-  memcpy(self->image->planes[VPX_PLANE_U], data + stride, stride);
-  memcpy(self->image->planes[VPX_PLANE_V], data + (stride << 1), stride);
+  rgb_to_i420(data, self->image);
 
   int ret = toxav_send_video(self->av, self->image);
   if (ret != 0) {
