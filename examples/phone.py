@@ -168,12 +168,12 @@ class AV(ToxAV):
             sleep(0.001)
 
 
-class EchoBot(Tox):
+class Phone(Tox):
     def __init__(self):
         if exists(DATA):
             self.load_from_file(DATA)
 
-        self.set_name("EchoBot")
+        self.set_name("PyTox-Phone")
         print('ID: %s' % self.get_address())
 
         self.connect()
@@ -208,10 +208,10 @@ class EchoBot(Tox):
                                 self.add_friend(args[1], "Hi")
                             except: pass
                             print('Friend added')
-                        if args[0] == "call":
+                        elif args[0] == "call":
                             if len(args) == 2:
                                 self.call(int(args[1]))
-                        if args[0] == "hangup":
+                        elif args[0] == "hangup":
                             self.av.hangup()
 
                 self.do()
@@ -228,7 +228,7 @@ class EchoBot(Tox):
     def on_friend_message(self, friendId, message):
         name = self.get_name(friendId)
         print('%s: %s' % (name, message))
-        print('EchoBot: %s' % message)
+        print('Phone: %s' % message)
         self.send_message(friendId, message)
 
     def on_connection_status(self, friendId, status):
@@ -242,5 +242,5 @@ class EchoBot(Tox):
 if len(sys.argv) == 2:
     DATA = sys.argv[1]
 
-t = EchoBot()
+t = Phone()
 t.loop()
