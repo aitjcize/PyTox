@@ -46,6 +46,10 @@ class AV(ToxAV):
         self.core = self.get_tox()
         self.stop = True
         self.call_type = self.TypeAudio
+        self.ae_thread = None
+        self.ad_thread = None
+        self.ve_thread = None
+        self.vd_thread = None
 
     def on_invite(self):
         self.call_type = self.get_peer_transmission_type(0)
@@ -84,11 +88,15 @@ class AV(ToxAV):
 
     def on_end(self):
         self.stop = True
-        self.ae_thread.join()
-        self.ad_thread.join()
+        if self.ae_thread:
+            self.ae_thread.join()
+        if self.ad_thread:
+            self.ad_thread.join()
         if self.call_type == self.TypeVideo:
-            self.ve_thread.join()
-            self.vd_thread.join()
+            if self.ve_thread:
+                self.ve_thread.join()
+            if self.vd_thread:
+                self.vd_thread.join()
 
         self.kill_transmission()
         print("Call ended")
