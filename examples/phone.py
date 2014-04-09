@@ -212,7 +212,9 @@ class Phone(Tox):
                             if len(args) == 2:
                                 self.call(int(args[1]))
                         elif args[0] == "hangup":
-                            self.av.hangup()
+                            try:
+                                self.av.hangup()
+                            except: pass
 
                 self.do()
         except KeyboardInterrupt:
