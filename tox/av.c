@@ -141,15 +141,13 @@ static void i420_to_rgb(vpx_image_t *img, unsigned char *out)
 static void rgb_to_i420(unsigned char* rgb, vpx_image_t *img)
 {
   int image_size = img->d_w * img->d_h;
-  fprintf(stderr, "%d, %d\n", img->d_w, img->d_h);
   int upos = image_size;
   int vpos = upos + upos / 4;
-  int i = 0;
+  int x = 0, i = 0;
   int line = 0;
 
   for (line = 0; line < img->d_h; ++line) {
     if (!(line % 2)) {
-      int x;
       for (x = 0; x < img->d_w; x += 2) {
         uint8_t r = rgb[3 * i];
         uint8_t g = rgb[3 * i + 1];
@@ -166,7 +164,6 @@ static void rgb_to_i420(unsigned char* rgb, vpx_image_t *img)
         img->planes[VPX_PLANE_Y][i++] = ((66*r + 129*g + 25*b) >> 8) + 16;
       }
     } else {
-      int x;
       for (x = 0; x < img->d_w; x += 1) {
         uint8_t r = rgb[3 * i];
         uint8_t g = rgb[3 * i + 1];
