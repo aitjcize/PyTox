@@ -36,6 +36,9 @@ typedef struct {
 
 extern PyObject* ToxOpError;
 
+
+#define AUDIO_FRAME_SIZE (av_DefaultSettings.audio_sample_rate * av_DefaultSettings.audio_frame_duration / 1000)
+
 #define CALLBACK_DEF(name)                                   \
   void ToxAV_callback_##name(void* self)                     \
   {                                                          \
@@ -73,7 +76,11 @@ static int init_helper(ToxAV* self, PyObject* args)
   self->core = core;
   Py_INCREF(self->core);
 
-  self->av = toxav_new(((ToxCore*)self->core)->tox, width, height);
+  ToxAvCodecSettings cs = av_DefaultSettings;
+  cs.video_height = height;
+  cs.video_width = width;
+
+  self->av = toxav_new(((ToxCore*)self->core)->tox, &cs);
 
 #define REG_CALLBACK(id, name) \
   toxav_register_callstate_callback(ToxAV_callback_##name, id, self)
@@ -346,7 +353,7 @@ ToxAV_recv_video(ToxAV* self, PyObject* args)
 static PyObject*
 ToxAV_recv_audio(ToxAV* self, PyObject* args)
 {
-  int16_t PCM[AUDIO_FRAME_SIZE] = { 0 };
+  int16_t* PCM = (int16_t*)malloc(AUDIO_FRAME_SIZE * sizeof(int16_t));
 
   int ret = toxav_recv_audio(self->av, AUDIO_FRAME_SIZE, PCM);
   if (ret < 0) {
@@ -355,6 +362,7 @@ ToxAV_recv_audio(ToxAV* self, PyObject* args)
   }
 
   if (ret == 0) {
+    free(PCM);
     Py_RETURN_NONE;
   }
 
@@ -363,6 +371,7 @@ ToxAV_recv_audio(ToxAV* self, PyObject* args)
   PyDict_SetItemString(d, "data",
       PYBYTES_FromStringAndSize((char*)PCM, AUDIO_FRAME_SIZE << 1));
 
+  free(PCM);
   return d;
 }
 
