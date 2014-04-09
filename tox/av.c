@@ -319,7 +319,7 @@ ToxAV_call(ToxAV* self, PyObject* args)
   }
 
   int ret = toxav_call(self->av, peer_id, call_type, seconds);
-  if (ret != 0) {
+  if (ret < 0) {
     ToxAV_set_Error(ret);
     return NULL;
   }
@@ -331,7 +331,7 @@ static PyObject*
 ToxAV_hangup(ToxAV* self, PyObject* args)
 {
   int ret = toxav_hangup(self->av);
-  if (ret != 0) {
+  if (ret < 0) {
     ToxAV_set_Error(ret);
     return NULL;
   }
@@ -349,7 +349,7 @@ ToxAV_answer(ToxAV* self, PyObject* args)
   }
 
   int ret = toxav_answer(self->av, call_type);
-  if (ret != 0) {
+  if (ret < 0) {
     ToxAV_set_Error(ret);
     return NULL;
   }
@@ -367,7 +367,7 @@ ToxAV_reject(ToxAV* self, PyObject* args)
   }
 
   int ret = toxav_reject(self->av, res);
-  if (ret != 0) {
+  if (ret < 0) {
     ToxAV_set_Error(ret);
     return NULL;
   }
@@ -386,7 +386,7 @@ ToxAV_cancel(ToxAV* self, PyObject* args)
   }
 
   int ret = toxav_cancel(self->av, peer_id, res);
-  if (ret != 0) {
+  if (ret < 0) {
     ToxAV_set_Error(ret);
     return NULL;
   }
@@ -398,7 +398,7 @@ static PyObject*
 ToxAV_stop_call(ToxAV* self, PyObject* args)
 {
   int ret = toxav_stop_call(self->av);
-  if (ret != 0) {
+  if (ret < 0) {
     ToxAV_set_Error(ret);
     return NULL;
   }
@@ -416,7 +416,7 @@ ToxAV_prepare_transmission(ToxAV* self, PyObject* args)
   }
 
   int ret = toxav_prepare_transmission(self->av, support_video);
-  if (ret != 0) {
+  if (ret < 0) {
     ToxAV_set_Error(ret);
     return NULL;
   }
@@ -428,7 +428,7 @@ static PyObject*
 ToxAV_kill_transmission(ToxAV* self, PyObject* args)
 {
   int ret = toxav_kill_transmission(self->av);
-  if (ret != 0) {
+  if (ret < 0) {
     ToxAV_set_Error(ret);
     return NULL;
   }
@@ -442,7 +442,7 @@ ToxAV_recv_video(ToxAV* self, PyObject* args)
   vpx_image_t* image = NULL;
 
   int ret = toxav_recv_video(self->av, &image);
-  if (ret != 0) {
+  if (ret < 0) {
     ToxAV_set_Error(ret);
     return NULL;
   }
@@ -503,7 +503,7 @@ ToxAV_send_video(ToxAV* self, PyObject* args)
   rgb_to_i420(data, self->image);
 
   int ret = toxav_send_video(self->av, self->image);
-  if (ret != 0) {
+  if (ret < 0) {
     ToxAV_set_Error(ret);
     return NULL;
   }
@@ -522,7 +522,7 @@ ToxAV_send_audio(ToxAV* self, PyObject* args)
   }
 
   int ret = toxav_send_audio(self->av, (int16_t*)data, frame_size);
-  if (ret != 0) {
+  if (ret < 0) {
     ToxAV_set_Error(ret);
     return NULL;
   }
@@ -540,7 +540,7 @@ ToxAV_get_peer_transmission_type(ToxAV* self, PyObject* args)
   }
 
   int ret = toxav_get_peer_transmission_type(self->av, peer);
-  if (ret != 0) {
+  if (ret < 0) {
     ToxAV_set_Error(ret);
     return NULL;
   }
@@ -576,6 +576,10 @@ ToxAV_capability_supported(ToxAV* self, PyObject* args)
   }
 
   int ret = toxav_capability_supported(self->av, cap);
+  if (ret < 0) {
+    ToxAV_set_Error(ret);
+    return NULL;
+  }
 
   return PyBool_FromLong(ret);
 }
