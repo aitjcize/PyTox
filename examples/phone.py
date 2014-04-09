@@ -38,13 +38,13 @@ SERVER = ["54.199.139.199", 33445, "7F9C31FE850E97CEFD4C4591DF93FC757C7C12549DDD
 
 DATA = 'data'
 cap = cv2.VideoCapture(0)
+audio = pyaudio.PyAudio()
 
 class AV(ToxAV):
     def __init__(self, core, width, height, debug=False):
         self.debug = debug
         self.core = self.get_tox()
         self.stop = True
-        self.audio = pyaudio.PyAudio()
         self.call_type = self.TypeAudio
 
     def on_invite(self):
@@ -64,10 +64,9 @@ class AV(ToxAV):
         self.a_thread = Thread(target=self.a_transmission)
         self.a_thread.daemon = True
 
-        self.astream = self.audio.open(format=pyaudio.paInt16, channels=1,
-                                       rate=48000, input=True, output=True,
-                                       frames_per_buffer=960)
-
+        self.astream = audio.open(format=pyaudio.paInt16, channels=1,
+                                  rate=48000, input=True, output=True,
+                                  frames_per_buffer=960)
         self.a_thread.start()
 
         if self.call_type == self.TypeVideo:
