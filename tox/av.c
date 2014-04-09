@@ -141,8 +141,8 @@ static void i420_to_rgb(vpx_image_t *img, unsigned char *out)
 static void rgb_to_i420(unsigned char* rgb, vpx_image_t *img)
 {
   int image_size = img->d_w * img->d_h;
-  int upos = image_size;
-  int vpos = upos + upos / 4;
+  int upos = 0;
+  int vpos = 0;
   int x = 0, i = 0;
   int line = 0;
 
