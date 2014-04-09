@@ -61,24 +61,34 @@ class AV(ToxAV):
         self.prepare_transmission(True)
 
         self.stop = False
-        self.a_thread = Thread(target=self.a_transmission)
-        self.a_thread.daemon = True
-
-        self.astream = audio.open(format=pyaudio.paInt16, channels=1,
-                                  rate=48000, input=True, output=True,
+        self.aistream = audio.open(format=pyaudio.paInt16, channels=1,
+                                  rate=48000, input=True,
                                   frames_per_buffer=960)
-        self.a_thread.start()
+        self.aostream = audio.open(format=pyaudio.paInt16, channels=1,
+                                  rate=48000, output=True)
+
+        self.ae_thread = Thread(target=self.audio_encode)
+        self.ae_thread.daemon = True
+        self.ad_thread = Thread(target=self.audio_decode)
+        self.ad_thread.daemon = True
+        self.ae_thread.start()
+        self.ad_thread.start()
 
         if self.call_type == self.TypeVideo:
-            self.v_thread = Thread(target=self.v_transmission)
-            self.v_thread.daemon = True
-            self.v_thread.start()
+            self.ve_thread = Thread(target=self.video_encode)
+            self.ve_thread.daemon = True
+            self.vd_thread = Thread(target=self.video_decode)
+            self.vd_thread.daemon = True
+            self.ve_thread.start()
+            self.vd_thread.start()
 
     def on_end(self):
         self.stop = True
-        self.a_thread.join()
+        self.ae_thread.join()
+        self.ad_thread.join()
         if self.call_type == self.TypeVideo:
-            self.v_thread.join()
+            self.ve_thread.join()
+            self.vd_thread.join()
 
         self.kill_transmission()
         print 'Call ended'
@@ -95,8 +105,19 @@ class AV(ToxAV):
     def on_request_timeout(self):
         self.stop_call()
 
-    def a_transmission(self):
-        print "Starting audio transmission..."
+    def audio_encode(self):
+        print "Starting audio encode thread..."
+
+        while not self.stop:
+            try:
+                self.send_audio(960, self.aistream.read(960))
+            except Exception as e:
+                print e
+
+            sleep(0.001)
+
+    def audio_decode(self):
+        print "Starting audio decode thread..."
 
         while not self.stop:
             try:
@@ -105,15 +126,28 @@ class AV(ToxAV):
                     if self.debug:
                         sys.stdout.write('.')
                         sys.stdout.flush()
-                    self.astream.write(aret["data"])
-
-                self.send_audio(960, self.astream.read(960))
+                    self.aostream.write(aret["data"])
             except Exception as e:
                 print e
+
             sleep(0.001)
 
-    def v_transmission(self):
-        print "Starting video transmission..."
+    def video_encode(self):
+        print "Starting video encode thread..."
+
+        while not self.stop:
+            try:
+                ret, frame = cap.read()
+                if ret:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    self.send_video(frame.tostring())
+            except Exception as e:
+                print e
+
+            sleep(0.001)
+
+    def video_decode(self):
+        print "Starting video decode thread..."
 
         while not self.stop:
             try:
@@ -128,12 +162,6 @@ class AV(ToxAV):
                     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
                     cv2.imshow('frame', frame)
                     cv2.waitKey(1)
-
-                ret, frame = cap.read()
-                if ret:
-                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    self.send_video(frame.tostring())
-                    del frame
             except Exception as e:
                 print e
 
