@@ -99,11 +99,16 @@ class AV(ToxAV):
     def on_ending(self):
         self.on_end()
 
+    def on_cancel(self):
+        try:
+            self.stop_call()
+        except: pass
+
     def on_peer_timeout(self):
-        self.stop_call()
+        self.on_cancel()
 
     def on_request_timeout(self):
-        self.stop_call()
+        self.on_cancel()
 
     def audio_encode(self):
         print("Starting audio encode thread...")
@@ -200,6 +205,7 @@ class Phone(Tox):
                     checked = False
 
                 readable, _, _ = select([sys.stdin], [], [], 0.01)
+
                 if readable:
                     args = sys.stdin.readline().strip().split()
                     if args:
@@ -208,13 +214,28 @@ class Phone(Tox):
                                 self.add_friend(args[1], "Hi")
                             except: pass
                             print('Friend added')
+                        elif args[0] == "msg":
+                            try:
+                                if len(args) > 2:
+                                    friend_number = int(args[1])
+                                    msg = ' '.join(args[2:])
+                                    self.send_message(friend_number, msg)
+                            except: pass
                         elif args[0] == "call":
                             if len(args) == 2:
                                 self.call(int(args[1]))
+                        elif args[0] == "cancel":
+                            try:
+                                if len(args) == 2:
+                                    self.av.cancel(int(args[1]), 'cancel')
+                                    print('Canceling...')
+                            except: pass
                         elif args[0] == "hangup":
                             try:
                                 self.av.hangup()
                             except: pass
+                        elif args[0] == "quit":
+                            raise KeyboardInterrupt
 
                 self.do()
         except KeyboardInterrupt:
@@ -230,8 +251,6 @@ class Phone(Tox):
     def on_friend_message(self, friendId, message):
         name = self.get_name(friendId)
         print('%s: %s' % (name, message))
-        print('Phone: %s' % message)
-        self.send_message(friendId, message)
 
     def on_connection_status(self, friendId, status):
         print('%s %s' % (self.get_name(friendId),
