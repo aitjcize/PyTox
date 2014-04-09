@@ -110,6 +110,7 @@ class AV(ToxAV):
                 self.send_audio(960, self.astream.read(960))
             except Exception as e:
                 print e
+            sleep(0.001)
 
     def v_transmission(self):
         print "Starting video transmission..."
