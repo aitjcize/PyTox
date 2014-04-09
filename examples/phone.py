@@ -49,12 +49,12 @@ class AV(ToxAV):
 
     def on_invite(self):
         self.call_type = self.get_peer_transmission_type(0)
-        print 'Incoming %s call from %s ...' % (
+        print("Incoming %s call from %s ..." % (
                 "video" if self.call_type == self.TypeVideo else "audio",
-                self.core.get_name(self.get_peer_id(0)))
+                self.core.get_name(self.get_peer_id(0))))
 
         self.answer(self.call_type)
-        print 'Answered, in call...'
+        print("Answered, in call...")
 
     def on_start(self):
         self.call_type = self.get_peer_transmission_type(0)
@@ -91,7 +91,7 @@ class AV(ToxAV):
             self.vd_thread.join()
 
         self.kill_transmission()
-        print 'Call ended'
+        print("Call ended")
 
     def on_starting(self):
         self.on_start()
@@ -106,18 +106,18 @@ class AV(ToxAV):
         self.stop_call()
 
     def audio_encode(self):
-        print "Starting audio encode thread..."
+        print("Starting audio encode thread...")
 
         while not self.stop:
             try:
                 self.send_audio(960, self.aistream.read(960))
             except Exception as e:
-                print e
+                print(e)
 
             sleep(0.001)
 
     def audio_decode(self):
-        print "Starting audio decode thread..."
+        print("Starting audio decode thread...")
 
         while not self.stop:
             try:
@@ -128,12 +128,12 @@ class AV(ToxAV):
                         sys.stdout.flush()
                     self.aostream.write(aret["data"])
             except Exception as e:
-                print e
+                print(e)
 
             sleep(0.001)
 
     def video_encode(self):
-        print "Starting video encode thread..."
+        print("Starting video encode thread...")
 
         while not self.stop:
             try:
@@ -142,12 +142,12 @@ class AV(ToxAV):
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     self.send_video(frame.tostring())
             except Exception as e:
-                print e
+                print(e)
 
             sleep(0.001)
 
     def video_decode(self):
-        print "Starting video decode thread..."
+        print("Starting video decode thread...")
 
         while not self.stop:
             try:
@@ -163,7 +163,7 @@ class AV(ToxAV):
                     cv2.imshow('frame', frame)
                     cv2.waitKey(1)
             except Exception as e:
-                print e
+                print(e)
 
             sleep(0.001)
 
@@ -207,7 +207,7 @@ class EchoBot(Tox):
                             try:
                                 self.add_friend(args[1], "Hi")
                             except: pass
-                            print 'Friend added'
+                            print('Friend added')
                         if args[0] == "call":
                             if len(args) == 2:
                                 self.call(int(args[1]))
@@ -232,11 +232,11 @@ class EchoBot(Tox):
         self.send_message(friendId, message)
 
     def on_connection_status(self, friendId, status):
-        print '%s %s' % (self.get_name(friendId),
-                'online' if status else 'offline')
+        print('%s %s' % (self.get_name(friendId),
+                'online' if status else 'offline'))
 
     def call(self, friend_number):
-        print 'Calling %s ...' % self.get_name(friend_number)
+        print('Calling %s ...' % self.get_name(friend_number))
         self.av.call(friend_number, self.av.TypeVideo, 60)
 
 if len(sys.argv) == 2:
