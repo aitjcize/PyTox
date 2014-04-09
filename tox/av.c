@@ -464,10 +464,6 @@ ToxAV_capability_supported(ToxAV* self, PyObject* args)
   }
 
   int ret = toxav_capability_supported(self->av, cap);
-  if (ret != 0) {
-    ToxAV_set_Error(ret);
-    return NULL;
-  }
 
   return PyBool_FromLong(ret);
 }
