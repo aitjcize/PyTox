@@ -476,10 +476,18 @@ ToxAV_recv_video(ToxAV* self, PyObject* args)
   i420_to_rgb(image, self->out_image);
 
   PyObject* d = PyDict_New();
-  PyDict_SetItemString(d, "d_w", PyLong_FromLong(image->d_w));
-  PyDict_SetItemString(d, "d_h", PyLong_FromLong(image->d_h));
-  PyDict_SetItemString(d, "data",
-      PYBYTES_FromStringAndSize(self->out_image, image->d_w * image->d_h * 3));
+  PyObject* d_w = PyLong_FromLong(image->d_w);
+  PyDict_SetItemString(d, "d_w", d_w);
+  Py_DECREF(d_w);
+
+  PyObject* d_h = PyLong_FromLong(image->d_h);
+  PyDict_SetItemString(d, "d_h", d_h);
+  Py_DECREF(d_h);
+
+  PyObject* data =
+      PYBYTES_FromStringAndSize(self->out_image, image->d_w * image->d_h * 3);
+  PyDict_SetItemString(d, "data", data);
+  Py_DECREF(data);
 
   vpx_img_free(image);
 
@@ -500,9 +508,15 @@ ToxAV_recv_audio(ToxAV* self, PyObject* args)
   }
 
   PyObject* d = PyDict_New();
-  PyDict_SetItemString(d, "size", PyLong_FromLong(ret));
-  PyDict_SetItemString(d, "data",
-      PYBYTES_FromStringAndSize((char*)self->pcm, AUDIO_FRAME_SIZE << 1));
+
+  PyObject* size = PyLong_FromLong(ret);
+  PyDict_SetItemString(d, "size", size);
+  Py_DECREF(size);
+
+  PyObject* data =
+    PYBYTES_FromStringAndSize((char*)self->pcm, AUDIO_FRAME_SIZE << 1);
+  PyDict_SetItemString(d, "data", data);
+  Py_DECREF(data);
 
   return d;
 }
@@ -735,8 +749,10 @@ PyTypeObject ToxAVType = {
 
 void ToxAV_install_dict()
 {
-#define SET(name) \
-  PyDict_SetItemString(dict, #name, PyLong_FromLong(name));
+#define SET(name)                                            \
+  PyObject* obj_##name = PyLong_FromLong(name);              \
+  PyDict_SetItemString(dict, #name, obj_##name);             \
+  Py_DECREF(obj_##name);
 
   PyObject* dict = PyDict_New();
   SET(TypeAudio);

@@ -2023,8 +2023,10 @@ PyTypeObject ToxCoreType = {
 
 void ToxCore_install_dict()
 {
-#define SET(name) \
-  PyDict_SetItemString(dict, #name, PyLong_FromLong(TOX_##name));
+#define SET(name)                                            \
+  PyObject* obj_##name = PyLong_FromLong(TOX_##name);        \
+  PyDict_SetItemString(dict, #name, obj_##name);             \
+  Py_DECREF(obj_##name);
 
   PyObject* dict = PyDict_New();
   SET(FAERR_TOOLONG)
