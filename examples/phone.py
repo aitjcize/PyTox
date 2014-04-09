@@ -114,7 +114,7 @@ class AV(ToxAV):
             except Exception as e:
                 print(e)
 
-            sleep(0.001)
+            sleep(0.01)
 
     def audio_decode(self):
         print("Starting audio decode thread...")
@@ -130,7 +130,7 @@ class AV(ToxAV):
             except Exception as e:
                 print(e)
 
-            sleep(0.001)
+            sleep(0.01)
 
     def video_encode(self):
         print("Starting video encode thread...")

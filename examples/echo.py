@@ -94,10 +94,6 @@ class AV(ToxAV):
     def video_transmission(self):
         print("Starting video transmission...")
 
-        r = g = b = 0
-        ar = ag = ab = 0
-        ar = 1
-
         while not self.stop:
             try:
                 vret = self.recv_video()
