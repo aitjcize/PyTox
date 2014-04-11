@@ -122,10 +122,10 @@ class AV(ToxAV):
         print("Starting audio encode thread...")
 
         while not self.stop:
-            try:
-                self.send_audio(960, self.aistream.read(960))
-            except Exception as e:
-                print(e)
+            #try:
+            #    self.send_audio(960, self.aistream.read(960))
+            #except Exception as e:
+            #    print(e)
 
             sleep(0.01)
 
@@ -133,15 +133,15 @@ class AV(ToxAV):
         print("Starting audio decode thread...")
 
         while not self.stop:
-            try:
-                aret = self.recv_audio()
-                if aret:
-                    if self.debug:
-                        sys.stdout.write('.')
-                        sys.stdout.flush()
-                    self.aostream.write(aret["data"])
-            except Exception as e:
-                print(e)
+            #try:
+            #    aret = self.recv_audio()
+            #    if aret:
+            #        if self.debug:
+            #            sys.stdout.write('.')
+            #            sys.stdout.flush()
+            #        self.aostream.write(aret["data"])
+            #except Exception as e:
+            #    print(e)
 
             sleep(0.01)
 
