@@ -627,9 +627,11 @@ ToxAV_callback_stub(ToxAV* self, PyObject* args)
   Py_RETURN_NONE;
 }
 
-#define METHOD_DEF(name)                                     \
-  {                                                          \
-    #name, (PyCFunction)ToxAV_callback_stub, METH_NOARGS, "" \
+#define METHOD_DEF(name)                                   \
+  {                                                        \
+    #name, (PyCFunction)ToxAV_callback_stub, METH_NOARGS,  \
+    #name "\n"                                             \
+    #name " handler, default implementation does nothing." \
   }
 
 PyMethodDef ToxAV_methods[] = {
@@ -645,57 +647,118 @@ PyMethodDef ToxAV_methods[] = {
   METHOD_DEF(on_request_timeout),
   METHOD_DEF(on_peer_timeout),
   {
-    "call", (PyCFunction)ToxAV_call, METH_VARARGS, ""
+    "call", (PyCFunction)ToxAV_call, METH_VARARGS,
+    "call(friend_id, call_type, seconds)\n"
+    "Call a friend with *friend_id*, with *seconds* ringing timeout.\n\n"
+    "*call_type* can be one of following value:\n\n"
+    "+------------------+-----------------------+\n"
+    "| control_type     | description           |\n"
+    "+==================+=======================+\n"
+    "| ToxAV.TypeAudio  | audio only call       |\n"
+    "+------------------+-----------------------+\n"
+    "| ToxAV.TypeVideo  | audio and video call  |\n"
+    "+------------------+-----------------------+\n"
   },
   {
-    "hangup", (PyCFunction)ToxAV_hangup, METH_NOARGS, ""
+    "hangup", (PyCFunction)ToxAV_hangup, METH_NOARGS,
+    "hangup()\n"
+    "Hangup active call."
   },
   {
-    "answer", (PyCFunction)ToxAV_answer, METH_VARARGS, ""
+    "answer", (PyCFunction)ToxAV_answer, METH_VARARGS,
+    "answer(call_type)\n"
+    "Answer incomming call.\n\n"
+    ".. seealso ::\n"
+    "    :meth:`.call`"
   },
   {
-    "reject", (PyCFunction)ToxAV_reject, METH_VARARGS, ""
+    "reject", (PyCFunction)ToxAV_reject, METH_VARARGS,
+    "reject()\n"
+    "Reject incomming call."
   },
   {
-    "cancel", (PyCFunction)ToxAV_cancel, METH_VARARGS, ""
+    "cancel", (PyCFunction)ToxAV_cancel, METH_VARARGS,
+    "cancel()\n"
+    "Cancel outgoing request."
   },
   {
-    "stop_call", (PyCFunction)ToxAV_stop_call, METH_NOARGS, ""
+    "stop_call", (PyCFunction)ToxAV_stop_call, METH_NOARGS,
+    "stop_call()\n"
+    "Terminate transmission. Note that transmission will be terminated "
+    "without informing remote peer."
   },
   {
     "prepare_transmission", (PyCFunction)ToxAV_prepare_transmission,
-    METH_VARARGS, ""
+    METH_VARARGS,
+    "prepare_transmission(support_video)\n"
+    "Must be call before any RTP transmission occurs. *support_video* is "
+    "either True or False."
   },
   {
     "kill_transmission", (PyCFunction)ToxAV_kill_transmission,
-    METH_NOARGS, ""
+    METH_NOARGS,
+    "kill_transmission()\n"
+    "Call this at the end of the transmission."
   },
   {
-    "recv_video", (PyCFunction)ToxAV_recv_video, METH_VARARGS, ""
+    "recv_video", (PyCFunction)ToxAV_recv_video, METH_VARARGS,
+    "recv_video()\n"
+    "Receive decoded video packet."
   },
   {
-    "recv_audio", (PyCFunction)ToxAV_recv_audio, METH_VARARGS, ""
+    "recv_audio", (PyCFunction)ToxAV_recv_audio, METH_VARARGS,
+    "recv_audio()\n"
+    "Receive decoded audio packet."
   },
   {
-    "send_video", (PyCFunction)ToxAV_send_video, METH_VARARGS, ""
+    "send_video", (PyCFunction)ToxAV_send_video, METH_VARARGS,
+    "send_video(data)\n"
+    "Encode and send video packet. *data* should be a str or buffer"
+    "containing a image in RGB888 format."
   },
   {
-    "send_audio", (PyCFunction)ToxAV_send_audio, METH_VARARGS, ""
+    "send_audio", (PyCFunction)ToxAV_send_audio, METH_VARARGS,
+    "send_audio(frame_size, data)\n"
+    "Encode and send video packet. *data* should be a str or buffer"
+    "containing singal channel 16 bit signed PCM audio data."
   },
   {
     "get_peer_transmission_type",
-    (PyCFunction)ToxAV_get_peer_transmission_type, METH_VARARGS, ""
+    (PyCFunction)ToxAV_get_peer_transmission_type, METH_VARARGS,
+    "get_peer_transmission_type(peer_num)\n"
+    "Get peer transmission type. It can either be audio or video."
+    "*peer_num* is always 0 for now."
   },
   {
-    "get_peer_id", (PyCFunction)ToxAV_get_peer_id, METH_VARARGS, ""
+    "get_peer_id", (PyCFunction)ToxAV_get_peer_id, METH_VARARGS,
+    "get_peer_id(peer_num)\n"
+    "Get *friend_number* of peer participating in conversation. *peer_num* "
+    "is always 0 for now."
+
   },
   {
     "capability_supported", (PyCFunction)ToxAV_capability_supported,
-    METH_VARARGS, ""
+    METH_VARARGS,
+    "capability_supported(capability)\n"
+    "Query if certain capability is supported.\n\n"
+    "*capability* can be one of following value:\n\n"
+    "+----------------------+-----------------+\n"
+    "| control_type         | description     |\n"
+    "+======================+=================+\n"
+    "| ToxAV.AudioEncoding  | audio encoding  |\n"
+    "+----------------------+-----------------+\n"
+    "| ToxAV.AudioDecoding  | audio decoding  |\n"
+    "+----------------------+-----------------+\n"
+    "| ToxAV.VideoEncoding  | video encoding  |\n"
+    "+----------------------+-----------------+\n"
+    "| ToxAV.VideoEncoding  | video decoding  |\n"
+    "+----------------------+-----------------+\n"
   },
   {
     "get_tox", (PyCFunction)ToxAV_get_tox,
-    METH_VARARGS, ""
+    METH_VARARGS,
+    "get_tox()\n"
+    "Get the Tox object associated with this ToxAV instance."
   },
 };
 
