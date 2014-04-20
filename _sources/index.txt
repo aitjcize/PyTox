@@ -28,6 +28,15 @@ Module Documentation
 
     tox
 
+Class Documentation
+-------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    tox.Tox
+    tox.ToxAV
+
 Indices and tables
 ------------------
 
