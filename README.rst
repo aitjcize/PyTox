@@ -25,7 +25,7 @@ PyTox provides a Pythonic binding, i.e Object-oriented instead of C style, raise
             print 'Accepted.'
     
         def on_friend_message(self, friendId, message):
-            name = self.getname(friendId)
+            name = self.get_name(friendId)
             print '%s: %s' % (name, message)
             print 'EchoBot: %s' % message
             self.send_message(friendId, message)

@@ -1,11 +1,11 @@
 tox Module
 ==========
 
-PyTox wraps libtoxcore API with the object tox.Tox, all the tox API methods are
-in this class.
+The tox module contains two classes:
 
-.. automodule:: tox
-   :members:
+.. toctree::
+    :maxdepth: 1
 
-.. autoclass:: tox.Tox
-   :members:
+    tox.Tox
+    tox.ToxAV
+
