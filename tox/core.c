@@ -34,35 +34,35 @@ static void callback_friend_request(Tox* tox, uint8_t* public_key,
   bytes_to_hex_string(public_key, TOX_CLIENT_ID_SIZE, buf);
 
   PyObject_CallMethod((PyObject*)self, "on_friend_request", "ss#", buf, data,
-      length);
+      length - (data[length - 1] == 0));
 }
 
 static void callback_friend_message(Tox *tox, int32_t friendnumber,
     uint8_t* message, uint16_t length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_friend_message", "is#", friendnumber,
-      message, length);
+      message, length - (message[length - 1] == 0));
 }
 
 static void callback_action(Tox *tox, int32_t friendnumber, uint8_t* action,
     uint16_t length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_friend_action", "is#", friendnumber,
-      action, length);
+      action, length - (action[length - 1] == 0));
 }
 
 static void callback_name_change(Tox *tox, int32_t friendnumber,
     uint8_t* newname, uint16_t length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_name_change", "is#", friendnumber,
-      newname, length);
+      newname, length - (newname[length - 1] == 0));
 }
 
 static void callback_status_message(Tox *tox, int32_t friendnumber,
     uint8_t *newstatus, uint16_t length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_status_message", "is#", friendnumber,
-      newstatus, length);
+      newstatus, length - (newstatus[length - 1] == 0));
 }
 
 static void callback_user_status(Tox *tox, int32_t friendnumber,
@@ -108,14 +108,14 @@ static void callback_group_message(Tox *tox, int groupid,
     int friendgroupid, uint8_t* message, uint16_t length, void *self)
 {
   PyObject_CallMethod((PyObject*)self, "on_group_message", "iis#", groupid,
-      friendgroupid, message, length);
+      friendgroupid, message, length - (message[length - 1] == 0));
 }
 
 static void callback_group_action(Tox *tox, int groupid,
     int friendgroupid, uint8_t* action, uint16_t length, void *self)
 {
   PyObject_CallMethod((PyObject*)self, "on_group_action", "iis#", groupid,
-      friendgroupid, action, length);
+      friendgroupid, action, length - (action[length - 1] == 0));
 }
 
 static void callback_group_namelist_change(Tox *tox, int groupid,
@@ -131,7 +131,7 @@ static void callback_file_send_request(Tox *m, int32_t friendnumber,
 {
   PyObject_CallMethod((PyObject*)self, "on_file_send_request", "iiKs#",
       friendnumber, filenumber, filesize, filename,
-      filename_length);
+      filename_length - (filename[filename_length - 1] == 0));
 }
 
 static void callback_file_control(Tox *m, int32_t friendnumber,
