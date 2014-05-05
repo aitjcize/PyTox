@@ -1,5 +1,7 @@
 include tox/*.c
 include tox/*.h
+include tests/*.py
+include examples/*.py
 include README.rst
 include COPYING
 include MANIFEST.in
