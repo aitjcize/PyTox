@@ -4,7 +4,7 @@ from subprocess import Popen, PIPE
 def supports_av():
     h = Popen("ldconfig -p | grep toxav", shell=True, stdout=PIPE)
     out, err = h.communicate()
-    return 'toxav' in out
+    return 'toxav' in str(out)
 
 sources = ["tox/tox.c", "tox/core.c", "tox/util.c"]
 libraries = ["toxcore"]
