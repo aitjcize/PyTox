@@ -25,9 +25,16 @@
 
 #include "core.h"
 
+#ifdef ENABLE_AV
+  #include "av.h"
+#endif
+
 extern PyObject* ToxOpError;
 extern PyTypeObject ToxCoreType;
+
+#ifdef ENABLE_AV
 extern PyTypeObject ToxAVType;
+#endif
 
 #if PY_MAJOR_VERSION >= 3
 struct PyModuleDef moduledef = {
@@ -58,7 +65,9 @@ PyMODINIT_FUNC inittox(void)
   }
 
   ToxCore_install_dict();
+#ifdef ENABLE_AV
   ToxAV_install_dict();
+#endif
 
   // Initialize toxcore
   if (PyType_Ready(&ToxCoreType) < 0) {
@@ -72,6 +81,7 @@ PyMODINIT_FUNC inittox(void)
   ToxOpError = PyErr_NewException("tox.OperationFailedError", NULL, NULL);
   PyModule_AddObject(m, "OperationFailedError", (PyObject*)ToxOpError);
 
+#ifdef ENABLE_AV
   // Initialize toxav
   if (PyType_Ready(&ToxAVType) < 0) {
     fprintf(stderr, "Invalid PyTypeObject `ToxAVType'\n");
@@ -80,6 +90,7 @@ PyMODINIT_FUNC inittox(void)
 
   Py_INCREF(&ToxAVType);
   PyModule_AddObject(m, "ToxAV", (PyObject*)&ToxAVType);
+#endif
 
 #if PY_MAJOR_VERSION >= 3
   return m;

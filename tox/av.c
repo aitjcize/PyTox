@@ -23,23 +23,11 @@
 #include <Python.h>
 #include <tox/toxav.h>
 
+#include "av.h"
 #include "core.h"
 #include "util.h"
 
-/* ToxAV definition */
-typedef struct {
-  PyObject_HEAD
-  PyObject* core;
-  ToxAv* av;
-  int16_t* pcm;
-  vpx_image_t* in_image;
-  uint32_t o_w, o_h;
-  unsigned char* out_image;
-  ToxAvCodecSettings cs;
-} ToxAV;
-
 extern PyObject* ToxOpError;
-
 
 #define AUDIO_FRAME_SIZE (av_DefaultSettings.audio_sample_rate * av_DefaultSettings.audio_frame_duration / 1000)
 
