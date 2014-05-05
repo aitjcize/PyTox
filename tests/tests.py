@@ -646,7 +646,7 @@ class ToxTest(unittest.TestCase):
         while not self.alice.completed:
             if CONTEXT['START']:
                 try:
-                    for i in range(100):
+                    while True:
                         if CONTEXT['SENT'] == FILE_SIZE:
                             self.bob.file_send_control(self.aid, 0, FN,
                                     Tox.FILECONTROL_FINISHED)
