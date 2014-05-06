@@ -1254,7 +1254,7 @@ ToxCore_set_nospam(ToxCore* self, PyObject* args)
 
   uint32_t nospam = 0;
 
-  if (!PyArg_ParseTuple(args, "k", &nospam)) {
+  if (!PyArg_ParseTuple(args, "I", &nospam)) {
     return NULL;
   }
 
@@ -1961,7 +1961,7 @@ PyMethodDef Tox_methods[] = {
     "set_nospam", (PyCFunction)ToxCore_set_nospam,
     METH_VARARGS,
     "set_nospam(nospam)\n"
-    "set nospam part of ID"
+    "set nospam part of ID. *nospam* should be of type uint32"
   },
   {
     "bootstrap_from_address", (PyCFunction)ToxCore_bootstrap_from_address,
