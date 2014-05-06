@@ -1238,6 +1238,32 @@ ToxCore_file_data_remaining(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
+ToxCore_get_nospam(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  uint32_t nospam = tox_get_nospam(self->tox);
+
+  return PyLong_FromUnsignedLongLong(nospam);
+}
+
+static PyObject*
+ToxCore_set_nospam(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  uint32_t nospam = 0;
+
+  if (!PyArg_ParseTuple(args, "k", &nospam)) {
+    return NULL;
+  }
+
+  tox_set_nospam(self->tox, nospam);
+
+  Py_RETURN_NONE;
+}
+
+static PyObject*
 ToxCore_bootstrap_from_address(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
@@ -1924,6 +1950,18 @@ PyMethodDef Tox_methods[] = {
     "file_data_remaining(friend_number, file_number, send_receive)\n"
     "Give the number of bytes left to be sent/received. *send_receive* is "
     "0 for sending and 1 for receiving."
+  },
+  {
+    "get_nospam", (PyCFunction)ToxCore_get_nospam,
+    METH_NOARGS,
+    "get_nospam()\n"
+    "get nospam part from ID"
+  },
+  {
+    "set_nospam", (PyCFunction)ToxCore_set_nospam,
+    METH_VARARGS,
+    "set_nospam(nospam)\n"
+    "set nospam part of ID"
   },
   {
     "bootstrap_from_address", (PyCFunction)ToxCore_bootstrap_from_address,

@@ -145,12 +145,17 @@ class ToxTest(unittest.TestCase):
         assert self.alice.isconnected()
         assert self.bob.isconnected()
 
-    def test_get_address(self):
+    def test_address(self):
         """
         t:get_address
+        t:get_nospam
+        t:set_nospam
         """
         assert len(self.alice.get_address()) == ADDR_SIZE
         assert len(self.bob.get_address()) == ADDR_SIZE
+
+        self.alice.set_nospam(0x12345678)
+        assert self.alice.get_nospam() == 0x12345678
 
     def test_self_name(self):
         """
