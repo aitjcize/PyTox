@@ -1344,42 +1344,9 @@ ToxCore_save(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  PyObject* keyobj = Py_None;
-  uint8_t* key = NULL;
-  Py_ssize_t key_len = 0;
-
-  if (!PyArg_ParseTuple(args, "|O", &keyobj)) {
-    return NULL;
-  }
-
-  if (PYSTRING_Check(keyobj)) {
-    PyStringUnicode_AsStringAnsSize(keyobj, (char**)&key, &key_len);
-  } else if (keyobj != Py_None) {
-    PyErr_SetString(ToxOpError, "invalid passphrase type");
-    return NULL;
-  }
-
-  int size = 0;
-  if (key) {
-    size = tox_size_encrypted(self->tox);
-  } else {
-    size = tox_size(self->tox);
-  }
+  uint32_t size = tox_size(self->tox);
   uint8_t* buf = (uint8_t*)malloc(size);
-
-  if (buf == NULL) {
-    return PyErr_NoMemory();
-  }
-
-  if (key) {
-    if (tox_save_encrypted(self->tox, buf, key, key_len) == -1) {
-      PyErr_SetString(ToxOpError, "tox_save_encrypted(): failed");
-      free(buf);
-      return NULL;
-    }
-  } else {
-    tox_save(self->tox, buf);
-  }
+  tox_save(self->tox, buf);
 
   PyObject* res = PYBYTES_FromStringAndSize((const char*)buf, size);
   free(buf);
@@ -1392,28 +1359,13 @@ ToxCore_save_to_file(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  PyObject* keyobj = Py_None;
   char* filename = NULL;
-  uint8_t* key = NULL;
-  Py_ssize_t key_len = 0;
 
-  if (!PyArg_ParseTuple(args, "s|O", &filename, &keyobj)) {
+  if (!PyArg_ParseTuple(args, "s", &filename)) {
     return NULL;
   }
 
-  if (PYSTRING_Check(keyobj)) {
-    PyStringUnicode_AsStringAnsSize(keyobj, (char**)&key, &key_len);
-  } else if (keyobj != Py_None) {
-    PyErr_SetString(ToxOpError, "invalid passphrase type");
-    return NULL;
-  }
-
-  int size = 0;
-  if (key) {
-    size = tox_size_encrypted(self->tox);
-  } else {
-    size = tox_size(self->tox);
-  }
+  int size = tox_size(self->tox);
 
   uint8_t* buf = (uint8_t*)malloc(size);
 
@@ -1421,15 +1373,7 @@ ToxCore_save_to_file(ToxCore* self, PyObject* args)
     return PyErr_NoMemory();
   }
 
-  if (key) {
-    if (tox_save_encrypted(self->tox, buf, key, key_len) == -1) {
-      PyErr_SetString(ToxOpError, "tox_save_encrypted(): failed");
-      free(buf);
-      return NULL;
-    }
-  } else {
-    tox_save(self->tox, buf);
-  }
+  tox_save(self->tox, buf);
 
   FILE* fp = fopen(filename, "w");
 
@@ -1453,32 +1397,15 @@ ToxCore_load(ToxCore* self, PyObject* args)
 
   uint8_t* data = NULL;
   int length = 0;
-  PyObject* keyobj = Py_None;
-  uint8_t* key = NULL;
-  Py_ssize_t key_len = 0;
 
-  if (!PyArg_ParseTuple(args, "s#|O", &data, &length, &keyobj)) {
+  if (!PyArg_ParseTuple(args, "s#", &data, &length)) {
     PyErr_SetString(ToxOpError, "no data specified");
     return NULL;
   }
 
-  if (PYSTRING_Check(keyobj)) {
-    PyStringUnicode_AsStringAnsSize(keyobj, (char**)&key, &key_len);
-  } else if (keyobj != Py_None) {
-    PyErr_SetString(ToxOpError, "invalid passphrase type");
+  if (tox_load(self->tox, data, length) == -1) {
+    PyErr_SetString(ToxOpError, "tox_load(): load failed");
     return NULL;
-  }
-
-  if (key) {
-    if (tox_load_encrypted(self->tox, data, length, key, key_len) == -1) {
-      PyErr_SetString(ToxOpError, "tox_load_encrypted(): load failed");
-      return NULL;
-    }
-  } else {
-    if (tox_load(self->tox, data, length) == -1) {
-      PyErr_SetString(ToxOpError, "tox_load(): load failed");
-      return NULL;
-    }
   }
 
   Py_RETURN_NONE;
@@ -1490,18 +1417,8 @@ ToxCore_load_from_file(ToxCore* self, PyObject* args)
   CHECK_TOX(self);
 
   char* filename = NULL;
-  PyObject* keyobj = Py_None;
-  uint8_t* key = NULL;
-  Py_ssize_t key_len = 0;
 
-  if (!PyArg_ParseTuple(args, "s|O", &filename, &keyobj)) {
-    return NULL;
-  }
-
-  if (PYSTRING_Check(keyobj)) {
-    PyStringUnicode_AsStringAnsSize(keyobj, (char**)&key, &key_len);
-  } else if (keyobj != Py_None) {
-    PyErr_SetString(ToxOpError, "invalid passphrase type");
+  if (!PyArg_ParseTuple(args, "s", &filename)) {
     return NULL;
   }
 
@@ -1526,18 +1443,10 @@ ToxCore_load_from_file(ToxCore* self, PyObject* args)
     return NULL;
   }
 
-  if (key) {
-    if (tox_load_encrypted(self->tox, data, length, key, key_len) == -1) {
-      PyErr_SetString(ToxOpError, "tox_load_encrypted(): load failed");
-      free(data);
-      return NULL;
-    }
-  } else {
-    if (tox_load(self->tox, data, length) == -1) {
-      PyErr_SetString(ToxOpError, "tox_load(): load failed");
-      free(data);
-      return NULL;
-    }
+  if (tox_load(self->tox, data, length) == -1) {
+    PyErr_SetString(ToxOpError, "tox_load(): load failed");
+    free(data);
+    return NULL;
   }
 
   free(data);
@@ -1992,22 +1901,22 @@ PyMethodDef Tox_methods[] = {
   },
   {
     "save", (PyCFunction)ToxCore_save, METH_VARARGS,
-    "save([passphrase=None])\n"
+    "save()\n"
     "Return messenger blob in str."
   },
   {
     "save_to_file", (PyCFunction)ToxCore_save_to_file, METH_VARARGS,
-    "save_to_file(filename[, passphrase=None])\n"
+    "save_to_file(filename)\n"
     "Save the messenger to a file."
   },
   {
     "load", (PyCFunction)ToxCore_load, METH_VARARGS,
-    "load(blob[, passphrase=None])\n"
+    "load(blob)\n"
     "Load the messenger from *blob*."
   },
   {
     "load_from_file", (PyCFunction)ToxCore_load_from_file, METH_VARARGS,
-    "load_from_file(filename[, passphrase=None])\n"
+    "load_from_file(filename)\n"
     "Load the messenger from file."
   },
   {NULL}
