@@ -23,10 +23,12 @@
 #include "core.h"
 #include "util.h"
 
+#include <arpa/inet.h>
+
 extern PyObject* ToxOpError;
 
-static void callback_friend_request(Tox* tox, uint8_t* public_key,
-    uint8_t* data, uint16_t length, void* self)
+static void callback_friend_request(Tox* tox, const uint8_t* public_key,
+    const uint8_t* data, uint16_t length, void* self)
 {
   uint8_t buf[TOX_CLIENT_ID_SIZE * 2 + 1];
   memset(buf, 0, TOX_CLIENT_ID_SIZE * 2 + 1);

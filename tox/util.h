@@ -45,7 +45,7 @@
   #define PYBYTES_FromStringAndSize PyBytes_FromStringAndSize
 #endif
 
-void bytes_to_hex_string(uint8_t* digest, int length, uint8_t* hex_digest);
+void bytes_to_hex_string(const uint8_t* digest, int length, uint8_t* hex_digest);
 
 void hex_string_to_bytes(uint8_t* hexstr, int length, uint8_t* bytes);
 

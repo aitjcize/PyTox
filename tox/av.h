@@ -16,6 +16,6 @@ typedef struct {
   ToxAvCodecSettings cs;
 } ToxAV;
 
-void ToxAV_install_dict();
+void ToxAV_install_dict(void);
 
 #endif /* __AV_H__ */
