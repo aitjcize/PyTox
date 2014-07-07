@@ -33,15 +33,16 @@ SERVER = ["54.199.139.199", 33445, "7F9C31FE850E97CEFD4C4591DF93FC757C7C12549DDD
 DATA = 'data'
 
 class AV(ToxAV):
-    def __init__(self, core, width, height):
-        super(AV, self).__init__(core, width, height)
+    def __init__(self, core, max_calls):
+        super(AV, self).__init__(core, max_calls)
         self.core = self.get_tox()
         self.daemon = True
         self.stop = True
         self.call_type = self.TypeAudio
+        self.prepare_transmission(width, height, True)
 
     def on_invite(self):
-        self.call_type = self.get_peer_transmission_type(0)
+        self.call_type = self.get_peer_transmission_type(0, 0)
         print("Incoming %s call from %s ..." % (
                 "video" if self.call_type == self.TypeVideo else "audio",
                 self.core.get_name(self.get_peer_id(0))))
@@ -50,7 +51,7 @@ class AV(ToxAV):
         print("Answered, in call...")
 
     def on_start(self):
-        self.call_type = self.get_peer_transmission_type(0)
+        self.call_type = self.get_peer_transmission_type(0, 0)
         self.prepare_transmission(True)
 
         self.stop = False

@@ -423,8 +423,10 @@ ToxAV_prepare_transmission(ToxAV* self, PyObject* args)
   }
 
   ToxAvCodecSettings cs = av_DefaultSettings;
-  cs.video_height = height;
-  cs.video_width = width;
+  cs.max_video_height = height;
+  cs.max_video_width = width;
+
+  self->in_image = vpx_img_alloc(NULL, VPX_IMG_FMT_I420, width, height, 1);
 
   int ret = toxav_prepare_transmission(self->av, idx, &cs, support_video);
   if (ret < 0) {

@@ -40,28 +40,28 @@ static void callback_friend_request(Tox* tox, const uint8_t* public_key,
 }
 
 static void callback_friend_message(Tox *tox, int32_t friendnumber,
-    uint8_t* message, uint16_t length, void* self)
+    const uint8_t* message, uint16_t length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_friend_message", "is#", friendnumber,
       message, length - (message[length - 1] == 0));
 }
 
-static void callback_action(Tox *tox, int32_t friendnumber, uint8_t* action,
-    uint16_t length, void* self)
+static void callback_action(Tox *tox, int32_t friendnumber,
+    const uint8_t* action, uint16_t length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_friend_action", "is#", friendnumber,
       action, length - (action[length - 1] == 0));
 }
 
 static void callback_name_change(Tox *tox, int32_t friendnumber,
-    uint8_t* newname, uint16_t length, void* self)
+    const uint8_t* newname, uint16_t length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_name_change", "is#", friendnumber,
       newname, length - (newname[length - 1] == 0));
 }
 
 static void callback_status_message(Tox *tox, int32_t friendnumber,
-    uint8_t *newstatus, uint16_t length, void* self)
+    const uint8_t *newstatus, uint16_t length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_status_message", "is#", friendnumber,
       newstatus, length - (newstatus[length - 1] == 0));
@@ -96,7 +96,7 @@ static void callback_connection_status(Tox *tox, int32_t friendnumber,
 }
 
 static void callback_group_invite(Tox *tox, int32_t friendnumber,
-    uint8_t* group_public_key, void *self)
+    const uint8_t* group_public_key, void *self)
 {
   uint8_t gpk[TOX_CLIENT_ID_SIZE * 2 + 1];
   memset(gpk, 0, TOX_CLIENT_ID_SIZE * 2 + 1);
@@ -107,14 +107,14 @@ static void callback_group_invite(Tox *tox, int32_t friendnumber,
 }
 
 static void callback_group_message(Tox *tox, int groupid,
-    int friendgroupid, uint8_t* message, uint16_t length, void *self)
+    int friendgroupid, const uint8_t* message, uint16_t length, void *self)
 {
   PyObject_CallMethod((PyObject*)self, "on_group_message", "iis#", groupid,
       friendgroupid, message, length - (message[length - 1] == 0));
 }
 
 static void callback_group_action(Tox *tox, int groupid,
-    int friendgroupid, uint8_t* action, uint16_t length, void *self)
+    int friendgroupid, const uint8_t* action, uint16_t length, void *self)
 {
   PyObject_CallMethod((PyObject*)self, "on_group_action", "iis#", groupid,
       friendgroupid, action, length - (action[length - 1] == 0));
@@ -128,7 +128,7 @@ static void callback_group_namelist_change(Tox *tox, int groupid,
 }
 
 static void callback_file_send_request(Tox *m, int32_t friendnumber,
-    uint8_t filenumber, uint64_t filesize, uint8_t* filename,
+    uint8_t filenumber, uint64_t filesize, const uint8_t* filename,
     uint16_t filename_length, void* self)
 {
   PyObject_CallMethod((PyObject*)self, "on_file_send_request", "iiKs#",
@@ -138,7 +138,7 @@ static void callback_file_send_request(Tox *m, int32_t friendnumber,
 
 static void callback_file_control(Tox *m, int32_t friendnumber,
     uint8_t receive_send, uint8_t filenumber, uint8_t control_type,
-    uint8_t* data, uint16_t length, void* self)
+    const uint8_t* data, uint16_t length, void* self)
 {
 #if PY_MAJOR_VERSION < 3
   PyObject_CallMethod((PyObject*)self, "on_file_control", "iiiis#",
@@ -150,7 +150,7 @@ static void callback_file_control(Tox *m, int32_t friendnumber,
 }
 
 static void callback_file_data(Tox *m, int32_t friendnumber, uint8_t filenumber,
-    uint8_t* data, uint16_t length, void* self)
+    const uint8_t* data, uint16_t length, void* self)
 {
 #if PY_MAJOR_VERSION < 3
   PyObject_CallMethod((PyObject*)self, "on_file_data", "iis#",
