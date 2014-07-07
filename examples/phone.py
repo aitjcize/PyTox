@@ -41,7 +41,7 @@ cap = cv2.VideoCapture(0)
 audio = pyaudio.PyAudio()
 
 class AV(ToxAV):
-    def __init__(self, core, width, height, debug=False):
+    def __init__(self, core, max_calls, debug=False):
         self.debug = debug
         self.core = self.get_tox()
         self.stop = True
@@ -54,16 +54,16 @@ class AV(ToxAV):
         self.height = 480
 
     def on_invite(self):
-        self.call_type = self.get_peer_transmission_type(0)
+        self.call_type = self.get_peer_transmission_type(0, 0)
         print("Incoming %s call from %s ..." % (
                 "video" if self.call_type == self.TypeVideo else "audio",
                 self.core.get_name(self.get_peer_id(0))))
 
-        self.answer(self.call_type)
+        self.answer(0, self.call_type)
         print("Answered, in call...")
 
     def on_start(self):
-        self.call_type = self.get_peer_transmission_type(0)
+        self.call_type = self.get_peer_transmission_type(0, 0)
         self.prepare_transmission(0, self.width, self.height, True)
 
         self.stop = False
@@ -192,7 +192,7 @@ class Phone(Tox):
         print('ID: %s' % self.get_address())
 
         self.connect()
-        self.av = AV(self, 640, 480)
+        self.av = AV(self, 1)
 
     def connect(self):
         print('connecting...')

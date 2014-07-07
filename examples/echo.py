@@ -34,7 +34,6 @@ DATA = 'data'
 
 class AV(ToxAV):
     def __init__(self, core, max_calls):
-        super(AV, self).__init__(core, max_calls)
         self.core = self.get_tox()
         self.daemon = True
         self.stop = True
