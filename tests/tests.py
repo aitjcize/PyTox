@@ -32,11 +32,13 @@ class ToxTest(unittest.TestCase):
     def loop(self, n):
         """
         t:do
+        t:do_interval
         """
+        interval = self.bob.do_interval()
         for i in range(n):
             self.alice.do()
             self.bob.do()
-            sleep(0.02)
+            sleep(interval / 1000.0)
 
     def loop_until_connected(self):
         """

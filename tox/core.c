@@ -1319,6 +1319,16 @@ ToxCore_kill(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
+ToxCore_do_interval(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  uint32_t interval = tox_do_interval(self->tox);
+
+  return PyLong_FromUnsignedLongLong(interval);
+}
+
+static PyObject*
 ToxCore_do(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
@@ -1890,6 +1900,11 @@ PyMethodDef Tox_methods[] = {
     "kill", (PyCFunction)ToxCore_kill, METH_NOARGS,
     "kill()\n"
     "Run this before closing shop."
+  },
+  {
+    "do_interval", (PyCFunction)ToxCore_do_interval, METH_NOARGS,
+    "do_interval()\n"
+    "returns time (in ms) before the next tox_do() needs to be run on success."
   },
   {
     "do", (PyCFunction)ToxCore_do, METH_NOARGS,
