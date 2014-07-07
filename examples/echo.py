@@ -39,20 +39,21 @@ class AV(ToxAV):
         self.daemon = True
         self.stop = True
         self.call_type = self.TypeAudio
-        self.prepare_transmission(width, height, True)
+        self.width = 640
+        self.height = 480
 
     def on_invite(self):
         self.call_type = self.get_peer_transmission_type(0, 0)
         print("Incoming %s call from %s ..." % (
                 "video" if self.call_type == self.TypeVideo else "audio",
-                self.core.get_name(self.get_peer_id(0))))
+                self.core.get_name(self.get_peer_id(0, 0))))
 
         self.answer(self.call_type)
         print("Answered, in call...")
 
     def on_start(self):
         self.call_type = self.get_peer_transmission_type(0, 0)
-        self.prepare_transmission(True)
+        self.prepare_transmission(self.width, self.height, True)
 
         self.stop = False
         self.a_thread = Thread(target=self.audio_transmission)
@@ -117,7 +118,7 @@ class EchoBot(Tox):
         print('ID: %s' % self.get_address())
 
         self.connect()
-        self.av = AV(self, 640, 480)
+        self.av = AV(self, 1)
 
     def connect(self):
         print('connecting...')
