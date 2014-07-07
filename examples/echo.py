@@ -48,12 +48,12 @@ class AV(ToxAV):
                 "video" if self.call_type == self.TypeVideo else "audio",
                 self.core.get_name(self.get_peer_id(0, 0))))
 
-        self.answer(self.call_type)
+        self.answer(0, self.call_type)
         print("Answered, in call...")
 
     def on_start(self):
         self.call_type = self.get_peer_transmission_type(0, 0)
-        self.prepare_transmission(self.width, self.height, True)
+        self.prepare_transmission(0, self.width, self.height, True)
 
         self.stop = False
         self.a_thread = Thread(target=self.audio_transmission)
@@ -83,11 +83,11 @@ class AV(ToxAV):
 
         while not self.stop:
             try:
-                ret = self.recv_audio()
+                ret = self.recv_audio(0)
                 if ret:
                     sys.stdout.write('.')
                     sys.stdout.flush()
-                    self.send_audio(ret["size"], ret["data"])
+                    self.send_audio(0, ret["size"], ret["data"])
             except Exception as e:
                 print(e)
 
@@ -98,11 +98,11 @@ class AV(ToxAV):
 
         while not self.stop:
             try:
-                vret = self.recv_video()
+                vret = self.recv_video(0)
                 if vret:
                     sys.stdout.write('*')
                     sys.stdout.flush()
-                    self.send_video(vret['data'])
+                    self.send_video(0, vret['data'])
             except Exception as e:
                 print(e)
 

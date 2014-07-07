@@ -50,6 +50,8 @@ class AV(ToxAV):
         self.ad_thread = None
         self.ve_thread = None
         self.vd_thread = None
+        self.width = 640
+        self.height = 480
 
     def on_invite(self):
         self.call_type = self.get_peer_transmission_type(0)
@@ -62,7 +64,7 @@ class AV(ToxAV):
 
     def on_start(self):
         self.call_type = self.get_peer_transmission_type(0)
-        self.prepare_transmission(True)
+        self.prepare_transmission(0, self.width, self.height, True)
 
         self.stop = False
         self.aistream = audio.open(format=pyaudio.paInt16, channels=1,
@@ -123,7 +125,7 @@ class AV(ToxAV):
 
         while not self.stop:
             try:
-                self.send_audio(960, self.aistream.read(960))
+                self.send_audio(0, 960, self.aistream.read(960))
             except Exception as e:
                 print(e)
 
@@ -134,7 +136,7 @@ class AV(ToxAV):
 
         while not self.stop:
             try:
-                aret = self.recv_audio()
+                aret = self.recv_audio(0)
                 if aret:
                     if self.debug:
                         sys.stdout.write('.')
@@ -153,7 +155,7 @@ class AV(ToxAV):
                 ret, frame = cap.read()
                 if ret:
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    self.send_video(frame.tostring())
+                    self.send_video(0, frame.tostring())
             except Exception as e:
                 print(e)
 
@@ -164,7 +166,7 @@ class AV(ToxAV):
 
         while not self.stop:
             try:
-                vret = self.recv_video()
+                vret = self.recv_video(0)
                 if vret:
                     if self.debug:
                         sys.stdout.write('*')
