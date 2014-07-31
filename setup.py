@@ -2,6 +2,7 @@ from distutils.core import setup, Extension
 from subprocess import Popen, PIPE
 
 def supports_av():
+    return False
     h = Popen("ldconfig -p | grep toxav", shell=True, stdout=PIPE)
     out, err = h.communicate()
     return 'toxav' in str(out)
