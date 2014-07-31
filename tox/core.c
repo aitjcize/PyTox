@@ -1266,6 +1266,27 @@ ToxCore_set_nospam(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
+ToxCore_get_keys(ToxCore* self, PyObject* args)
+{
+  uint8_t public_key[TOX_CLIENT_ID_SIZE];
+  uint8_t secret_key[TOX_CLIENT_ID_SIZE];
+
+  uint8_t public_key_hex[TOX_CLIENT_ID_SIZE * 2 + 1];
+  uint8_t secret_key_hex[TOX_CLIENT_ID_SIZE * 2 + 1];
+
+  tox_get_keys(self->tox, public_key, secret_key);
+  bytes_to_hex_string(public_key, TOX_CLIENT_ID_SIZE, public_key_hex);
+  bytes_to_hex_string(secret_key, TOX_CLIENT_ID_SIZE, secret_key_hex);
+
+  PyObject* res = PyTuple_New(2);
+  PyTuple_SetItem(res, 0, PYSTRING_FromStringAndSize(public_key_hex,
+        TOX_CLIENT_ID_SIZE * 2));
+  PyTuple_SetItem(res, 1, PYSTRING_FromStringAndSize(secret_key_hex,
+        TOX_CLIENT_ID_SIZE * 2));
+  return res;
+}
+
+static PyObject*
 ToxCore_bootstrap_from_address(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
@@ -1883,6 +1904,13 @@ PyMethodDef Tox_methods[] = {
     METH_VARARGS,
     "set_nospam(nospam)\n"
     "set nospam part of ID. *nospam* should be of type uint32"
+  },
+  {
+    "get_keys", (PyCFunction)ToxCore_get_keys,
+    METH_NOARGS,
+    "get_keys()\n"
+    "Get the public and secret key from the Tox object. Return a tuple "
+    "(public_key, secret_key)"
   },
   {
     "bootstrap_from_address", (PyCFunction)ToxCore_bootstrap_from_address,

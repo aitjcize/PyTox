@@ -152,12 +152,16 @@ class ToxTest(unittest.TestCase):
         t:get_address
         t:get_nospam
         t:set_nospam
+        t:get_keys
         """
         assert len(self.alice.get_address()) == ADDR_SIZE
         assert len(self.bob.get_address()) == ADDR_SIZE
 
         self.alice.set_nospam(0x12345678)
         assert self.alice.get_nospam() == 0x12345678
+
+        pk, sk = self.alice.get_keys()
+        assert pk == self.alice.get_address()[:CLIENT_ID_SIZE]
 
     def test_self_name(self):
         """
