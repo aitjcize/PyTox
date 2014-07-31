@@ -13,7 +13,7 @@ typedef struct {
   vpx_image_t* in_image;
   uint32_t o_w, o_h;
   unsigned char* out_image;
-  ToxAvCodecSettings cs;
+  ToxAvCSettings cs;
 } ToxAV;
 
 void ToxAV_install_dict(void);

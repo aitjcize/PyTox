@@ -422,7 +422,7 @@ ToxAV_prepare_transmission(ToxAV* self, PyObject* args)
     return NULL;
   }
 
-  ToxAvCodecSettings cs = av_DefaultSettings;
+  ToxAvCSettings cs = av_DefaultSettings;
   cs.max_video_height = height;
   cs.max_video_width = width;
 
