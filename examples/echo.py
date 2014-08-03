@@ -37,12 +37,12 @@ class AV(ToxAV):
         self.core = self.get_tox()
         self.daemon = True
         self.stop = True
+        self.cs = None
         self.call_type = self.TypeAudio
-        self.width = 640
-        self.height = 480
 
     def on_invite(self):
-        self.call_type = self.get_peer_transmission_type(0, 0)
+        self.cs = self.get_peer_csettings(0, 0)
+        self.call_type = self.cs["call_type"]
         print("Incoming %s call from %s ..." % (
                 "video" if self.call_type == self.TypeVideo else "audio",
                 self.core.get_name(self.get_peer_id(0, 0))))
@@ -51,20 +51,11 @@ class AV(ToxAV):
         print("Answered, in call...")
 
     def on_start(self):
-        self.call_type = self.get_peer_transmission_type(0, 0)
-        self.prepare_transmission(0, self.width, self.height, True)
-
-        self.stop = False
-        self.a_thread = Thread(target=self.audio_transmission)
-        self.a_thread.daemon = True
-        self.a_thread.start()
-
-        if self.call_type == self.TypeVideo:
-            self.v_thread = Thread(target=self.video_transmission)
-            self.v_thread.daemon = True
-            self.v_thread.start()
+        print 'on_start'
+        self.prepare_transmission(0, self.jbufdc * 2, self.VADd, True)
 
     def on_end(self):
+        print 'on_end'
         self.stop = True
         self.kill_transmission()
         self.a_thread.join()
@@ -77,36 +68,18 @@ class AV(ToxAV):
     def on_peer_timeout(self):
         self.stop_call()
 
-    def audio_transmission(self):
-        print("Starting audio transmission...")
+    def on_audio(self):
+        print 'on_audio'
 
-        while not self.stop:
-            try:
-                ret = self.recv_audio(0)
-                if ret:
-                    sys.stdout.write('.')
-                    sys.stdout.flush()
-                    self.send_audio(0, ret["size"], ret["data"])
-            except Exception as e:
-                print(e)
+    #def on_audio(self, idx, size, data):
+    #    sys.stdout.write('.')
+    #    sys.stdout.flush()
+    #    self.send_audio(0, size, data)
 
-            sleep(0.001)
-
-    def video_transmission(self):
-        print("Starting video transmission...")
-
-        while not self.stop:
-            try:
-                vret = self.recv_video(0)
-                if vret:
-                    sys.stdout.write('*')
-                    sys.stdout.flush()
-                    self.send_video(0, vret['data'])
-            except Exception as e:
-                print(e)
-
-            sleep(0.001)
-
+    def on_video(self, idx, size, data):
+        sys.stdout.write('*')
+        sys.stdout.flush()
+        self.send_video(0, data)
 
 class EchoBot(Tox):
     def __init__(self):

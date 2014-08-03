@@ -9,7 +9,6 @@ typedef struct {
   PyObject_HEAD
   PyObject* core;
   ToxAv* av;
-  int16_t* pcm;
   vpx_image_t* in_image;
   uint32_t o_w, o_h;
   unsigned char* out_image;
