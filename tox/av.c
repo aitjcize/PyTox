@@ -32,9 +32,9 @@ extern PyObject* ToxOpError;
 #define AUDIO_FRAME_SIZE (av_DefaultSettings.audio_sample_rate * av_DefaultSettings.audio_frame_duration / 1000)
 
 #define CALLBACK_DEF(name)                                          \
-  void ToxAV_callback_##name(void* agent, int32_t id, void* self)   \
+  void ToxAV_callback_##name(void* agent, int32_t idx, void* self)  \
   {                                                                 \
-    PyObject_CallMethod((PyObject*)self, #name, NULL);              \
+    PyObject_CallMethod((PyObject*)self, #name, "i", idx);          \
   }
 
 CALLBACK_DEF(on_invite);
@@ -167,10 +167,8 @@ static void rgb_to_i420(unsigned char* rgb, vpx_image_t *img)
 void ToxAV_audio_recv_callback(ToxAv* av, int32_t call_idx, int16_t* data,
     int size, void* self)
 {
-  if (data) {
-    PyObject_CallMethod((PyObject*)self, "on_audio", "iis#", call_idx, size,
-        (char*)data, size << 1);
-  }
+  PyObject_CallMethod((PyObject*)self, "on_audio", "iis#", call_idx, size,
+      (char*)data, size << 1);
 }
 
 void ToxAV_video_recv_callback(ToxAv* av, int32_t call_idx, vpx_image_t* image,
@@ -250,7 +248,7 @@ static int init_helper(ToxAV* self, PyObject* args)
   toxav_register_video_recv_callback(self->av, ToxAV_video_recv_callback, self);
 
   if (self->in_image == NULL) {
-    //self->in_image = vpx_img_alloc(NULL, VPX_IMG_FMT_I420, width, height, 1);
+    self->in_image = vpx_img_alloc(NULL, VPX_IMG_FMT_I420, 640, 480, 1);
   }
 
   if (self->av == NULL) {
@@ -387,7 +385,7 @@ ToxAV_answer(ToxAV* self, PyObject* args)
 {
   int32_t idx = 0, call_type = 0;
 
-  if (!PyArg_ParseTuple(args, "ii", &idx, &call_type)) {
+  if (!PyArg_ParseTuple(args, "ii", &idx, &self->cs.call_type)) {
     return NULL;
   }
 

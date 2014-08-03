@@ -25,7 +25,6 @@ from tox import Tox, ToxAV
 
 from time import sleep, time
 from os.path import exists
-from threading import Thread
 from random import randint
 
 SERVER = ["54.199.139.199", 33445, "7F9C31FE850E97CEFD4C4591DF93FC757C7C12549DDD55F8EEAECC34FE76C029"]
@@ -35,51 +34,40 @@ DATA = 'data'
 class AV(ToxAV):
     def __init__(self, core, max_calls):
         self.core = self.get_tox()
-        self.daemon = True
-        self.stop = True
         self.cs = None
         self.call_type = self.TypeAudio
 
-    def on_invite(self):
-        self.cs = self.get_peer_csettings(0, 0)
+    def on_invite(self, idx):
+        self.cs = self.get_peer_csettings(idx, 0)
         self.call_type = self.cs["call_type"]
-        print("Incoming %s call from %s ..." % (
-                "video" if self.call_type == self.TypeVideo else "audio",
-                self.core.get_name(self.get_peer_id(0, 0))))
+        print("Incoming %s call from %d:%s ..." % (
+                "video" if self.call_type == self.TypeVideo else "audio", idx,
+                self.core.get_name(self.get_peer_id(idx, 0))))
 
-        self.answer(0, self.call_type)
+        self.answer(idx, self.call_type)
         print("Answered, in call...")
 
-    def on_start(self):
-        print 'on_start'
-        self.prepare_transmission(0, self.jbufdc * 2, self.VADd, True)
+    def on_start(self, idx):
+        self.prepare_transmission(idx, self.jbufdc * 2, self.VADd,
+                True if self.call_type == self.TypeVideo)
 
-    def on_end(self):
-        print 'on_end'
-        self.stop = True
+    def on_end(self, idx):
         self.kill_transmission()
-        self.a_thread.join()
-
-        if self.call_type == self.TypeVideo:
-            self.v_thread.join()
 
         print 'Call ended'
 
-    def on_peer_timeout(self):
+    def on_peer_timeout(self, idx):
         self.stop_call()
 
-    def on_audio(self):
-        print 'on_audio'
-
-    #def on_audio(self, idx, size, data):
-    #    sys.stdout.write('.')
-    #    sys.stdout.flush()
-    #    self.send_audio(0, size, data)
+    def on_audio(self, idx, size, data):
+        sys.stdout.write('.')
+        sys.stdout.flush()
+        self.send_audio(idx, size, data)
 
     def on_video(self, idx, size, data):
         sys.stdout.write('*')
         sys.stdout.flush()
-        self.send_video(0, data)
+        self.send_video(idx, data)
 
 class EchoBot(Tox):
     def __init__(self):
