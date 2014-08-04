@@ -167,13 +167,19 @@ static void rgb_to_i420(unsigned char* rgb, vpx_image_t *img)
 void ToxAV_audio_recv_callback(ToxAv* av, int32_t call_idx, int16_t* data,
     int size, void* self)
 {
+  PyGILState_STATE gstate = PyGILState_Ensure();
+
   PyObject_CallMethod((PyObject*)self, "on_audio", "iis#", call_idx, size,
       (char*)data, size << 1);
+
+  PyGILState_Release(gstate);
 }
 
 void ToxAV_video_recv_callback(ToxAv* av, int32_t call_idx, vpx_image_t* image,
     void* user)
 {
+  PyGILState_STATE gstate = PyGILState_Ensure();
+
   ToxAV* self = (ToxAV*)user;
 
   if (image == NULL) {
@@ -199,11 +205,15 @@ void ToxAV_video_recv_callback(ToxAv* av, int32_t call_idx, vpx_image_t* image,
 
   PyObject_CallMethod((PyObject*)self, "on_video", "iiis#", call_idx,
       self->o_w, self->o_h, self->out_image);
+
+  PyGILState_Release(gstate);
 }
 
 
 static int init_helper(ToxAV* self, PyObject* args)
 {
+  PyEval_InitThreads();
+
   if (self->av) {
     toxav_kill(self->av);
     self->av = NULL;
@@ -333,6 +343,12 @@ ToxAV_set_Error(int ret)
     break;
   case ErrorTerminatingVideoRtp:
     msg = "Returned in toxav_kill_transmission()";
+    break;
+  case ErrorPacketTooLarge:
+    msg = "Buffer exceeds size while encoding";
+    break;
+  case ErrorInvalidCodecState:
+    msg = "Codec state not initialized";
     break;
   default:
     msg = "Unknown error";
@@ -741,12 +757,12 @@ PyMethodDef ToxAV_methods[] = {
     "Call this at the end of the transmission."
   },
   {
-    "on_video", (PyCFunction)ToxAV_callback_stub, METH_NOARGS,
+    "on_video", (PyCFunction)ToxAV_callback_stub, METH_VARARGS,
     "on_video(idx, width, height, data)\n"
     "Receive decoded video packet. Default implementation does nothing."
   },
   {
-    "on_audio", (PyCFunction)ToxAV_callback_stub, METH_NOARGS,
+    "on_audio", (PyCFunction)ToxAV_callback_stub, METH_VARARGS,
     "on_audio(idx, size, data)\n"
     "Receive decoded audio packet. Default implementation does nothing."
   },

@@ -49,7 +49,7 @@ class AV(ToxAV):
 
     def on_start(self, idx):
         self.prepare_transmission(idx, self.jbufdc * 2, self.VADd,
-                True if self.call_type == self.TypeVideo)
+                True if self.call_type == self.TypeAudio else False)
 
     def on_end(self, idx):
         self.kill_transmission()
