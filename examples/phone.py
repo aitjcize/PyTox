@@ -45,109 +45,99 @@ class AV(ToxAV):
         self.debug = debug
         self.core = self.get_tox()
         self.stop = True
+        self.cs = None
         self.call_type = self.TypeAudio
         self.ae_thread = None
-        self.ad_thread = None
         self.ve_thread = None
-        self.vd_thread = None
-        self.width = 640
-        self.height = 480
+        self.frame_size = 960
 
-    def on_invite(self):
-        self.call_type = self.get_peer_transmission_type(0, 0)
-        print("Incoming %s call from %s ..." % (
-                "video" if self.call_type == self.TypeVideo else "audio",
+    def update_settings(self, idx):
+        self.cs = self.get_peer_csettings(idx, 0)
+        self.call_type = self.cs["call_type"]
+        self.frame_size = self.cs["audio_sample_rate"] * \
+                self.cs["audio_frame_duration"] / 1000
+
+    def on_invite(self, idx):
+        self.update_settings(idx)
+
+        print("Incoming %s call from %d:%s ..." % (
+                "video" if self.call_type == self.TypeVideo else "audio", idx,
                 self.core.get_name(self.get_peer_id(0))))
 
-        self.answer(0, self.call_type)
+        self.answer(idx, self.call_type)
         print("Answered, in call...")
 
-    def on_start(self):
-        self.call_type = self.get_peer_transmission_type(0, 0)
-        self.prepare_transmission(0, self.width, self.height, True)
+    def on_start(self, idx):
+        self.update_settings(idx)
+        self.prepare_transmission(idx, self.jbufdc * 2, self.VADd, True)
 
         self.stop = False
-        self.aistream = audio.open(format=pyaudio.paInt16, channels=1,
-                                  rate=48000, input=True,
-                                  frames_per_buffer=960)
-        self.aostream = audio.open(format=pyaudio.paInt16, channels=1,
-                                  rate=48000, output=True)
+        self.aistream = audio.open(format=pyaudio.paInt16,
+                                   channels=self.cs["audio_channels"],
+                                   rate=self.cs["audio_sample_rate"],
+                                   input=True,
+                                   frames_per_buffer=self.frame_size)
+        self.aostream = audio.open(format=pyaudio.paInt16,
+                                   channels=self.cs["audio_channels"],
+                                   rate=self.cs["audio_sample_rate"],
+                                   output=True)
 
-        self.ae_thread = Thread(target=self.audio_encode)
+        self.ae_thread = Thread(target=self.audio_encode, args=(idx,))
         self.ae_thread.daemon = True
-        self.ad_thread = Thread(target=self.audio_decode)
-        self.ad_thread.daemon = True
         self.ae_thread.start()
-        self.ad_thread.start()
 
         if self.call_type == self.TypeVideo:
-            self.ve_thread = Thread(target=self.video_encode)
+            self.ve_thread = Thread(target=self.video_encode, args=(idx,))
             self.ve_thread.daemon = True
-            self.vd_thread = Thread(target=self.video_decode)
-            self.vd_thread.daemon = True
             self.ve_thread.start()
-            self.vd_thread.start()
 
-    def on_end(self):
+    def on_end(self, idx):
         self.stop = True
         if self.ae_thread:
             self.ae_thread.join()
-        if self.ad_thread:
-            self.ad_thread.join()
         if self.call_type == self.TypeVideo:
             if self.ve_thread:
                 self.ve_thread.join()
-            if self.vd_thread:
-                self.vd_thread.join()
 
         self.kill_transmission()
         print("Call ended")
 
-    def on_starting(self):
-        self.on_start()
+    def on_starting(self, idx):
+        self.on_start(idx)
 
-    def on_ending(self):
-        self.on_end()
+    def on_ending(self, idx):
+        self.on_end(idx)
 
-    def on_cancel(self):
+    def on_cancel(self, idx):
         try:
-            self.stop_call()
+            self.stop_call(idx)
         except: pass
 
     def on_peer_timeout(self):
-        self.on_cancel()
+        self.on_cancel(idx)
 
     def on_request_timeout(self):
         self.on_cancel()
 
-    def audio_encode(self):
+    def audio_encode(self, idx):
         print("Starting audio encode thread...")
 
         while not self.stop:
             try:
-                self.send_audio(0, 960, self.aistream.read(960))
+                self.send_audio(idx, self.frame_size,
+                        self.aistream.read(self.frame_size))
             except Exception as e:
                 print(e)
 
             sleep(0.005)
 
-    def audio_decode(self):
-        print("Starting audio decode thread...")
+    def on_audio_data(self, idx, size, data):
+        if self.debug:
+            sys.stdout.write('.')
+            sys.stdout.flush()
+        self.aostream.write(data)
 
-        while not self.stop:
-            try:
-                aret = self.recv_audio(0)
-                if aret:
-                    if self.debug:
-                        sys.stdout.write('.')
-                        sys.stdout.flush()
-                    self.aostream.write(aret["data"])
-            except Exception as e:
-                print(e)
-
-            sleep(0.005)
-
-    def video_encode(self):
+    def video_encode(self, idx):
         print("Starting video encode thread...")
 
         while not self.stop:
@@ -155,32 +145,22 @@ class AV(ToxAV):
                 ret, frame = cap.read()
                 if ret:
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    self.send_video(0, frame.tostring())
+                    self.send_video(idx, frame.tostring())
             except Exception as e:
                 print(e)
 
             sleep(0.001)
 
-    def video_decode(self):
-        print("Starting video decode thread...")
+    def on_video_data(self, idx, width, height, data):
+        if self.debug:
+            sys.stdout.write('*')
+            sys.stdout.flush()
 
-        while not self.stop:
-            try:
-                vret = self.recv_video(0)
-                if vret:
-                    if self.debug:
-                        sys.stdout.write('*')
-                        sys.stdout.flush()
-
-                    frame = np.ndarray(shape=(vret['d_h'], vret['d_w'], 3),
-                            dtype=np.dtype(np.uint8), buffer=vret["data"])
-                    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-                    cv2.imshow('frame', frame)
-                    cv2.waitKey(1)
-            except Exception as e:
-                print(e)
-
-            sleep(0.001)
+        frame = np.ndarray(shape=(width, height, 3),
+                dtype=np.dtype(np.uint8), buffer=data)
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        cv2.imshow('frame', frame)
+        cv2.waitKey(1)
 
 
 class Phone(Tox):
@@ -268,7 +248,7 @@ class Phone(Tox):
 
     def call(self, friend_number):
         print('Calling %s ...' % self.get_name(friend_number))
-        self.av.call(friend_number, self.av.TypeVideo, 60)
+        idx = self.av.call(friend_number, self.av.TypeVideo, 60)
 
 if len(sys.argv) == 2:
     DATA = sys.argv[1]

@@ -169,8 +169,12 @@ void ToxAV_audio_recv_callback(ToxAv* av, int32_t call_idx, int16_t* data,
 {
   PyGILState_STATE gstate = PyGILState_Ensure();
 
-  PyObject_CallMethod((PyObject*)self, "on_audio", "iis#", call_idx, size,
+  PyObject_CallMethod((PyObject*)self, "on_audio_data", "iis#", call_idx, size,
       (char*)data, size << 1);
+
+  if (PyErr_Occurred()) {
+    PyErr_Print();
+  }
 
   PyGILState_Release(gstate);
 }
@@ -203,8 +207,12 @@ void ToxAV_video_recv_callback(ToxAv* av, int32_t call_idx, vpx_image_t* image,
 
   vpx_img_free(image);
 
-  PyObject_CallMethod((PyObject*)self, "on_video", "iiis#", call_idx,
+  PyObject_CallMethod((PyObject*)self, "on_video_data", "iiis#", call_idx,
       self->o_w, self->o_h, self->out_image);
+
+  if (PyErr_Occurred()) {
+    PyErr_Print();
+  }
 
   PyGILState_Release(gstate);
 }
@@ -361,10 +369,9 @@ static PyObject*
 ToxAV_call(ToxAV* self, PyObject* args)
 {
   int peer_id = 0;
-  int call_type = 0;
   int seconds = 0;
 
-  if (!PyArg_ParseTuple(args, "iii", &peer_id, &call_type, &seconds)) {
+  if (!PyArg_ParseTuple(args, "iii", &peer_id, &self->cs.call_type, &seconds)) {
     return NULL;
   }
 
@@ -375,7 +382,7 @@ ToxAV_call(ToxAV* self, PyObject* args)
     return NULL;
   }
 
-  Py_RETURN_NONE;
+  return PyLong_FromLong(call_idx);
 }
 
 static PyObject*
@@ -399,7 +406,7 @@ ToxAV_hangup(ToxAV* self, PyObject* args)
 static PyObject*
 ToxAV_answer(ToxAV* self, PyObject* args)
 {
-  int32_t idx = 0, call_type = 0;
+  int32_t idx = 0;
 
   if (!PyArg_ParseTuple(args, "ii", &idx, &self->cs.call_type)) {
     return NULL;
@@ -452,18 +459,38 @@ ToxAV_cancel(ToxAV* self, PyObject* args)
   Py_RETURN_NONE;
 }
 
-/*
 static PyObject*
 ToxAV_change_settings(ToxAV* self, PyObject* args)
 {
-  int idx = 0, peer_id = 0;
-  const char* res = NULL;
+  int idx = 0;
+  PyObject* settings = NULL;
 
-  if (!PyArg_ParseTuple(args, "iis", &idx, &peer_id, &res)) {
+  if (!PyArg_ParseTuple(args, "iO", &idx, &settings)) {
     return NULL;
   }
 
-  int ret = toxav_change_settings(self->av, idx, peer_id, res);
+  if (!PyDict_Check(settings)) {
+    PyErr_SetString(PyExc_TypeError, "settings should be a dictionary");
+    return NULL;
+  }
+
+#define CHECK_AND_UPDATE(d, name)                                    \
+  PyObject* key_##name = PYSTRING_FromString(#name);                 \
+  if (PyDict_Contains(d, key_##name)) {                              \
+    self->cs.name = PyLong_AsLong(PyDict_GetItemString(d, #name));   \
+  }                                                                  \
+  Py_DECREF(key_##name);
+
+  CHECK_AND_UPDATE(settings, call_type);
+  CHECK_AND_UPDATE(settings, video_bitrate);
+  CHECK_AND_UPDATE(settings, max_video_width);
+  CHECK_AND_UPDATE(settings, max_video_height);
+  CHECK_AND_UPDATE(settings, audio_bitrate);
+  CHECK_AND_UPDATE(settings, audio_frame_duration);
+  CHECK_AND_UPDATE(settings, audio_sample_rate);
+  CHECK_AND_UPDATE(settings, audio_channels);
+
+  int ret = toxav_change_settings(self->av, idx, &self->cs);
   if (ret < 0) {
     ToxAV_set_Error(ret);
     return NULL;
@@ -471,7 +498,6 @@ ToxAV_change_settings(ToxAV* self, PyObject* args)
 
   Py_RETURN_NONE;
 }
-*/
 
 static PyObject*
 ToxAV_stop_call(ToxAV* self, PyObject* args)
@@ -685,7 +711,7 @@ ToxAV_callback_stub(ToxAV* self, PyObject* args)
 
 #define METHOD_DEF(name)                                   \
   {                                                        \
-    #name, (PyCFunction)ToxAV_callback_stub, METH_NOARGS,  \
+    #name, (PyCFunction)ToxAV_callback_stub, METH_VARARGS, \
     #name "\n"                                             \
     #name " handler. Default implementation does nothing." \
   }
@@ -738,6 +764,15 @@ PyMethodDef ToxAV_methods[] = {
     "Cancel outgoing request."
   },
   {
+    "change_settings", (PyCFunction)ToxAV_change_settings, METH_VARARGS,
+    "change_settings(idx)\n"
+    "Notify peer that we are changing call settings. *settings* is a"
+    "dictionary of new settings like the one returned by "
+    "get_peer_csettings\n\n"
+    ".. seealso ::\n"
+    "    :meth:`.get_peer_csettings`"
+  },
+  {
     "stop_call", (PyCFunction)ToxAV_stop_call, METH_NOARGS,
     "stop_call(idx)\n"
     "Terminate transmission. Note that transmission will be terminated "
@@ -757,31 +792,31 @@ PyMethodDef ToxAV_methods[] = {
     "Call this at the end of the transmission."
   },
   {
-    "on_video", (PyCFunction)ToxAV_callback_stub, METH_VARARGS,
-    "on_video(idx, width, height, data)\n"
+    "on_video_data", (PyCFunction)ToxAV_callback_stub, METH_VARARGS,
+    "on_video_data(idx, width, height, data)\n"
     "Receive decoded video packet. Default implementation does nothing."
   },
   {
-    "on_audio", (PyCFunction)ToxAV_callback_stub, METH_VARARGS,
-    "on_audio(idx, size, data)\n"
+    "on_audio_data", (PyCFunction)ToxAV_callback_stub, METH_VARARGS,
+    "on_audio_data(idx, size, data)\n"
     "Receive decoded audio packet. Default implementation does nothing."
   },
   {
     "send_video", (PyCFunction)ToxAV_send_video, METH_VARARGS,
-    "send_video(data)\n"
+    "send_video(idx, data)\n"
     "Encode and send video packet. *data* should be a str or buffer"
     "containing a image in RGB888 format."
   },
   {
     "send_audio", (PyCFunction)ToxAV_send_audio, METH_VARARGS,
-    "send_audio(frame_size, data)\n"
+    "send_audio(idx, frame_size, data)\n"
     "Encode and send video packet. *data* should be a str or buffer"
     "containing singal channel 16 bit signed PCM audio data."
   },
   {
     "get_peer_csettings",
     (PyCFunction)ToxAV_get_peer_csettings, METH_VARARGS,
-    "get_peer_csettings(peer_num)\n"
+    "get_peer_csettings(idx, peer_num)\n"
     "Get peer transmission type. It can either be audio or video."
     "*peer_num* is always 0 for now."
   },

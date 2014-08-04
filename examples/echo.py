@@ -40,6 +40,7 @@ class AV(ToxAV):
     def on_invite(self, idx):
         self.cs = self.get_peer_csettings(idx, 0)
         self.call_type = self.cs["call_type"]
+
         print("Incoming %s call from %d:%s ..." % (
                 "video" if self.call_type == self.TypeVideo else "audio", idx,
                 self.core.get_name(self.get_peer_id(idx, 0))))
@@ -49,22 +50,22 @@ class AV(ToxAV):
 
     def on_start(self, idx):
         self.prepare_transmission(idx, self.jbufdc * 2, self.VADd,
-                True if self.call_type == self.TypeAudio else False)
+                True if self.call_type == self.TypeVideo else False)
 
     def on_end(self, idx):
         self.kill_transmission()
 
-        print 'Call ended'
+        print('Call ended')
 
     def on_peer_timeout(self, idx):
         self.stop_call()
 
-    def on_audio(self, idx, size, data):
+    def on_audio_data(self, idx, size, data):
         sys.stdout.write('.')
         sys.stdout.flush()
         self.send_audio(idx, size, data)
 
-    def on_video(self, idx, size, data):
+    def on_video_data(self, idx, size, data):
         sys.stdout.write('*')
         sys.stdout.flush()
         self.send_video(idx, data)
