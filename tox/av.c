@@ -182,8 +182,6 @@ void ToxAV_audio_recv_callback(ToxAv* av, int32_t call_idx, int16_t* data,
 void ToxAV_video_recv_callback(ToxAv* av, int32_t call_idx, vpx_image_t* image,
     void* user)
 {
-  PyGILState_STATE gstate = PyGILState_Ensure();
-
   ToxAV* self = (ToxAV*)user;
 
   if (image == NULL) {
@@ -207,8 +205,10 @@ void ToxAV_video_recv_callback(ToxAv* av, int32_t call_idx, vpx_image_t* image,
 
   vpx_img_free(image);
 
+  PyGILState_STATE gstate = PyGILState_Ensure();
+
   PyObject_CallMethod((PyObject*)self, "on_video_data", "iiis#", call_idx,
-      self->o_w, self->o_h, self->out_image);
+      self->o_w, self->o_h, self->out_image, buf_size);
 
   if (PyErr_Occurred()) {
     PyErr_Print();
@@ -265,10 +265,6 @@ static int init_helper(ToxAV* self, PyObject* args)
   toxav_register_audio_recv_callback(self->av, ToxAV_audio_recv_callback, self);
   toxav_register_video_recv_callback(self->av, ToxAV_video_recv_callback, self);
 
-  if (self->in_image == NULL) {
-    self->in_image = vpx_img_alloc(NULL, VPX_IMG_FMT_I420, 640, 480, 1);
-  }
-
   if (self->av == NULL) {
     PyErr_SetString(ToxOpError, "failed to allocate toxav");
     return -1;
@@ -284,6 +280,7 @@ ToxAV_new(PyTypeObject *type, PyObject* args, PyObject* kwds)
   self->av = NULL;
   self->in_image = NULL;
   self->out_image = NULL;
+  self->i_w = self->i_h = self->o_w = self->o_h = 0;
 
   if (init_helper(self, args) == -1) {
     return NULL;
@@ -309,7 +306,10 @@ ToxAV_dealloc(ToxAV* self)
     Py_DECREF(self->core);
     toxav_kill(self->av);
     self->av = NULL;
-    vpx_img_free(self->in_image);
+
+    if (self->in_image) {
+      vpx_img_free(self->in_image);
+    }
     if (self->out_image) {
       free(self->out_image);
     }
@@ -490,6 +490,8 @@ ToxAV_change_settings(ToxAV* self, PyObject* args)
   CHECK_AND_UPDATE(settings, audio_sample_rate);
   CHECK_AND_UPDATE(settings, audio_channels);
 
+#undef CHECK_AND_UPDATE
+
   int ret = toxav_change_settings(self->av, idx, &self->cs);
   if (ret < 0) {
     ToxAV_set_Error(ret);
@@ -559,11 +561,22 @@ ToxAV_kill_transmission(ToxAV* self, PyObject* args)
 static PyObject*
 ToxAV_send_video(ToxAV* self, PyObject* args)
 {
-  int idx = 0, len = 0;
+  int idx = 0, len = 0, w = 0, h = 0;
   char* data = NULL;
 
-  if (!PyArg_ParseTuple(args, "is#", &idx, &data, &len)) {
+  if (!PyArg_ParseTuple(args, "iiis#", &idx, &w, &h, &data, &len)) {
     return NULL;
+  }
+
+  if (self->in_image && (self->i_w != w || self->i_h != h)) {
+    vpx_img_free(self->in_image);
+    self->in_image = NULL;
+  }
+
+  if (self->in_image == NULL) {
+    self->i_w = w;
+    self->i_h = h;
+    self->in_image = vpx_img_alloc(NULL, VPX_IMG_FMT_I420, w, h, 1);
   }
 
   rgb_to_i420((unsigned char*)data, self->in_image);
@@ -571,6 +584,7 @@ ToxAV_send_video(ToxAV* self, PyObject* args)
   uint8_t encoded_payload[RTP_PAYLOAD_SIZE];
   int32_t payload_size = toxav_prepare_video_frame(self->av, idx,
       encoded_payload, RTP_PAYLOAD_SIZE, self->in_image);
+
   int ret = toxav_send_video(self->av, idx, encoded_payload, payload_size);
   if (ret < 0) {
     ToxAV_set_Error(ret);
@@ -728,6 +742,7 @@ PyMethodDef ToxAV_methods[] = {
   METHOD_DEF(on_error),
   METHOD_DEF(on_request_timeout),
   METHOD_DEF(on_peer_timeout),
+  METHOD_DEF(on_media_change),
   {
     "call", (PyCFunction)ToxAV_call, METH_VARARGS,
     "call(friend_id, call_type, seconds)\n"
@@ -765,7 +780,7 @@ PyMethodDef ToxAV_methods[] = {
   },
   {
     "change_settings", (PyCFunction)ToxAV_change_settings, METH_VARARGS,
-    "change_settings(idx)\n"
+    "change_settings(idx, csettings)\n"
     "Notify peer that we are changing call settings. *settings* is a"
     "dictionary of new settings like the one returned by "
     "get_peer_csettings\n\n"

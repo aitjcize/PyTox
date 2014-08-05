@@ -36,7 +36,7 @@ from tox import Tox, ToxAV
 SERVER = ["54.199.139.199", 33445, "7F9C31FE850E97CEFD4C4591DF93FC757C7C12549DDD55F8EEAECC34FE76C029"]
 
 
-DATA = 'data'
+DATA = 'phone.data'
 cap = cv2.VideoCapture(0)
 audio = pyaudio.PyAudio()
 
@@ -56,6 +56,18 @@ class AV(ToxAV):
         self.call_type = self.cs["call_type"]
         self.frame_size = self.cs["audio_sample_rate"] * \
                 self.cs["audio_frame_duration"] / 1000
+
+        ret, frame = cap.read()
+        width, height = 640, 480
+
+        if ret:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            height, width, channels = frame.shape
+        else:
+            print("Can't determine webcam resolution")
+
+        self.change_settings(idx, {"max_video_width": width,
+                                   "max_video_height": height})
 
     def on_invite(self, idx):
         self.update_settings(idx)
@@ -129,7 +141,7 @@ class AV(ToxAV):
             except Exception as e:
                 print(e)
 
-            sleep(0.005)
+            sleep(0.001)
 
     def on_audio_data(self, idx, size, data):
         if self.debug:
@@ -145,7 +157,8 @@ class AV(ToxAV):
                 ret, frame = cap.read()
                 if ret:
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    self.send_video(idx, frame.tostring())
+                    height, width, channels = frame.shape
+                    self.send_video(idx, width, height, frame.tostring())
             except Exception as e:
                 print(e)
 
@@ -156,7 +169,7 @@ class AV(ToxAV):
             sys.stdout.write('*')
             sys.stdout.flush()
 
-        frame = np.ndarray(shape=(width, height, 3),
+        frame = np.ndarray(shape=(height, width, 3),
                 dtype=np.dtype(np.uint8), buffer=data)
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         cv2.imshow('frame', frame)
@@ -172,7 +185,7 @@ class Phone(Tox):
         print('ID: %s' % self.get_address())
 
         self.connect()
-        self.av = AV(self, 1)
+        self.av = AV(self, 1, debug=True)
 
     def connect(self):
         print('connecting...')

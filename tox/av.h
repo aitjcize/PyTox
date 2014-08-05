@@ -10,8 +10,9 @@ typedef struct {
   PyObject* core;
   ToxAv* av;
   vpx_image_t* in_image;
-  uint32_t o_w, o_h;
+  uint32_t i_w, i_h;
   unsigned char* out_image;
+  uint32_t o_w, o_h;
   ToxAvCSettings cs;
 } ToxAV;
 

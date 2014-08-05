@@ -29,7 +29,7 @@ from random import randint
 
 SERVER = ["54.199.139.199", 33445, "7F9C31FE850E97CEFD4C4591DF93FC757C7C12549DDD55F8EEAECC34FE76C029"]
 
-DATA = 'data'
+DATA = 'echo.data'
 
 class AV(ToxAV):
     def __init__(self, core, max_calls):
@@ -49,6 +49,8 @@ class AV(ToxAV):
         print("Answered, in call...")
 
     def on_start(self, idx):
+        self.change_settings(idx, {"max_video_width": 1920,
+                                   "max_video_height": 1080})
         self.prepare_transmission(idx, self.jbufdc * 2, self.VADd,
                 True if self.call_type == self.TypeVideo else False)
 
@@ -65,10 +67,10 @@ class AV(ToxAV):
         sys.stdout.flush()
         self.send_audio(idx, size, data)
 
-    def on_video_data(self, idx, size, data):
+    def on_video_data(self, idx, width, height, data):
         sys.stdout.write('*')
         sys.stdout.flush()
-        self.send_video(idx, data)
+        self.send_video(idx, width, height, data)
 
 class EchoBot(Tox):
     def __init__(self):
