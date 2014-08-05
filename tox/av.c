@@ -689,7 +689,7 @@ ToxAV_get_call_state(ToxAV* self, PyObject* args)
     return NULL;
   }
 
-  return PyBool_FromLong(ret);
+  return PyLong_FromLong(ret);
 }
 
 static PyObject*
@@ -841,6 +841,27 @@ PyMethodDef ToxAV_methods[] = {
     "Get *friend_number* of peer participating in conversation. *peer_num* "
     "is always 0 for now."
 
+  },
+  {
+    "get_call_state", (PyCFunction)ToxAV_get_call_state, METH_VARARGS,
+    "get_call_state(call_index)\n"
+    "Get current call state\n\n"
+    "The state returned can be one of following value:\n\n"
+    "+------------------------+\n"
+    "| state                  |\n"
+    "+========================+\n"
+    "| ToxAV.CallNonExistant  |\n"
+    "+------------------------+\n"
+    "| ToxAV.CallInviting     |\n"
+    "+------------------------+\n"
+    "| ToxAV.CallStarting     |\n"
+    "+------------------------+\n"
+    "| ToxAV.CallActive       |\n"
+    "+------------------------+\n"
+    "| ToxAV.CallHold         |\n"
+    "+------------------------+\n"
+    "| ToxAV.CallHanged_up    |\n"
+    "+------------------------+\n"
   },
   {
     "capability_supported", (PyCFunction)ToxAV_capability_supported,

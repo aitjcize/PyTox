@@ -30,8 +30,8 @@ extern PyObject* ToxOpError;
 static void callback_friend_request(Tox* tox, const uint8_t* public_key,
     const uint8_t* data, uint16_t length, void* self)
 {
-  uint8_t buf[TOX_CLIENT_ID_SIZE << 1 + 1];
-  memset(buf, 0, TOX_CLIENT_ID_SIZE << 1 + 1);
+  uint8_t buf[TOX_CLIENT_ID_SIZE * 2 + 1];
+  memset(buf, 0, TOX_CLIENT_ID_SIZE * 2 + 1);
 
   bytes_to_hex_string(public_key, TOX_CLIENT_ID_SIZE, buf);
 
@@ -98,8 +98,8 @@ static void callback_connection_status(Tox *tox, int32_t friendnumber,
 static void callback_group_invite(Tox *tox, int32_t friendnumber,
     const uint8_t* group_public_key, void *self)
 {
-  uint8_t gpk[TOX_CLIENT_ID_SIZE << 1 + 1];
-  memset(gpk, 0, TOX_CLIENT_ID_SIZE << 1 + 1);
+  uint8_t gpk[TOX_CLIENT_ID_SIZE * 2 + 1];
+  memset(gpk, 0, TOX_CLIENT_ID_SIZE * 2 + 1);
 
   bytes_to_hex_string(group_public_key, TOX_CLIENT_ID_SIZE, gpk);
   PyObject_CallMethod((PyObject*)self, "on_group_invite", "is", friendnumber,
@@ -256,8 +256,8 @@ ToxCore_getaddress(ToxCore* self, PyObject* args)
   CHECK_TOX(self);
 
   uint8_t address[TOX_FRIEND_ADDRESS_SIZE];
-  uint8_t address_hex[TOX_FRIEND_ADDRESS_SIZE << 1 + 1];
-  memset(address_hex, 0, TOX_FRIEND_ADDRESS_SIZE << 1 + 1);
+  uint8_t address_hex[TOX_FRIEND_ADDRESS_SIZE * 2 + 1];
+  memset(address_hex, 0, TOX_FRIEND_ADDRESS_SIZE * 2 + 1);
 
   tox_get_address(self->tox, address);
   bytes_to_hex_string(address, TOX_FRIEND_ADDRESS_SIZE, address_hex);
@@ -380,8 +380,8 @@ ToxCore_get_client_id(ToxCore* self, PyObject* args)
   uint8_t pk[TOX_CLIENT_ID_SIZE + 1];
   pk[TOX_CLIENT_ID_SIZE] = 0;
 
-  uint8_t hex[TOX_CLIENT_ID_SIZE << 1 + 1];
-  memset(hex, 0, TOX_CLIENT_ID_SIZE << 1 + 1);
+  uint8_t hex[TOX_CLIENT_ID_SIZE * 2 + 1];
+  memset(hex, 0, TOX_CLIENT_ID_SIZE * 2 + 1);
 
   int friend_num = 0;
 
@@ -1271,18 +1271,18 @@ ToxCore_get_keys(ToxCore* self, PyObject* args)
   uint8_t public_key[TOX_CLIENT_ID_SIZE];
   uint8_t secret_key[TOX_CLIENT_ID_SIZE];
 
-  uint8_t public_key_hex[TOX_CLIENT_ID_SIZE << 1 + 1];
-  uint8_t secret_key_hex[TOX_CLIENT_ID_SIZE << 1 + 1];
+  uint8_t public_key_hex[TOX_CLIENT_ID_SIZE * 2 + 1];
+  uint8_t secret_key_hex[TOX_CLIENT_ID_SIZE * 2 + 1];
 
   tox_get_keys(self->tox, public_key, secret_key);
   bytes_to_hex_string(public_key, TOX_CLIENT_ID_SIZE, public_key_hex);
   bytes_to_hex_string(secret_key, TOX_CLIENT_ID_SIZE, secret_key_hex);
 
   PyObject* res = PyTuple_New(2);
-  PyTuple_SetItem(res, 0, PYSTRING_FromStringAndSize(public_key_hex,
-        TOX_CLIENT_ID_SIZE << 1));
-  PyTuple_SetItem(res, 1, PYSTRING_FromStringAndSize(secret_key_hex,
-        TOX_CLIENT_ID_SIZE << 1));
+  PyTuple_SetItem(res, 0, PYSTRING_FromStringAndSize((char*)public_key_hex,
+        TOX_CLIENT_ID_SIZE * 2));
+  PyTuple_SetItem(res, 1, PYSTRING_FromStringAndSize((char*)secret_key_hex,
+        TOX_CLIENT_ID_SIZE * 2));
   return res;
 }
 
