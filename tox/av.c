@@ -758,7 +758,7 @@ PyMethodDef ToxAV_methods[] = {
     "+------------------+-----------------------+\n"
   },
   {
-    "hangup", (PyCFunction)ToxAV_hangup, METH_NOARGS,
+    "hangup", (PyCFunction)ToxAV_hangup, METH_VARARGS,
     "hangup(call_index)\n"
     "Hangup active call."
   },
@@ -789,7 +789,7 @@ PyMethodDef ToxAV_methods[] = {
     "    :meth:`.get_peer_csettings`"
   },
   {
-    "stop_call", (PyCFunction)ToxAV_stop_call, METH_NOARGS,
+    "stop_call", (PyCFunction)ToxAV_stop_call, METH_VARARGS,
     "stop_call(call_index)\n"
     "Terminate transmission. Note that transmission will be terminated "
     "without informing remote peer."
@@ -802,8 +802,7 @@ PyMethodDef ToxAV_methods[] = {
     "either True or False."
   },
   {
-    "kill_transmission", (PyCFunction)ToxAV_kill_transmission,
-    METH_NOARGS,
+    "kill_transmission", (PyCFunction)ToxAV_kill_transmission, METH_VARARGS,
     "kill_transmission(call_index)\n"
     "Call this at the end of the transmission."
   },
