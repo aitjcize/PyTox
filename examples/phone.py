@@ -67,8 +67,10 @@ class AV(ToxAV):
         else:
             print("Can't determine webcam resolution")
 
-        self.change_settings(idx, {"max_video_width": width,
-                                   "max_video_height": height})
+        try:
+            self.change_settings(idx, {"max_video_width": width,
+                                       "max_video_height": height})
+        except: pass
 
     def on_invite(self, idx):
         self.update_settings(idx)
@@ -115,22 +117,23 @@ class AV(ToxAV):
         self.kill_transmission(idx)
         print("Call ended")
 
+    def on_cancel(self, idx):
+        self.kill_transmission(idx)
+
     def on_starting(self, idx):
         self.on_start(idx)
 
     def on_ending(self, idx):
-        self.on_end(idx)
-
-    def on_cancel(self, idx):
         try:
-            self.stop_call(idx)
+            self.on_end(idx)
         except: pass
 
     def on_peer_timeout(self, idx):
-        self.on_cancel(idx)
+        self.kill_transmission(idx)
+        self.stop_call(idx)
 
     def on_request_timeout(self, idx):
-        self.on_cancel(idx)
+        self.kill_transmission(idx)
 
     def audio_encode(self, idx):
         print("Starting audio encode thread...")
@@ -227,7 +230,7 @@ class Phone(Tox):
                             except: pass
                         elif args[0] == "call":
                             if len(args) == 2:
-                                self.call_idx = self.call(int(args[1]))
+                                self.call(int(args[1]))
                         elif args[0] == "cancel":
                             try:
                                 if len(args) == 2:
@@ -237,9 +240,12 @@ class Phone(Tox):
                         elif args[0] == "hangup":
                             try:
                                 self.av.hangup(self.call_idx)
+                                self.av.kill_transmission(self.call_idx)
                             except: pass
                         elif args[0] == "quit":
                             raise KeyboardInterrupt
+                        else:
+                            print('Invalid command:', args)
 
                 self.do()
         except KeyboardInterrupt:
@@ -262,7 +268,7 @@ class Phone(Tox):
 
     def call(self, friend_number):
         print('Calling %s ...' % self.get_name(friend_number))
-        idx = self.av.call(friend_number, self.av.TypeVideo, 60)
+        self.call_idx = self.av.call(friend_number, self.av.TypeVideo, 60)
 
 if len(sys.argv) == 2:
     DATA = sys.argv[1]

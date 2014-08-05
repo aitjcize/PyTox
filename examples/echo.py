@@ -49,17 +49,22 @@ class AV(ToxAV):
         print("Answered, in call...")
 
     def on_start(self, idx):
-        self.change_settings(idx, {"max_video_width": 1920,
-                                   "max_video_height": 1080})
+        try:
+            self.change_settings(idx, {"max_video_width": 1920,
+                                       "max_video_height": 1080})
+        except: pass
         self.prepare_transmission(idx, self.jbufdc * 2, self.VADd,
                 True if self.call_type == self.TypeVideo else False)
 
     def on_end(self, idx):
         self.kill_transmission(idx)
-
         print('Call ended')
 
+    def on_cancel(self, idx):
+        self.kill_transmission(idx)
+
     def on_peer_timeout(self, idx):
+        self.kill_transmission(idx)
         self.stop_call(idx)
 
     def on_audio_data(self, idx, size, data):
