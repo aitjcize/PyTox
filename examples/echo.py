@@ -55,12 +55,12 @@ class AV(ToxAV):
                 True if self.call_type == self.TypeVideo else False)
 
     def on_end(self, idx):
-        self.kill_transmission()
+        self.kill_transmission(idx)
 
         print('Call ended')
 
     def on_peer_timeout(self, idx):
-        self.stop_call()
+        self.stop_call(idx)
 
     def on_audio_data(self, idx, size, data):
         sys.stdout.write('.')

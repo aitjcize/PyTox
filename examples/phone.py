@@ -46,6 +46,7 @@ class AV(ToxAV):
         self.core = self.get_tox()
         self.stop = True
         self.cs = None
+        self.call_idx = None
         self.call_type = self.TypeAudio
         self.ae_thread = None
         self.ve_thread = None
@@ -111,7 +112,7 @@ class AV(ToxAV):
             if self.ve_thread:
                 self.ve_thread.join()
 
-        self.kill_transmission()
+        self.kill_transmission(idx)
         print("Call ended")
 
     def on_starting(self, idx):
@@ -125,11 +126,11 @@ class AV(ToxAV):
             self.stop_call(idx)
         except: pass
 
-    def on_peer_timeout(self):
+    def on_peer_timeout(self, idx):
         self.on_cancel(idx)
 
-    def on_request_timeout(self):
-        self.on_cancel()
+    def on_request_timeout(self, idx):
+        self.on_cancel(idx)
 
     def audio_encode(self, idx):
         print("Starting audio encode thread...")
@@ -226,7 +227,7 @@ class Phone(Tox):
                             except: pass
                         elif args[0] == "call":
                             if len(args) == 2:
-                                self.call(int(args[1]))
+                                self.call_idx = self.call(int(args[1]))
                         elif args[0] == "cancel":
                             try:
                                 if len(args) == 2:
@@ -235,7 +236,7 @@ class Phone(Tox):
                             except: pass
                         elif args[0] == "hangup":
                             try:
-                                self.av.hangup()
+                                self.av.hangup(self.call_idx)
                             except: pass
                         elif args[0] == "quit":
                             raise KeyboardInterrupt
