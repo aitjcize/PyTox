@@ -90,7 +90,7 @@ class EchoBot(Tox):
 
     def connect(self):
         print('connecting...')
-        self.bootstrap_from_address(SERVER[0], 1, SERVER[1], SERVER[2])
+        self.bootstrap_from_address(SERVER[0], SERVER[1], SERVER[2])
 
     def loop(self):
         checked = False

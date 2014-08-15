@@ -1302,7 +1302,7 @@ ToxCore_bootstrap_from_address(ToxCore* self, PyObject* args)
   int pk_length = 0;
   uint8_t pk[TOX_CLIENT_ID_SIZE];
 
-  if (!PyArg_ParseTuple(args, "s#iHs#", &address, &addr_length, &port,
+  if (!PyArg_ParseTuple(args, "s#Hs#", &address, &addr_length, &port,
         &public_key, &pk_length)) {
     return NULL;
   }
