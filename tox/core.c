@@ -177,7 +177,10 @@ static int init_helper(ToxCore* self, PyObject* args)
     }
   }
 
-  Tox* tox = tox_new(ipv6enabled);
+  Tox_Options options = {0};
+  options.ipv6enabled = ipv6enabled;
+
+  Tox* tox = tox_new(&options);
   if (tox == NULL) {
       fprintf(stderr, "Warning: failed to initialize toxcore with ipv6, "
           "trying ipv4.\n");
@@ -1305,8 +1308,7 @@ ToxCore_bootstrap_from_address(ToxCore* self, PyObject* args)
   }
 
   hex_string_to_bytes(public_key, TOX_CLIENT_ID_SIZE, pk);
-  int ret = tox_bootstrap_from_address(self->tox, address, ipv6enabled,
-      htons(port), pk);
+  int ret = tox_bootstrap_from_address(self->tox, address, htons(port), pk);
 
   if (!ret) {
     PyErr_SetString(ToxOpError, "failed to resolve address");
