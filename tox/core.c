@@ -1917,7 +1917,7 @@ PyMethodDef Tox_methods[] = {
   {
     "bootstrap_from_address", (PyCFunction)ToxCore_bootstrap_from_address,
     METH_VARARGS,
-    "bootstrap_from_address(address, ipv6enabled, port, public_key)\n"
+    "bootstrap_from_address(address, port, public_key)\n"
     "Resolves address into an IP address. If successful, sends a 'get nodes'"
     "request to the given node with ip, port."
   },
