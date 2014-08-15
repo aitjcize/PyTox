@@ -178,7 +178,7 @@ static int init_helper(ToxCore* self, PyObject* args)
   }
 
   Tox_Options options = {0};
-  options.ipv6enabled = TOX_ENABLE_IPV6_DEFAULT;
+  options.ipv6enabled = ipv6enabled;
 
   Tox* tox = tox_new(&options);
   if (tox == NULL) {
