@@ -21,7 +21,7 @@ else:
 
 setup(
     name="PyTox",
-    version="0.0.20",
+    version="0.0.21",
     description = 'Python binding for Tox the skype replacement',
     author = 'Wei-Ning Huang (AZ)',
     author_email = 'aitjcize@gmail.com',
