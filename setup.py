@@ -1,5 +1,3 @@
-import setuptools
-
 from distutils.core import setup, Extension
 from subprocess import Popen, PIPE
 
