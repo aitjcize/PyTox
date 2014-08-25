@@ -38,8 +38,5 @@ Full API documentation can be read [here](http://aitjcize.github.io/PyTox).
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
 
-[![Version](https://pypip.in/version/PyTox/badge.svg)](https://pypi.python.org/pypi/PyTox)
-
-[![Status](https://pypip.in/status/PyTox/badge.svg)](https://pypi.python.org/pypi/PyTox)
-
-[![Image](https://cruel-carlota.pagodabox.com/f7c9269a8398926d869e54744b334c26)](http://githalytics.com/aitjcize/PyTox.git)
+## Links
+* [PyTox on PyPI](https://pypi.python.org/pypi/PyTox)
