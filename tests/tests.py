@@ -187,6 +187,7 @@ class ToxTest(unittest.TestCase):
 
         MSG = 'Happy'
         AID = self.aid
+
         def on_status_message(self, friend_id, new_message):
             assert friend_id == AID
             assert new_message == MSG
@@ -410,6 +411,8 @@ class ToxTest(unittest.TestCase):
         t:get_last_online
         """
         self.bob_add_alice_as_friend()
+
+        AID = self.aid
 
         #: Test typing status
         def on_typing_change(self, fid, is_typing):
