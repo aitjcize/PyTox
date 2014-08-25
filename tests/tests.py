@@ -405,35 +405,11 @@ class ToxTest(unittest.TestCase):
         """
         t:on_read_receipt
         t:on_typing_change
-        t:set_send_receipts
         t:set_user_is_typing
         t:get_is_typing
         t:get_last_online
         """
         self.bob_add_alice_as_friend()
-
-        #: Test send receipts
-        AID = self.aid
-        MSG = 'Hi, Bob!'
-
-        checked = {'checked': False, 'MID': 0}
-        def on_read_receipt(self, fid, receipt):
-            assert fid == AID
-            if not checked['checked']:
-                checked['checked'] = True
-                assert receipt == checked['MID']
-            self.rr = True
-
-        BobTox.on_read_receipt = on_read_receipt
-        self.bob.rr = False
-
-        self.bob.set_send_receipts(self.aid, True)
-        checked['MID'] = self.ensure_exec(self.bob.send_message,
-                (self.aid, MSG))
-        assert self.wait_callback(self.bob, 'rr')
-
-        self.bob.set_send_receipts(self.aid, False)
-        BobTox.on_read_receipt = Tox.on_read_receipt
 
         #: Test typing status
         def on_typing_change(self, fid, is_typing):
