@@ -4,7 +4,7 @@ Python binding for [toxcore](https://github.com/irungentoo/ProjectTox-Core).
 PyTox provides a Pythonic binding, i.e Object-oriented instead of C style, raise exception instead of returning error code.
 
 A simple example is as follows:
-```
+```python
 class EchoBot(Tox):
     def loop(self):
         while True:
