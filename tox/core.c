@@ -835,23 +835,6 @@ ToxCore_get_is_typing(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_set_send_receipts(ToxCore* self, PyObject* args)
-{
-  CHECK_TOX(self);
-
-  int friend_num = 0;
-  int yesno = 0;
-
-  if (!PyArg_ParseTuple(args, "ii", &friend_num, &yesno)) {
-    return NULL;
-  }
-
-  tox_set_sends_receipts(self->tox, friend_num, yesno);
-
-  Py_RETURN_NONE;
-}
-
-static PyObject*
 ToxCore_count_friendlist(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
@@ -1771,13 +1754,6 @@ PyMethodDef Tox_methods[] = {
     METH_VARARGS,
     "get_is_typing(friend_number)\n"
     "Return True is user is typing.\n\n"
-  },
-  {
-    "set_send_receipts", (PyCFunction)ToxCore_set_send_receipts,
-    METH_VARARGS,
-    "set_send_receipts(friend_number, yesno)\n"
-    "Sets whether we send read receipts for friendnumber. *yesno* should be "
-    "a boolean value."
   },
   {
     "count_friendlist", (PyCFunction)ToxCore_count_friendlist,
