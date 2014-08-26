@@ -1,8 +1,8 @@
-.. image:: https://travis-ci.org/aitjcize/PyTox.png?branch=master
+.. image:: http://img.shields.io/travis/aitjcize/PyTox.svg
    :target: https://travis-ci.org/aitjcize/PyTox
-.. image:: https://pypip.in/v/PyTox/badge.png
+.. image:: http://img.shields.io/pypi/v/PyTox.svg
    :target: https://pypi.python.org/pypi/PyTox
-.. image:: https://pypip.in/d/PyTox/badge.png
+.. image:: http://img.shields.io/pypi/dm/PyTox.svg
    :target: https://crate.io/packages/PyTox
 
 PyTox
