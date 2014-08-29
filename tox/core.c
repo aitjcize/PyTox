@@ -477,30 +477,6 @@ ToxCore_send_message(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_send_message_withid(ToxCore* self, PyObject* args)
-{
-  CHECK_TOX(self);
-
-  int friend_num = 0;
-  int length = 0;
-  uint32_t id = 0;
-  uint8_t* message = NULL;
-
-  if (!PyArg_ParseTuple(args, "iIs#", &friend_num, &id, &message, &length)) {
-    return NULL;
-  }
-
-  uint32_t ret = tox_send_message_withid(self->tox, friend_num, id,message,
-      length);
-  if (ret == 0) {
-    PyErr_SetString(ToxOpError, "failed to send message with id");
-    return NULL;
-  }
-
-  return PyLong_FromUnsignedLong(ret);
-}
-
-static PyObject*
 ToxCore_send_action(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
@@ -516,30 +492,6 @@ ToxCore_send_action(ToxCore* self, PyObject* args)
   uint32_t ret = tox_send_action(self->tox, friend_num, action, length);
   if (ret == 0) {
     PyErr_SetString(ToxOpError, "failed to send action");
-    return NULL;
-  }
-
-  return PyLong_FromUnsignedLong(ret);
-}
-
-static PyObject*
-ToxCore_send_action_withid(ToxCore* self, PyObject* args)
-{
-  CHECK_TOX(self);
-
-  int friend_num = 0;
-  int length = 0;
-  uint32_t id = 0;
-  uint8_t* action = NULL;
-
-  if (!PyArg_ParseTuple(args, "iIs#", &friend_num, &id, &action, &length)) {
-    return NULL;
-  }
-
-  uint32_t ret = tox_send_action_withid(self->tox, friend_num, id, action,
-      length);
-  if (ret == 0) {
-    PyErr_SetString(ToxOpError, "failed to send action with id");
     return NULL;
   }
 
@@ -1634,20 +1586,9 @@ PyMethodDef Tox_methods[] = {
     "Send a text chat message to an online friend."
   },
   {
-    "send_message_withid", (PyCFunction)ToxCore_send_message_withid,
-    METH_VARARGS,
-    "send_message_withid(friend_number, id, message)\n"
-    "Send a text chat message to an online friend with id."
-  },
-  {
     "send_action", (PyCFunction)ToxCore_send_action, METH_VARARGS,
     "send_action(friend_number, action)\n"
     "Send an action to an online friend."
-  },
-  {
-    "send_action_withid", (PyCFunction)ToxCore_send_action_withid, METH_VARARGS,
-    "send_action_withid(friend_number, id, action)\n"
-    "Send an action to an online friend with id."
   },
   {
     "set_name", (PyCFunction)ToxCore_set_name, METH_VARARGS,
