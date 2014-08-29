@@ -351,9 +351,7 @@ class ToxTest(unittest.TestCase):
         t:on_friend_action
         t:on_friend_message
         t:send_action
-        t:send_action_withid
         t:send_message
-        t:send_message_withid
         """
         self.bob_add_alice_as_friend()
 
@@ -371,10 +369,6 @@ class ToxTest(unittest.TestCase):
         self.alice.fm = False
         assert self.wait_callback(self.alice, 'fm')
 
-        self.ensure_exec(self.bob.send_message_withid, (self.aid, 42, MSG))
-        self.alice.fm = False
-        assert self.wait_callback(self.alice, 'fm')
-
         AliceTox.on_friend_message = Tox.on_friend_message
 
         #: Test action
@@ -388,10 +382,6 @@ class ToxTest(unittest.TestCase):
         AliceTox.on_friend_action = on_friend_action
 
         self.ensure_exec(self.bob.send_action, (self.aid, ACTION))
-        self.alice.fa = False
-        assert self.wait_callback(self.alice, 'fa')
-
-        self.ensure_exec(self.bob.send_action_withid, (self.aid, 42, ACTION))
         self.alice.fa = False
         assert self.wait_callback(self.alice, 'fa')
 
