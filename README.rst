@@ -50,6 +50,3 @@ Contributing
 3. Commit your changes (``git commit -am 'Add some feature'``)
 4. Push to the branch (``git push origin my-new-feature``)
 5. Create new Pull Request
-
-.. image:: https://cruel-carlota.pagodabox.com/f7c9269a8398926d869e54744b334c26
-   :target: http://githalytics.com/aitjcize/PyTox.git
