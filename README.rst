@@ -50,3 +50,11 @@ Contributing
 3. Commit your changes (``git commit -am 'Add some feature'``)
 4. Push to the branch (``git push origin my-new-feature``)
 5. Create new Pull Request
+
+Getting started
+---------------
+To get started quickly, you may use the Makefile, it will help you use PyTox's Dockerfile.
+
+- *make test*: This will launch tests in a container.
+- *make run*: This will launch an interactive container with PyTox installed.
+- *make echobot*: This will launch the example echobot in a container.
