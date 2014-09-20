@@ -44,7 +44,7 @@ before_script:
   - cd ..
 script:
   - pip install .
-  - travis_wait python tests/tests.py
+  - sleep $[($RANDOM % 50) + 1]s && python tests/tests.py
 
 notifications:
   email: false
