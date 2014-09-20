@@ -44,7 +44,7 @@ before_script:
   - cd ..
 script:
   - pip install .
-  - python tests/tests.py
+  - travis_wait python tests/tests.py
 
 notifications:
   email: false
