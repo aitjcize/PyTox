@@ -20,7 +20,7 @@ RUN cd libvpx && ./configure --enable-shared && make && make install
 # creating librarys' links and updating cache
 RUN ldconfig
 RUN git clone https://github.com/irungentoo/ProjectTox-Core.git toxcore
-RUN cd toxcore && autoreconf -i 
+RUN cd toxcore && autoreconf -i
 RUN cd toxcore && ./configure --prefix=/usr --disable-tests --disable-ntox
 RUN cd toxcore && make
 RUN cd toxcore && make install
