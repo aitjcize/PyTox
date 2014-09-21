@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>tox.ToxAV Class &mdash; PyTox 0.0.16 documentation</title>
+    <title>tox.ToxAV Class &mdash; PyTox 0.0.22 documentation</title>
     
     <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.16',
+        VERSION:     '0.0.22',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="PyTox 0.0.16 documentation" href="index.html" />
+    <link rel="top" title="PyTox 0.0.22 documentation" href="index.html" />
     <link rel="prev" title="tox.Tox Class" href="tox.Tox.html" />
 <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
@@ -55,7 +55,7 @@
         <li class="right" >
           <a href="tox.Tox.html" title="tox.Tox Class"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">PyTox 0.0.16 documentation</a> &raquo;</li> 
+        <li><a href="index.html">PyTox 0.0.22 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -74,7 +74,7 @@ are in this class.</p>
 <dd><p>ToxAV object</p>
 <dl class="method">
 <dt id="tox.ToxAV.answer">
-<tt class="descname">answer</tt><big>(</big><em>call_type</em><big>)</big><a class="headerlink" href="#tox.ToxAV.answer" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">answer</tt><big>(</big><em>call_index</em>, <em>call_type</em><big>)</big><a class="headerlink" href="#tox.ToxAV.answer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Answer incomming call.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
@@ -85,7 +85,7 @@ are in this class.</p>
 <dl class="method">
 <dt id="tox.ToxAV.call">
 <tt class="descname">call</tt><big>(</big><em>friend_id</em>, <em>call_type</em>, <em>seconds</em><big>)</big><a class="headerlink" href="#tox.ToxAV.call" title="Permalink to this definition">¶</a></dt>
-<dd><p>Call a friend with <em>friend_id</em>, with <em>seconds</em> ringing timeout.</p>
+<dd><p>Call a friend with <em>friend_id</em>, with <em>seconds</em> ringing timeout. Returns the index <em>call_index</em> of the call.</p>
 <p><em>call_type</em> can be one of following value:</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -110,7 +110,7 @@ are in this class.</p>
 
 <dl class="method">
 <dt id="tox.ToxAV.cancel">
-<tt class="descname">cancel</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.cancel" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">cancel</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.cancel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cancel outgoing request.</p>
 </dd></dl>
 
@@ -147,15 +147,55 @@ are in this class.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="tox.ToxAV.get_peer_id">
-<tt class="descname">get_peer_id</tt><big>(</big><em>peer_num</em><big>)</big><a class="headerlink" href="#tox.ToxAV.get_peer_id" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get <em>friend_number</em> of peer participating in conversation. <em>peer_num</em> is always 0 for now.</p>
+<dt id="tox.ToxAV.change_settings">
+<tt class="descname">change_settings</tt><big>(</big><em>call_index</em>, <em>csettings</em><big>)</big><a class="headerlink" href="#tox.ToxAV.change_settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Notify peer that we are changing call settings. <em>settings</em> is adictionary of new settings like the one returned by get_peer_csettings</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#tox.ToxAV.get_peer_csettings" title="tox.ToxAV.get_peer_csettings"><tt class="xref py py-meth docutils literal"><span class="pre">get_peer_csettings()</span></tt></a></p>
+</div>
 </dd></dl>
 
 <dl class="method">
-<dt id="tox.ToxAV.get_peer_transmission_type">
-<tt class="descname">get_peer_transmission_type</tt><big>(</big><em>peer_num</em><big>)</big><a class="headerlink" href="#tox.ToxAV.get_peer_transmission_type" title="Permalink to this definition">¶</a></dt>
+<dt id="tox.ToxAV.get_call_state">
+<tt class="descname">get_call_state</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.get_call_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get current call state</p>
+<p>The state returned can be one of following value:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="100%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">state</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>ToxAV.CallNonExistant</td>
+</tr>
+<tr class="row-odd"><td>ToxAV.CallInviting</td>
+</tr>
+<tr class="row-even"><td>ToxAV.CallStarting</td>
+</tr>
+<tr class="row-odd"><td>ToxAV.CallActive</td>
+</tr>
+<tr class="row-even"><td>ToxAV.CallHold</td>
+</tr>
+<tr class="row-odd"><td>ToxAV.CallHanged_up</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tox.ToxAV.get_peer_csettings">
+<tt class="descname">get_peer_csettings</tt><big>(</big><em>call_index</em>, <em>peer_num</em><big>)</big><a class="headerlink" href="#tox.ToxAV.get_peer_csettings" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get peer transmission type. It can either be audio or video.*peer_num* is always 0 for now.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tox.ToxAV.get_peer_id">
+<tt class="descname">get_peer_id</tt><big>(</big><em>call_index</em>, <em>peer_num</em><big>)</big><a class="headerlink" href="#tox.ToxAV.get_peer_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get <em>friend_number</em> of peer participating in conversation. <em>peer_num</em> is always 0 for now.</p>
 </dd></dl>
 
 <dl class="method">
@@ -166,121 +206,127 @@ are in this class.</p>
 
 <dl class="method">
 <dt id="tox.ToxAV.hangup">
-<tt class="descname">hangup</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.hangup" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">hangup</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.hangup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Hangup active call.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="tox.ToxAV.kill_transmission">
-<tt class="descname">kill_transmission</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.kill_transmission" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">kill_transmission</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.kill_transmission" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call this at the end of the transmission.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="tox.ToxAV.on_audio_data">
+<tt class="descname">on_audio_data</tt><big>(</big><em>call_index</em>, <em>size</em>, <em>data</em><big>)</big><a class="headerlink" href="#tox.ToxAV.on_audio_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Receive decoded audio packet. Default implementation does nothing.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="tox.ToxAV.on_cancel">
-<tt class="descname">on_cancel</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.on_cancel" title="Permalink to this definition">¶</a></dt>
-<dd><p>on_cancel handler, default implementation does nothing.</p>
+<tt class="descname">on_cancel</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.on_cancel" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_cancel handler. Default implementation does nothing.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="tox.ToxAV.on_end">
-<tt class="descname">on_end</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.on_end" title="Permalink to this definition">¶</a></dt>
-<dd><p>on_end handler, default implementation does nothing.</p>
+<tt class="descname">on_end</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.on_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_end handler. Default implementation does nothing.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="tox.ToxAV.on_ending">
-<tt class="descname">on_ending</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.on_ending" title="Permalink to this definition">¶</a></dt>
-<dd><p>on_ending handler, default implementation does nothing.</p>
+<tt class="descname">on_ending</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.on_ending" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_ending handler. Default implementation does nothing.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="tox.ToxAV.on_error">
-<tt class="descname">on_error</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.on_error" title="Permalink to this definition">¶</a></dt>
-<dd><p>on_error handler, default implementation does nothing.</p>
+<tt class="descname">on_error</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.on_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_error handler. Default implementation does nothing.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="tox.ToxAV.on_invite">
-<tt class="descname">on_invite</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.on_invite" title="Permalink to this definition">¶</a></dt>
-<dd><p>on_invite handler, default implementation does nothing.</p>
+<tt class="descname">on_invite</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.on_invite" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_invite handler. Default implementation does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tox.ToxAV.on_media_change">
+<tt class="descname">on_media_change</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.on_media_change" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_media_change handler. Default implementation does nothing.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="tox.ToxAV.on_peer_timeout">
-<tt class="descname">on_peer_timeout</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.on_peer_timeout" title="Permalink to this definition">¶</a></dt>
-<dd><p>on_peer_timeout handler, default implementation does nothing.</p>
+<tt class="descname">on_peer_timeout</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.on_peer_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_peer_timeout handler. Default implementation does nothing.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="tox.ToxAV.on_reject">
-<tt class="descname">on_reject</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.on_reject" title="Permalink to this definition">¶</a></dt>
-<dd><p>on_reject handler, default implementation does nothing.</p>
+<tt class="descname">on_reject</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.on_reject" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_reject handler. Default implementation does nothing.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="tox.ToxAV.on_request_timeout">
-<tt class="descname">on_request_timeout</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.on_request_timeout" title="Permalink to this definition">¶</a></dt>
-<dd><p>on_request_timeout handler, default implementation does nothing.</p>
+<tt class="descname">on_request_timeout</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.on_request_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_request_timeout handler. Default implementation does nothing.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="tox.ToxAV.on_ringing">
-<tt class="descname">on_ringing</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.on_ringing" title="Permalink to this definition">¶</a></dt>
-<dd><p>on_ringing handler, default implementation does nothing.</p>
+<tt class="descname">on_ringing</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.on_ringing" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_ringing handler. Default implementation does nothing.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="tox.ToxAV.on_start">
-<tt class="descname">on_start</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.on_start" title="Permalink to this definition">¶</a></dt>
-<dd><p>on_start handler, default implementation does nothing.</p>
+<tt class="descname">on_start</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.on_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_start handler. Default implementation does nothing.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="tox.ToxAV.on_starting">
-<tt class="descname">on_starting</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.on_starting" title="Permalink to this definition">¶</a></dt>
-<dd><p>on_starting handler, default implementation does nothing.</p>
+<tt class="descname">on_starting</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.on_starting" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_starting handler. Default implementation does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tox.ToxAV.on_video_data">
+<tt class="descname">on_video_data</tt><big>(</big><em>call_index</em>, <em>width</em>, <em>height</em>, <em>data</em><big>)</big><a class="headerlink" href="#tox.ToxAV.on_video_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Receive decoded video packet. Default implementation does nothing.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="tox.ToxAV.prepare_transmission">
-<tt class="descname">prepare_transmission</tt><big>(</big><em>support_video</em><big>)</big><a class="headerlink" href="#tox.ToxAV.prepare_transmission" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">prepare_transmission</tt><big>(</big><em>call_index</em>, <em>jbuf_size</em>, <em>VAD_threshold</em>, <em>support_video</em><big>)</big><a class="headerlink" href="#tox.ToxAV.prepare_transmission" title="Permalink to this definition">¶</a></dt>
 <dd><p>Must be call before any RTP transmission occurs. <em>support_video</em> is either True or False.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="tox.ToxAV.recv_audio">
-<tt class="descname">recv_audio</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.recv_audio" title="Permalink to this definition">¶</a></dt>
-<dd><p>Receive decoded audio packet.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="tox.ToxAV.recv_video">
-<tt class="descname">recv_video</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.recv_video" title="Permalink to this definition">¶</a></dt>
-<dd><p>Receive decoded video packet.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="tox.ToxAV.reject">
-<tt class="descname">reject</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.reject" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">reject</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.reject" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reject incomming call.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="tox.ToxAV.send_audio">
-<tt class="descname">send_audio</tt><big>(</big><em>frame_size</em>, <em>data</em><big>)</big><a class="headerlink" href="#tox.ToxAV.send_audio" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">send_audio</tt><big>(</big><em>call_index</em>, <em>frame_size</em>, <em>data</em><big>)</big><a class="headerlink" href="#tox.ToxAV.send_audio" title="Permalink to this definition">¶</a></dt>
 <dd><p>Encode and send video packet. <em>data</em> should be a str or buffercontaining singal channel 16 bit signed PCM audio data.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="tox.ToxAV.send_video">
-<tt class="descname">send_video</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#tox.ToxAV.send_video" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">send_video</tt><big>(</big><em>call_index</em>, <em>data</em><big>)</big><a class="headerlink" href="#tox.ToxAV.send_video" title="Permalink to this definition">¶</a></dt>
 <dd><p>Encode and send video packet. <em>data</em> should be a str or buffercontaining a image in RGB888 format.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="tox.ToxAV.stop_call">
-<tt class="descname">stop_call</tt><big>(</big><big>)</big><a class="headerlink" href="#tox.ToxAV.stop_call" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">stop_call</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#tox.ToxAV.stop_call" title="Permalink to this definition">¶</a></dt>
 <dd><p>Terminate transmission. Note that transmission will be terminated without informing remote peer.</p>
 </dd></dl>
 
@@ -323,12 +369,12 @@ are in this class.</p>
         <li class="right" >
           <a href="tox.Tox.html" title="tox.Tox Class"
              >previous</a> |</li>
-        <li><a href="index.html">PyTox 0.0.16 documentation</a> &raquo;</li> 
+        <li><a href="index.html">PyTox 0.0.22 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2013, Wei-Ning Huang.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>
