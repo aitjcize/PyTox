@@ -832,7 +832,7 @@ PyMethodDef ToxAV_methods[] = {
     "get_peer_csettings",
     (PyCFunction)ToxAV_get_peer_csettings, METH_VARARGS,
     "get_peer_csettings(call_index, peer_num)\n"
-    "Get peer transmission type. It can either be audio or video."
+    "Get peer transmission type. It can either be audio or video. "
     "*peer_num* is always 0 for now."
   },
   {
