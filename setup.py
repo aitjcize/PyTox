@@ -8,7 +8,7 @@ def supports_av():
 
 sources = ["tox/tox.c", "tox/core.c", "tox/util.c"]
 libraries = ["toxcore"]
-cflags = ["-g", "-Wno-declaration-after-statement"]
+cflags = ["-Wall", "-Wno-declaration-after-statement"]
 
 if supports_av():
     libraries.append("toxav")
@@ -26,8 +26,6 @@ setup(
     url = 'http://github.com/aitjcize/PyTox',
     license = 'GPL',
     ext_modules=[
-       Extension("tox", sources,
-       extra_compile_args=cflags,
-       libraries=libraries)
+       Extension("tox", sources, extra_compile_args=cflags, libraries=libraries)
     ]
 )
