@@ -38,7 +38,7 @@ class ToxTest(unittest.TestCase):
         for i in range(n):
             self.alice.do()
             self.bob.do()
-            sleep(interval / 1000.0)
+            sleep(interval / 2000.0)
 
     def loop_until_connected(self):
         """
