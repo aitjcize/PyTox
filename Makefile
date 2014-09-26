@@ -11,7 +11,7 @@ run: kill build
 	sudo docker run -i -t --name pytox pytox_image bash
 
 test: kill build
-	sudo docker run -t --name pytox pytox_image python PyTox/tests/tests.py
+	sudo docker run -t --name pytox pytox_image bash -c "cd PyTox && tox"
 
 echobot: kill build
 	sudo docker run -t --name pytox pytox_image python PyTox/examples/echo.py

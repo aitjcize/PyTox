@@ -3,6 +3,15 @@ FROM ubuntu:trusty
 RUN sudo apt-get update
 RUN sudo apt-get install -y git wget make libtool automake pkg-config python-pip
 
+# test requirements
+RUN sudo pip install tox
+
+## python interpreters
+RUN sudo apt-get install -y software-properties-common python-software-properties
+RUN sudo add-apt-repository -y ppa:fkrull/deadsnakes
+RUN sudo apt-get update
+RUN sudo apt-get install -y python3.3 python3.2 python2.6
+
 # installing libsodium, needed for Core
 RUN git clone https://github.com/jedisct1/libsodium.git
 RUN cd libsodium && git checkout tags/0.7.0 && ./autogen.sh && ./configure --prefix=/usr && make && make install
@@ -31,4 +40,5 @@ ADD tox PyTox/tox
 ADD setup.py PyTox/setup.py
 ADD examples PyTox/examples
 ADD tests PyTox/tests
+ADD tox.ini PyTox/tox.ini
 RUN cd PyTox && pip install .
