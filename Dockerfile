@@ -36,7 +36,7 @@ RUN cd toxcore && make install
 
 # PyTox
 RUN sudo apt-get install -y python-dev
-ADD tox PyTox/tox
+ADD pytox PyTox/pytox
 ADD setup.py PyTox/setup.py
 ADD examples PyTox/examples
 ADD tests PyTox/tests
