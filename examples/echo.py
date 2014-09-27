@@ -23,13 +23,17 @@
 import sys
 from pytox import Tox, ToxAV
 
-from time import sleep, time
+from time import sleep
 from os.path import exists
-from random import randint
 
-SERVER = ["54.199.139.199", 33445, "7F9C31FE850E97CEFD4C4591DF93FC757C7C12549DDD55F8EEAECC34FE76C029"]
+SERVER = [
+    "54.199.139.199",
+    33445,
+    "7F9C31FE850E97CEFD4C4591DF93FC757C7C12549DDD55F8EEAECC34FE76C029"
+]
 
 DATA = 'echo.data'
+
 
 class AV(ToxAV):
     def __init__(self, core, max_calls):
@@ -42,8 +46,8 @@ class AV(ToxAV):
         self.call_type = self.cs["call_type"]
 
         print("Incoming %s call from %d:%s ..." % (
-                "video" if self.call_type == self.TypeVideo else "audio", idx,
-                self.core.get_name(self.get_peer_id(idx, 0))))
+            "video" if self.call_type == self.TypeVideo else "audio", idx,
+            self.core.get_name(self.get_peer_id(idx, 0))))
 
         self.answer(idx, self.call_type)
         print("Answered, in call...")
@@ -52,9 +56,11 @@ class AV(ToxAV):
         try:
             self.change_settings(idx, {"max_video_width": 1920,
                                        "max_video_height": 1080})
-        except: pass
-        self.prepare_transmission(idx, self.jbufdc * 2, self.VADd,
-                True if self.call_type == self.TypeVideo else False)
+        except:
+            pass
+        self.prepare_transmission(
+            idx, self.jbufdc * 2, self.VADd,
+            True if self.call_type == self.TypeVideo else False)
 
     def on_end(self, idx):
         self.kill_transmission(idx)
@@ -76,6 +82,7 @@ class AV(ToxAV):
         sys.stdout.write('*')
         sys.stdout.flush()
         self.send_video(idx, width, height, data)
+
 
 class EchoBot(Tox):
     def __init__(self):

@@ -33,12 +33,17 @@ from select import select
 
 from pytox import Tox, ToxAV
 
-SERVER = ["54.199.139.199", 33445, "7F9C31FE850E97CEFD4C4591DF93FC757C7C12549DDD55F8EEAECC34FE76C029"]
+SERVER = [
+    "54.199.139.199",
+    33445,
+    "7F9C31FE850E97CEFD4C4591DF93FC757C7C12549DDD55F8EEAECC34FE76C029"
+]
 
 
 DATA = 'phone.data'
 cap = cv2.VideoCapture(0)
 audio = pyaudio.PyAudio()
+
 
 class AV(ToxAV):
     def __init__(self, core, max_calls, debug=False):
@@ -56,7 +61,7 @@ class AV(ToxAV):
         self.cs = self.get_peer_csettings(idx, 0)
         self.call_type = self.cs["call_type"]
         self.frame_size = self.cs["audio_sample_rate"] * \
-                self.cs["audio_frame_duration"] / 1000
+            self.cs["audio_frame_duration"] / 1000
 
         ret, frame = cap.read()
         width, height = 640, 480
@@ -70,14 +75,17 @@ class AV(ToxAV):
         try:
             self.change_settings(idx, {"max_video_width": width,
                                        "max_video_height": height})
-        except: pass
+        except:
+            pass
 
     def on_invite(self, idx):
         self.update_settings(idx)
 
-        print("Incoming %s call from %d:%s ..." % (
-                "video" if self.call_type == self.TypeVideo else "audio", idx,
-                self.core.get_name(self.get_peer_id(0))))
+        print("Incoming %s call from %d:%s ..." %
+              (
+                  "video" if self.call_type == self.TypeVideo else "audio",
+                  idx,
+                  self.core.get_name(self.get_peer_id(0))))
 
         self.answer(idx, self.call_type)
         print("Answered, in call...")
@@ -126,7 +134,8 @@ class AV(ToxAV):
     def on_ending(self, idx):
         try:
             self.on_end(idx)
-        except: pass
+        except:
+            pass
 
     def on_peer_timeout(self, idx):
         self.kill_transmission(idx)
@@ -141,7 +150,7 @@ class AV(ToxAV):
         while not self.stop:
             try:
                 self.send_audio(idx, self.frame_size,
-                        self.aistream.read(self.frame_size))
+                                self.aistream.read(self.frame_size))
             except Exception as e:
                 print(e)
 
@@ -174,7 +183,7 @@ class AV(ToxAV):
             sys.stdout.flush()
 
         frame = np.ndarray(shape=(height, width, 3),
-                dtype=np.dtype(np.uint8), buffer=data)
+                           dtype=np.dtype(np.uint8), buffer=data)
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         cv2.imshow('frame', frame)
         cv2.waitKey(1)
@@ -219,7 +228,8 @@ class Phone(Tox):
                         if args[0] == "add":
                             try:
                                 self.add_friend(args[1], "Hi")
-                            except: pass
+                            except:
+                                pass
                             print('Friend added')
                         elif args[0] == "msg":
                             try:
@@ -227,7 +237,8 @@ class Phone(Tox):
                                     friend_number = int(args[1])
                                     msg = ' '.join(args[2:])
                                     self.send_message(friend_number, msg)
-                            except: pass
+                            except:
+                                pass
                         elif args[0] == "call":
                             if len(args) == 2:
                                 self.call(int(args[1]))
@@ -236,12 +247,14 @@ class Phone(Tox):
                                 if len(args) == 2:
                                     self.av.cancel(int(args[1]), 'cancel')
                                     print('Canceling...')
-                            except: pass
+                            except:
+                                pass
                         elif args[0] == "hangup":
                             try:
                                 self.av.hangup(self.call_idx)
                                 self.av.kill_transmission(self.call_idx)
-                            except: pass
+                            except:
+                                pass
                         elif args[0] == "quit":
                             raise KeyboardInterrupt
                         else:
@@ -264,7 +277,7 @@ class Phone(Tox):
 
     def on_connection_status(self, friendId, status):
         print('%s %s' % (self.get_name(friendId),
-                'online' if status else 'offline'))
+                         'online' if status else 'offline'))
 
     def call(self, friend_number):
         print('Calling %s ...' % self.get_name(friend_number))

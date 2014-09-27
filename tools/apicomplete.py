@@ -10,8 +10,10 @@ else:
 import re
 
 
-TOXURL="https://raw.github.com/irungentoo/ProjectTox-Core/master/toxcore/tox.h"
-PYTOXURL="https://raw.github.com/aitjcize/PyTox/master/tox/core.c"
+TOXURL =\
+    "https://raw.github.com/irungentoo/ProjectTox-Core/master/toxcore/tox.h"
+PYTOXURL =\
+    "https://raw.github.com/aitjcize/PyTox/master/tox/core.c"
 
 toxsrc = urlopen(TOXURL).read()
 pytoxsrc = urlopen(PYTOXURL).read()
@@ -28,7 +30,10 @@ for function in res:
         excl.append(function)
 
 
-print("PyTox includes %d out of %d functions found in tox.h" % (incl, len(res)))
+print(
+    "PyTox includes %d out of %d functions found in tox.h" % (incl, len(res))
+)
+
 print("Not included are the functions:")
 for item in excl:
     print("  %s" % item[:-1])
