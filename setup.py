@@ -7,13 +7,13 @@ def supports_av():
     out, err = h.communicate()
     return 'toxav' in str(out)
 
-sources = ["tox/tox.c", "tox/core.c", "tox/util.c"]
+sources = ["pytox/tox.c", "pytox/core.c", "pytox/util.c"]
 libraries = ["toxcore"]
 cflags = ["-Wall", "-Wno-declaration-after-statement"]
 
 if supports_av():
     libraries.append("toxav")
-    sources.append("tox/av.c")
+    sources.append("pytox/av.c")
     cflags.append("-DENABLE_AV")
 else:
     print("Warning: AV support not found, disabled.")
