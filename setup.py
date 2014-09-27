@@ -26,6 +26,6 @@ setup(
     url = 'http://github.com/aitjcize/PyTox',
     license = 'GPL',
     ext_modules=[
-       Extension("tox", sources, extra_compile_args=cflags, libraries=libraries)
+       Extension("pytox", sources, extra_compile_args=cflags, libraries=libraries)
     ]
 )

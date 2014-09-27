@@ -39,7 +39,7 @@ extern PyTypeObject ToxAVType;
 #if PY_MAJOR_VERSION >= 3
 struct PyModuleDef moduledef = {
   PyModuleDef_HEAD_INIT,
-  "tox",
+  "pytox",
   "Python Toxcore module",
   -1,
   NULL,
@@ -51,13 +51,13 @@ struct PyModuleDef moduledef = {
 #endif
 
 #if PY_MAJOR_VERSION >= 3
-PyMODINIT_FUNC PyInit_tox(void)
+PyMODINIT_FUNC PyInit_pytox(void)
 {
   PyObject *m = PyModule_Create(&moduledef);
 #else
-PyMODINIT_FUNC inittox(void)
+PyMODINIT_FUNC initpytox(void)
 {
-  PyObject *m = Py_InitModule("tox", NULL);
+  PyObject *m = Py_InitModule("pytox", NULL);
 #endif
 
   if (m == NULL) {
@@ -78,7 +78,7 @@ PyMODINIT_FUNC inittox(void)
   Py_INCREF(&ToxCoreType);
   PyModule_AddObject(m, "Tox", (PyObject*)&ToxCoreType);
 
-  ToxOpError = PyErr_NewException("tox.OperationFailedError", NULL, NULL);
+  ToxOpError = PyErr_NewException("pytox.OperationFailedError", NULL, NULL);
   PyModule_AddObject(m, "OperationFailedError", (PyObject*)ToxOpError);
 
 #ifdef ENABLE_AV
