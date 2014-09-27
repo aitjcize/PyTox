@@ -8,6 +8,8 @@ compiler:
   - gcc
   - clang
 before_script:
+  # install tox test manager
+  - sudo pip install tox
   # installing libsodium, needed for Core
   - git clone git://github.com/jedisct1/libsodium.git
   - cd libsodium
@@ -45,6 +47,7 @@ before_script:
 script:
   - pip install .
   - python tests/tests.py
+  - tox -epep8
 
 notifications:
   email: false
