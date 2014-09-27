@@ -31,11 +31,14 @@ from time import sleep
 ADDR_SIZE = 76
 CLIENT_ID_SIZE = 64
 
+
 class AliceTox(Tox):
     pass
 
+
 class BobTox(Tox):
     pass
+
 
 class ToxTest(unittest.TestCase):
     def setUp(self):
@@ -138,7 +141,7 @@ class ToxTest(unittest.TestCase):
 
         #: Wait until both are online
         def on_connection_status(self, friend_id, status):
-            assert status == True
+            assert status is True
             self.cs = True
 
         def on_user_status(self, friend_id, new_status):
@@ -237,6 +240,7 @@ class ToxTest(unittest.TestCase):
         self.bob_add_alice_as_friend()
 
         AID = self.aid
+
         def on_user_status(self, friend_id, new_status):
             assert friend_id == AID
             assert new_status == Tox.USERSTATUS_BUSY
@@ -260,9 +264,10 @@ class ToxTest(unittest.TestCase):
         self.bob_add_alice_as_friend()
 
         AID = self.aid
+
         def on_connection_status(self, friend_id, status):
             assert friend_id == AID
-            assert status == False
+            assert status is False
             self.cs = True
 
         BobTox.on_connection_status = on_connection_status
@@ -272,7 +277,7 @@ class ToxTest(unittest.TestCase):
         assert self.wait_callback(self.bob, 'cs')
         BobTox.on_connection_status = Tox.on_connection_status
 
-        assert self.bob.get_friend_connection_status(self.aid) == False
+        assert self.bob.get_friend_connection_status(self.aid) is False
 
     def test_tox(self):
         """
@@ -282,7 +287,7 @@ class ToxTest(unittest.TestCase):
         """
         assert self.alice.size() > 0
         data = self.alice.save()
-        assert data != None
+        assert data is not None
         addr = self.alice.get_address()
 
         self.alice.kill()
@@ -338,21 +343,22 @@ class ToxTest(unittest.TestCase):
 
         #: Test get_cliend_id
         assert self.alice.get_client_id(self.bid) == \
-                self.bob.get_address()[:CLIENT_ID_SIZE]
+            self.bob.get_address()[:CLIENT_ID_SIZE]
         assert self.bob.get_client_id(self.aid) == \
-                self.alice.get_address()[:CLIENT_ID_SIZE]
+            self.alice.get_address()[:CLIENT_ID_SIZE]
 
         #: Test friendlist
         assert self.alice.get_friendlist() == [self.bid]
         assert self.bob.get_friendlist() == [self.aid]
         assert self.alice.count_friendlist() == 1
         assert self.bob.count_friendlist() == 1
-        #assert self.alice.get_num_online_friends() == 1
-        #assert self.bob.get_num_online_friends() == 1
+        # assert self.alice.get_num_online_friends() == 1
+        # assert self.bob.get_num_online_friends() == 1
 
         #: Test friend name
         NEWNAME = 'Jenny'
         AID = self.aid
+
         def on_name_change(self, fid, newname):
             assert fid == AID
             assert newname == NEWNAME
@@ -380,6 +386,7 @@ class ToxTest(unittest.TestCase):
         #: Test message
         MSG = 'Hi, Bob!'
         BID = self.bid
+
         def on_friend_message(self, fid, message):
             assert fid == BID
             assert message == MSG
@@ -396,6 +403,7 @@ class ToxTest(unittest.TestCase):
         #: Test action
         ACTION = 'Kick'
         BID = self.bid
+
         def on_friend_action(self, fid, action):
             assert fid == BID
             assert action == ACTION
@@ -429,8 +437,8 @@ class ToxTest(unittest.TestCase):
         #: Test typing status
         def on_typing_change(self, fid, is_typing):
             assert fid == AID
-            assert is_typing == True
-            assert self.get_is_typing(fid) == True
+            assert is_typing is True
+            assert self.get_is_typing(fid) is True
             self.ut = True
 
         BobTox.on_typing_change = on_typing_change
@@ -440,8 +448,8 @@ class ToxTest(unittest.TestCase):
         BobTox.on_typing_change = Tox.on_typing_change
 
         #: Test last online
-        assert self.alice.get_last_online(self.bid) != None
-        assert self.bob.get_last_online(self.aid) != None
+        assert self.alice.get_last_online(self.bid) is not None
+        assert self.bob.get_last_online(self.aid) is not None
 
     def test_group(self):
         """
@@ -470,6 +478,7 @@ class ToxTest(unittest.TestCase):
         self.loop(50)
 
         BID = self.bid
+
         def on_group_invite(self, fid, pk):
             assert fid == BID
             assert len(pk) == CLIENT_ID_SIZE
@@ -527,6 +536,7 @@ class ToxTest(unittest.TestCase):
         AID = self.aid
         BID = self.bid
         MSG = 'Group message test'
+
         def on_group_message(self, gid, fgid, message):
             if fgid == AID:
                 assert gid == group_id
@@ -545,6 +555,7 @@ class ToxTest(unittest.TestCase):
         AID = self.aid
         BID = self.bid
         MSG = 'Group action test'
+
         def on_group_action(self, gid, fgid, action):
             if fgid == AID:
                 assert gid == group_id
@@ -611,8 +622,8 @@ class ToxTest(unittest.TestCase):
             CONTEXT['FILE'] += data
             CONTEXT['RECEIVED'] += len(data)
             if CONTEXT['RECEIVED'] < FILE_SIZE:
-                assert self.file_data_remaining(fid, file_number, 1) == \
-                        FILE_SIZE - CONTEXT['RECEIVED']
+                assert self.file_data_remaining(
+                    fid, file_number, 1) == FILE_SIZE - CONTEXT['RECEIVED']
 
         AliceTox.on_file_send_request = on_file_send_request
         AliceTox.on_file_control = on_file_control
@@ -633,16 +644,20 @@ class ToxTest(unittest.TestCase):
                 try:
                     while True:
                         if CONTEXT['SENT'] == FILE_SIZE:
-                            self.bob.file_send_control(self.aid, 0, FN,
-                                    Tox.FILECONTROL_FINISHED)
+                            self.bob.file_send_control(
+                                self.aid, 0, FN,
+                                Tox.FILECONTROL_FINISHED
+                            )
                             CONTEXT['START'] = False
                             break
                         else:
                             ed = CONTEXT['SENT'] + BLK
                             if ed > FILE_SIZE:
                                 ed = FILE_SIZE
-                            self.bob.file_send_data(self.aid, FN,
-                                    FILE[CONTEXT['SENT']:ed])
+                            self.bob.file_send_data(
+                                self.aid, FN,
+                                FILE[CONTEXT['SENT']:ed]
+                            )
                             CONTEXT['SENT'] = ed
                 except:
                     pass
@@ -658,9 +673,9 @@ class ToxTest(unittest.TestCase):
 
 if __name__ == '__main__':
     methods = set([x for x in dir(Tox)
-                     if not x[0].isupper() and not x[0] == '_'])
+                  if not x[0].isupper() and not x[0] == '_'])
     docs = "".join([getattr(ToxTest, x).__doc__ for x in dir(ToxTest)
-            if getattr(ToxTest, x).__doc__ != None])
+                    if getattr(ToxTest, x).__doc__ is not None])
 
     tested = set(re.findall(r't:(.*?)\n', docs))
     not_tested = methods.difference(tested)
