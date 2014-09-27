@@ -19,7 +19,7 @@ before_script:
   - ./configure --prefix=/usr
   - make -j2 > /dev/null
   - sudo make install > /dev/null
-  - cd ..
+  - cd /tmp
   # installing libopus, needed for audio encoding/decoding
   - wget http://downloads.xiph.org/releases/opus/opus-1.0.3.tar.gz > /dev/null
   - tar xzf opus-1.0.3.tar.gz > /dev/null
@@ -27,7 +27,7 @@ before_script:
   - ./configure
   - make -j3 > /dev/null
   - sudo make install > /dev/null
-  - cd ..
+  - cd /tmp
   # installing vpx
   - sudo apt-get install yasm
   - git clone http://git.chromium.org/webm/libvpx.git > /dev/null
@@ -35,7 +35,7 @@ before_script:
   - ./configure --enable-shared > /dev/null
   - make -j3 >/dev/null
   - sudo make install > /dev/null
-  - cd ..
+  - cd /tmp
   # creating librarys' links and updating cache
   - sudo ldconfig
   - git clone https://github.com/irungentoo/ProjectTox-Core.git toxcore
@@ -44,7 +44,7 @@ before_script:
   - ./configure --prefix=/usr --disable-tests --disable-ntox
   - make -j2
   - sudo make install
-  - cd ..
+  - cd /home/travis/build/aitjcize/PyTox
 script:
   - pip install .
   - python tests/tests.py
