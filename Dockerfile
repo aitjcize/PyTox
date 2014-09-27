@@ -10,7 +10,7 @@ RUN sudo pip install tox
 RUN sudo apt-get install -y software-properties-common python-software-properties
 RUN sudo add-apt-repository -y ppa:fkrull/deadsnakes
 RUN sudo apt-get update
-RUN sudo apt-get install -y python3.3 python3.2 python2.6
+RUN sudo apt-get install -y python3.3 python3.3-dev python3.2 python3.2-dev python2.6 python2.6-dev
 
 # installing libsodium, needed for Core
 RUN git clone https://github.com/jedisct1/libsodium.git
@@ -40,5 +40,6 @@ ADD tox PyTox/tox
 ADD setup.py PyTox/setup.py
 ADD examples PyTox/examples
 ADD tests PyTox/tests
+ADD MANIFEST.in PyTox/MANIFEST.in
 ADD tox.ini PyTox/tox.ini
-RUN cd PyTox && pip install .
+RUN cd PyTox && python setup.py install
