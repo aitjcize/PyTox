@@ -1,13 +1,18 @@
 language: python
-python:
-  - "2.6"
-  - "2.7"
-  - "3.2"
-  - "3.3"
+python: 2.7
+env:
+    - TOX_ENV=py26
+    - TOX_ENV=py27
+    - TOX_ENV=py32
+    - TOX_ENV=py33
+    - TOX_ENV=pep8
 compiler:
   - gcc
   - clang
 before_script:
+  - cd /tmp
+  # install tox test manager
+  - sudo pip install tox
   # installing libsodium, needed for Core
   - git clone git://github.com/jedisct1/libsodium.git
   - cd libsodium
@@ -16,7 +21,7 @@ before_script:
   - ./configure --prefix=/usr
   - make -j2 > /dev/null
   - sudo make install > /dev/null
-  - cd ..
+  - cd /tmp
   # installing libopus, needed for audio encoding/decoding
   - wget http://downloads.xiph.org/releases/opus/opus-1.0.3.tar.gz > /dev/null
   - tar xzf opus-1.0.3.tar.gz > /dev/null
@@ -24,7 +29,7 @@ before_script:
   - ./configure
   - make -j3 > /dev/null
   - sudo make install > /dev/null
-  - cd ..
+  - cd /tmp
   # installing vpx
   - sudo apt-get install yasm
   - git clone http://git.chromium.org/webm/libvpx.git > /dev/null
@@ -32,7 +37,7 @@ before_script:
   - ./configure --enable-shared > /dev/null
   - make -j3 >/dev/null
   - sudo make install > /dev/null
-  - cd ..
+  - cd /tmp
   # creating librarys' links and updating cache
   - sudo ldconfig
   - git clone https://github.com/irungentoo/ProjectTox-Core.git toxcore
@@ -41,10 +46,10 @@ before_script:
   - ./configure --prefix=/usr --disable-tests --disable-ntox
   - make -j2
   - sudo make install
-  - cd ..
+  - cd $TRAVIS_BUILD_DIR
 script:
   - pip install .
-  - python tests/tests.py
+  - tox -e $TOX_ENV
 
 notifications:
   email: false
