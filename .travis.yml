@@ -44,7 +44,7 @@ before_script:
   - ./configure --prefix=/usr --disable-tests --disable-ntox
   - make -j2
   - sudo make install
-  - cd /home/travis/build/aitjcize/PyTox
+  - cd $TRAVIS_BUILD_DIR
 script:
   - pip install .
   - python tests/tests.py
