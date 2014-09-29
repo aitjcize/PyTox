@@ -23,6 +23,7 @@
 import hashlib
 import os
 import re
+import sys
 import unittest
 
 from pytox import Tox, OperationFailedError
@@ -30,6 +31,23 @@ from time import sleep
 
 ADDR_SIZE = 76
 CLIENT_ID_SIZE = 64
+
+
+def unittest_skip(reason):
+    def _wrap1(func):
+        def _wrap2(self, *args, **kwargs):
+            pass
+        return _wrap2
+    return _wrap1
+
+
+def patch_unittest():
+    v = sys.version_info
+    if v.major == 2 and v.minor <= 6:
+        unittest.skip = unittest_skip
+
+# Patch unittest for Python version <= 2.6
+patch_unittest()
 
 
 class AliceTox(Tox):
@@ -451,6 +469,7 @@ class ToxTest(unittest.TestCase):
         assert self.alice.get_last_online(self.bid) is not None
         assert self.bob.get_last_online(self.aid) is not None
 
+    @unittest.skip("groupchat is under major refactor in toxcore")
     def test_group(self):
         """
         t:add_groupchat
@@ -498,9 +517,7 @@ class ToxTest(unittest.TestCase):
 
         self.ensure_exec(self.bob.invite_friend, (self.aid, group_id))
 
-        assert self.wait_callback(self.alice, 'gi')
-        if not self.alice.gn:
-            assert self.wait_callback(self.alice, 'gn')
+        assert self.wait_callbacks(self.alice, ['gi', 'gn'])
 
         AliceTox.on_group_invite = Tox.on_group_invite
         AliceTox.on_group_namelist_change = Tox.on_group_namelist_change
