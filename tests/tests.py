@@ -352,8 +352,8 @@ class ToxTest(unittest.TestCase):
         assert self.bob.get_friendlist() == [self.aid]
         assert self.alice.count_friendlist() == 1
         assert self.bob.count_friendlist() == 1
-        # assert self.alice.get_num_online_friends() == 1
-        # assert self.bob.get_num_online_friends() == 1
+        assert self.alice.get_num_online_friends() == 1
+        assert self.bob.get_num_online_friends() == 1
 
         #: Test friend name
         NEWNAME = 'Jenny'
