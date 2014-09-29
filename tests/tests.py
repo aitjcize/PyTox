@@ -479,10 +479,9 @@ class ToxTest(unittest.TestCase):
 
         BID = self.bid
 
-        def on_group_invite(self, fid, pk):
+        def on_group_invite(self, fid, data):
             assert fid == BID
-            assert len(pk) == CLIENT_ID_SIZE
-            self.join_groupchat(fid, pk)
+            self.join_groupchat(fid, data)
             self.gi = True
 
         AliceTox.on_group_invite = on_group_invite

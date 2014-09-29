@@ -96,14 +96,10 @@ static void callback_connection_status(Tox *tox, int32_t friendnumber,
 }
 
 static void callback_group_invite(Tox *tox, int32_t friendnumber,
-    const uint8_t* group_public_key, void *self)
+    const uint8_t* data, uint16_t length, void *self)
 {
-  uint8_t gpk[TOX_CLIENT_ID_SIZE * 2 + 1];
-  memset(gpk, 0, TOX_CLIENT_ID_SIZE * 2 + 1);
-
-  bytes_to_hex_string(group_public_key, TOX_CLIENT_ID_SIZE, gpk);
-  PyObject_CallMethod((PyObject*)self, "on_group_invite", "is", friendnumber,
-      gpk);
+  PyObject_CallMethod((PyObject*)self, "on_group_invite", "is#", friendnumber,
+      data, length);
 }
 
 static void callback_group_message(Tox *tox, int groupid,
@@ -904,18 +900,15 @@ ToxCore_join_groupchat(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  uint8_t* public_key = NULL;
+  uint8_t* data = NULL;
   int length = 0;
   int32_t friendnumber = 0;
-  uint8_t pk[TOX_CLIENT_ID_SIZE];
 
-  if (!PyArg_ParseTuple(args, "is#", &friendnumber, &public_key, &length)) {
+  if (!PyArg_ParseTuple(args, "is#", &friendnumber, &data, &length)) {
     return NULL;
   }
 
-  hex_string_to_bytes(public_key, TOX_CLIENT_ID_SIZE, pk);
-
-  int ret = tox_join_groupchat(self->tox, friendnumber, pk);
+  int ret = tox_join_groupchat(self->tox, friendnumber, data, length);
   if (ret == -1) {
     PyErr_SetString(ToxOpError, "failed to join group chat");
   }
@@ -1736,7 +1729,7 @@ PyMethodDef Tox_methods[] = {
   },
   {
     "join_groupchat", (PyCFunction)ToxCore_join_groupchat, METH_VARARGS,
-    "join_groupchat(friend_number, publick_key)\n"
+    "join_groupchat(friend_number, data)\n"
     "Join a group (you need to have been invited first.)"
   },
   {
