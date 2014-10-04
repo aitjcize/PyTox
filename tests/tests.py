@@ -42,8 +42,8 @@ def unittest_skip(reason):
 
 
 def patch_unittest():
-    v = sys.version_info
-    if v.major == 2 and v.minor <= 6:
+    major, minor, micro, release, serial = sys.version_info
+    if major == 2 and minor <= 6:
         unittest.skip = unittest_skip
 
 # Patch unittest for Python version <= 2.6
