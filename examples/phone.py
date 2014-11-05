@@ -82,10 +82,8 @@ class AV(ToxAV):
         self.update_settings(idx)
 
         print("Incoming %s call from %d:%s ..." %
-              (
-                  "video" if self.call_type == self.TypeVideo else "audio",
-                  idx,
-                  self.core.get_name(self.get_peer_id(0))))
+                ("video" if self.call_type == self.TypeVideo else "audio",
+                  idx, self.core.get_name(self.get_peer_id(idx, 0))))
 
         self.answer(idx, self.call_type)
         print("Answered, in call...")
