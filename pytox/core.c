@@ -95,11 +95,11 @@ static void callback_connection_status(Tox *tox, int32_t friendnumber,
       friendnumber, PyBool_FromLong(status));
 }
 
-static void callback_group_invite(Tox *tox, int32_t friendnumber,
-    const uint8_t* data, uint16_t length, void *self)
+static void callback_group_invite(Tox *tox, int32_t friendnumber, uint8_t type,
+    const uint8_t *data, uint16_t length, void *self)
 {
-  PyObject_CallMethod((PyObject*)self, "on_group_invite", "is#", friendnumber,
-      data, length);
+  PyObject_CallMethod((PyObject*)self, "on_group_invite", "i#s#", friendnumber,
+      type, data, length);
 }
 
 static void callback_group_message(Tox *tox, int groupid,
