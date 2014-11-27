@@ -838,6 +838,47 @@ ToxCore_add_groupchat(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
+ToxCore_group_get_title(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  int groupid = 0;
+  if (!PyArg_ParseTuple(args, "i", &groupid)) {
+    return NULL;
+  }
+
+  uint8_t buf[TOX_MAX_STATUSMESSAGE_LENGTH];
+  memset(buf, 0, TOX_MAX_STATUSMESSAGE_LENGTH);
+
+  int ret = tox_group_get_title(self->tox, groupid, buf, TOX_MAX_STATUSMESSAGE_LENGTH);
+  if (ret == -1) {
+    return PYSTRING_FromString("");  // no title.
+  }
+
+  return PYSTRING_FromString((const char*)buf);
+}
+
+static PyObject*
+ToxCore_group_set_title(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  int groupid = 0;
+  uint8_t* title = NULL;
+  uint32_t length = 0;
+
+  if (!PyArg_ParseTuple(args, "is#", &groupid, &title, &length)) {
+    return NULL;
+  }
+
+  if (tox_group_set_title(self->tox, groupid, title, length) == -1) {
+    PyErr_SetString(ToxOpError, "failed to set the group title");
+  }
+
+  Py_RETURN_NONE;
+}
+
+static PyObject*
 ToxCore_del_groupchat(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
@@ -1708,13 +1749,23 @@ PyMethodDef Tox_methods[] = {
     "Get a list of valid friend numbers."
   },
   {
+    "group_get_title", (PyCFunction)ToxCore_group_get_title, METH_VARARGS,
+    "group_get_title(group_number)\n"
+    "Returns the title for group_number."
+  },
+  {
+    "group_set_title", (PyCFunction)ToxCore_group_set_title, METH_VARARGS,
+    "group_set_title(group_number, title)\n"
+    "Sets the title for group."
+  },
+  {
     "add_groupchat", (PyCFunction)ToxCore_add_groupchat, METH_VARARGS,
     "add_groupchat()\n"
     "Creates a new groupchat and puts it in the chats array."
   },
   {
     "del_groupchat", (PyCFunction)ToxCore_del_groupchat, METH_VARARGS,
-    "del_groupchat(gruop_number)\n"
+    "del_groupchat(group_number)\n"
     "Delete a groupchat from the chats array."
   },
   {
