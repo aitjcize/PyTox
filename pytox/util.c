@@ -64,7 +64,7 @@ void hex_string_to_bytes(uint8_t* hexstr, int length, uint8_t* bytes)
   }
 }
 
-void PyStringUnicode_AsStringAnsSize(PyObject* object, char** str,
+void PyStringUnicode_AsStringAndSize(PyObject* object, char** str,
     Py_ssize_t* len)
 {
 #if PY_MAJOR_VERSION < 3
