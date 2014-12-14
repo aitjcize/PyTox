@@ -469,7 +469,6 @@ class ToxTest(unittest.TestCase):
         assert self.alice.get_last_online(self.bid) is not None
         assert self.bob.get_last_online(self.aid) is not None
 
-    @unittest.skip("groupchat is under major refactor in toxcore")
     def test_group(self):
         """
         t:add_groupchat
@@ -498,8 +497,9 @@ class ToxTest(unittest.TestCase):
 
         BID = self.bid
 
-        def on_group_invite(self, fid, data):
+        def on_group_invite(self, fid, type_, data):
             assert fid == BID
+            assert type_ == 0
             self.join_groupchat(fid, data)
             self.gi = True
 
@@ -547,6 +547,10 @@ class ToxTest(unittest.TestCase):
         assert 'Bob' in peernames
 
         assert sorted(self.bob.group_get_names(group_id)) == ['Alice', 'Bob']
+
+        #: Test title change
+        self.bob.group_set_title(group_id, 'My special title')
+        assert self.bob.group_get_title(group_id) == 'My special title'
 
         #: Test group message
         AID = self.aid
