@@ -880,6 +880,24 @@ ToxCore_group_set_title(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
+ToxCore_group_get_type(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  int type = 0;
+  if (!PyArg_ParseTuple(args, "i", &type)) {
+    return NULL;
+  }
+
+  int ret = tox_group_get_type(self->tox, type);
+  if (ret == -1) {
+    PyErr_SetString(ToxOpError, "failed to get group type");
+  }
+
+  return PyLong_FromLong(ret);
+}
+
+static PyObject*
 ToxCore_del_groupchat(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
@@ -1519,9 +1537,11 @@ PyMethodDef Tox_methods[] = {
   },
   {
     "on_group_invite", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
-    "on_group_invite(friend_number, group_public_key)\n"
+    "on_group_invite(friend_number, type, group_public_key)\n"
     "Callback for receiving group invitations, default implementation does "
-    "nothing."
+    "nothing.\n\n"
+    ".. seealso ::\n"
+    "    :meth:`.group_get_type`"
   },
   {
     "on_group_message", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
@@ -1760,6 +1780,18 @@ PyMethodDef Tox_methods[] = {
     "Sets the title for group."
   },
   {
+    "group_get_type", (PyCFunction)ToxCore_group_get_type, METH_VARARGS,
+    "group_get_type(group_number)\n"
+    "Return the type of group, could be the following value:\n\n"
+    "+-------------------------+-------------+\n"
+    "| type                    | description |\n"
+    "+=========================+=============+\n"
+    "| Tox.GROUPCHAT_TYPE_TEXT | text chat   |\n"
+    "+-------------------------+-------------+\n"
+    "| Tox.GROUPCHAT_TYPE_AV   | video chat  |\n"
+    "+-------------------------+-------------+\n"
+  },
+  {
     "add_groupchat", (PyCFunction)ToxCore_add_groupchat, METH_VARARGS,
     "add_groupchat()\n"
     "Creates a new groupchat and puts it in the chats array."
@@ -1782,7 +1814,8 @@ PyMethodDef Tox_methods[] = {
   {
     "join_groupchat", (PyCFunction)ToxCore_join_groupchat, METH_VARARGS,
     "join_groupchat(friend_number, data)\n"
-    "Join a group (you need to have been invited first.)"
+    "Join a group (you need to have been invited first.). Returns the group "
+    "number of success."
   },
   {
     "group_message_send", (PyCFunction)ToxCore_group_message_send, METH_VARARGS,
@@ -2005,6 +2038,8 @@ void ToxCore_install_dict()
   SET(FILECONTROL_KILL)
   SET(FILECONTROL_FINISHED)
   SET(FILECONTROL_RESUME_BROKEN)
+  SET(GROUPCHAT_TYPE_TEXT)
+  SET(GROUPCHAT_TYPE_AV)
 
 #undef SET
 

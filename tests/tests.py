@@ -477,9 +477,12 @@ class ToxTest(unittest.TestCase):
         t:get_chatlist
         t:group_action_send
         t:group_get_names
+        t:group_get_title
+        t:group_get_type
         t:group_message_send
         t:group_number_peers
         t:group_peername
+        t:group_set_title
         t:invite_friend
         t:join_groupchat
         t:on_group_action
@@ -500,7 +503,8 @@ class ToxTest(unittest.TestCase):
         def on_group_invite(self, fid, type_, data):
             assert fid == BID
             assert type_ == 0
-            self.join_groupchat(fid, data)
+            gn = self.join_groupchat(fid, data)
+            assert type_ == self.group_get_type(gn)
             self.gi = True
 
         AliceTox.on_group_invite = on_group_invite
