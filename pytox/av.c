@@ -36,18 +36,17 @@ extern PyObject* ToxOpError;
   }
 
 CALLBACK_DEF(on_invite);
+CALLBACK_DEF(on_ringing);
 CALLBACK_DEF(on_start);
 CALLBACK_DEF(on_cancel);
 CALLBACK_DEF(on_reject);
 CALLBACK_DEF(on_end);
-CALLBACK_DEF(on_ringing);
-CALLBACK_DEF(on_starting);
-CALLBACK_DEF(on_ending);
 CALLBACK_DEF(on_request_timeout);
 CALLBACK_DEF(on_peer_timeout);
-CALLBACK_DEF(on_media_change);
+CALLBACK_DEF(on_peer_cs_change);
+CALLBACK_DEF(on_self_cs_change);
 
-static void i420_to_rgb(vpx_image_t *img, unsigned char *out)
+static void i420_to_rgb(const vpx_image_t *img, unsigned char *out)
 {
     const int w = img->d_w;
     const int w2 = w / 2;
@@ -162,8 +161,8 @@ static void rgb_to_i420(unsigned char* rgb, vpx_image_t *img)
   }
 }
 
-void ToxAV_audio_recv_callback(ToxAv* av, int32_t call_idx, int16_t* data,
-    int size, void* self)
+void ToxAV_audio_recv_callback(void* agent, int32_t call_idx,
+    const int16_t* data, uint16_t size, void* self)
 {
   PyGILState_STATE gstate = PyGILState_Ensure();
 
@@ -177,8 +176,8 @@ void ToxAV_audio_recv_callback(ToxAv* av, int32_t call_idx, int16_t* data,
   PyGILState_Release(gstate);
 }
 
-void ToxAV_video_recv_callback(ToxAv* av, int32_t call_idx, vpx_image_t* image,
-    void* user)
+void ToxAV_video_recv_callback(void* agent, int32_t call_idx,
+    const vpx_image_t* image, void* user)
 {
   ToxAV* self = (ToxAV*)user;
 
@@ -200,8 +199,6 @@ void ToxAV_video_recv_callback(ToxAv* av, int32_t call_idx, vpx_image_t* image,
   }
 
   i420_to_rgb(image, self->out_image);
-
-  vpx_img_free(image);
 
   PyGILState_STATE gstate = PyGILState_Ensure();
 
@@ -245,23 +242,21 @@ static int init_helper(ToxAV* self, PyObject* args)
   toxav_register_callstate_callback(self->av, ToxAV_callback_##name, id, self)
 
   REG_CALLBACK(av_OnInvite, on_invite);
+  REG_CALLBACK(av_OnRinging, on_ringing);
   REG_CALLBACK(av_OnStart, on_start);
   REG_CALLBACK(av_OnCancel, on_cancel);
   REG_CALLBACK(av_OnReject, on_reject);
   REG_CALLBACK(av_OnEnd, on_end);
-
-  REG_CALLBACK(av_OnRinging, on_ringing);
-  REG_CALLBACK(av_OnStarting, on_starting);
-  REG_CALLBACK(av_OnEnding, on_ending);
-
   REG_CALLBACK(av_OnRequestTimeout, on_request_timeout);
   REG_CALLBACK(av_OnPeerTimeout, on_peer_timeout);
-  REG_CALLBACK(av_OnMediaChange, on_media_change);
+  REG_CALLBACK(av_OnPeerCSChange, on_peer_cs_change);
+  REG_CALLBACK(av_OnSelfCSChange, on_self_cs_change);
+
 
 #undef REG_CALLBACK
 
-  toxav_register_audio_recv_callback(self->av, ToxAV_audio_recv_callback, self);
-  toxav_register_video_recv_callback(self->av, ToxAV_video_recv_callback, self);
+  toxav_register_audio_callback(self->av, ToxAV_audio_recv_callback, self);
+  toxav_register_video_callback(self->av, ToxAV_video_recv_callback, self);
 
   if (self->av == NULL) {
     PyErr_SetString(ToxOpError, "failed to allocate toxav");
@@ -320,44 +315,57 @@ ToxAV_set_Error(int ret)
 {
   const char* msg = NULL;
   switch(ret) {
-  case ErrorInternal:
-    msg = "Internal error";
+  case av_ErrorNone:
+    msg = "None";
     break;
-  case ErrorAlreadyInCall:
-    msg = "Already has an active call";
+  case av_ErrorUnknown:
+    msg = "Unknown error";
     break;
-  case ErrorNoCall:
+  case av_ErrorNoCall:
     msg = "Trying to perform call action while not in a call";
     break;
-  case ErrorInvalidState:
+  case av_ErrorInvalidState:
     msg = "Trying to perform call action while in invalid stat";
     break;
-  case ErrorNoRtpSession:
+  case av_ErrorAlreadyInCallWithPeer:
+    msg = "Trying to call peer when already in a call with peer";
+    break;
+  case av_ErrorReachedCallLimit:
+    msg = "Cannot handle more calls";
+    break;
+  case av_ErrorInitializingCodecs:
+    msg = "Failed creating CSSession";
+    break;
+  case av_ErrorSettingVideoResolution:
+    msg = "Error setting resolution";
+    break;
+  case av_ErrorSettingVideoBitrate:
+    msg = "Error setting bitrate";
+    break;
+  case av_ErrorSplittingVideoPayload:
+    msg = "Error splitting video payload";
+    break;
+  case av_ErrorEncodingVideo:
+    msg = "vpx_codec_encode failed";
+    break;
+  case av_ErrorEncodingAudio:
+    msg = "opus_encode failed";
+    break;
+  case av_ErrorSendingPayload:
+    msg = "Sending lossy packet failed";
+    break;
+  case av_ErrorCreatingRtpSessions:
+    msg = "One of the rtp sessions failed to initialize";
+    break;
+  case av_ErrorNoRtpSession:
     msg = "Trying to perform rtp action on invalid session";
     break;
-  case ErrorAudioPacketLost:
-    msg = "Indicating packet loss";
-    break;
-  case ErrorStartingAudioRtp:
-    msg = "Error in toxav_prepare_transmission()";
-    break;
-  case ErrorStartingVideoRtp:
-    msg = "Error in toxav_prepare_transmission()";
-    break;
-  case ErrorTerminatingAudioRtp:
-    msg = "Returned in toxav_kill_transmission()";
-    break;
-  case ErrorTerminatingVideoRtp:
-    msg = "Returned in toxav_kill_transmission()";
-    break;
-  case ErrorPacketTooLarge:
-    msg = "Buffer exceeds size while encoding";
-    break;
-  case ErrorInvalidCodecState:
+  case av_ErrorInvalidCodecState:
     msg = "Codec state not initialized";
     break;
-  default:
-    msg = "Unknown error";
+  case av_ErrorPacketTooLarge:
+    msg = "Split packet exceeds it's limit";
+    break;
   }
 
   PyErr_SetString(ToxOpError, msg);
@@ -521,15 +529,12 @@ static PyObject*
 ToxAV_prepare_transmission(ToxAV* self, PyObject* args)
 {
   int call_index = 0, support_video = 0;
-  uint32_t jbuf_size = 0, VAD_threshold = 0;
 
-  if (!PyArg_ParseTuple(args, "iIIi", &call_index, &jbuf_size, &VAD_threshold,
-        &support_video)) {
+  if (!PyArg_ParseTuple(args, "iIIi", &call_index, &support_video)) {
     return NULL;
   }
 
-  int ret = toxav_prepare_transmission(self->av, call_index, jbuf_size,
-      VAD_threshold, support_video);
+  int ret = toxav_prepare_transmission(self->av, call_index, support_video);
   if (ret < 0) {
     ToxAV_set_Error(ret);
     return NULL;
@@ -732,17 +737,15 @@ ToxAV_callback_stub(ToxAV* self, PyObject* args)
 
 PyMethodDef ToxAV_methods[] = {
   METHOD_DEF(on_invite),
+  METHOD_DEF(on_ringing),
   METHOD_DEF(on_start),
   METHOD_DEF(on_cancel),
   METHOD_DEF(on_reject),
   METHOD_DEF(on_end),
-  METHOD_DEF(on_ringing),
-  METHOD_DEF(on_starting),
-  METHOD_DEF(on_ending),
-  METHOD_DEF(on_error),
   METHOD_DEF(on_request_timeout),
   METHOD_DEF(on_peer_timeout),
-  METHOD_DEF(on_media_change),
+  METHOD_DEF(on_peer_cs_change),
+  METHOD_DEF(on_self_cs_change),
   {
     "call", (PyCFunction)ToxAV_call, METH_VARARGS,
     "call(friend_id, call_type, seconds)\n"
@@ -797,7 +800,7 @@ PyMethodDef ToxAV_methods[] = {
   {
     "prepare_transmission", (PyCFunction)ToxAV_prepare_transmission,
     METH_VARARGS,
-    "prepare_transmission(call_index, jbuf_size, VAD_threshold, support_video)\n"
+    "prepare_transmission(call_index, support_video)\n"
     "Must be call before any RTP transmission occurs. *support_video* is "
     "either True or False."
   },
@@ -850,7 +853,7 @@ PyMethodDef ToxAV_methods[] = {
     "+------------------------+\n"
     "| state                  |\n"
     "+========================+\n"
-    "| ToxAV.CallNonExistant  |\n"
+    "| ToxAV.CallNonExistent  |\n"
     "+------------------------+\n"
     "| ToxAV.CallInviting     |\n"
     "+------------------------+\n"
@@ -938,12 +941,7 @@ PyTypeObject ToxAVType = {
 
 void ToxAV_install_dict()
 {
-#define SET(name)                                            \
-  PyObject* obj_##name = PyLong_FromLong(name);              \
-  PyDict_SetItemString(dict, #name, obj_##name);             \
-  Py_DECREF(obj_##name);
-
-#define SET2(name)                                           \
+#define SET(name)                                           \
   PyObject* obj_##name = PyLong_FromLong(av_##name);         \
   PyDict_SetItemString(dict, #name, obj_##name);             \
   Py_DECREF(obj_##name);
@@ -956,17 +954,12 @@ void ToxAV_install_dict()
   SET(VideoEncoding);
   SET(VideoDecoding);
 
-  SET2(CallNonExistant);
-  SET2(CallInviting);
-  SET2(CallStarting);
-  SET2(CallActive);
-  SET2(CallHold);
-  SET2(CallHanged_up);
-
-  SET2(jbufdc);
-  SET2(VADd);
-
-#undef SET2
+  SET(CallNonExistent);
+  SET(CallInviting);
+  SET(CallStarting);
+  SET(CallActive);
+  SET(CallHold);
+  SET(CallHungUp);
 
 #undef SET
 
