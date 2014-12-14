@@ -25,6 +25,12 @@
 
 #include <arpa/inet.h>
 
+#if PY_MAJOR_VERSION < 3
+# define BUF_TC "s"
+#else
+# define BUF_TC "y"
+#endif
+
 extern PyObject* ToxOpError;
 
 static void callback_friend_request(Tox* tox, const uint8_t* public_key,
@@ -98,8 +104,8 @@ static void callback_connection_status(Tox *tox, int32_t friendnumber,
 static void callback_group_invite(Tox *tox, int32_t friendnumber, uint8_t type,
     const uint8_t *data, uint16_t length, void *self)
 {
-  PyObject_CallMethod((PyObject*)self, "on_group_invite", "iis#", friendnumber,
-      type, data, length);
+  PyObject_CallMethod((PyObject*)self, "on_group_invite", "ii" BUF_TC "#",
+      friendnumber, type, data, length);
 }
 
 static void callback_group_message(Tox *tox, int groupid,
@@ -136,25 +142,15 @@ static void callback_file_control(Tox *m, int32_t friendnumber,
     uint8_t receive_send, uint8_t filenumber, uint8_t control_type,
     const uint8_t* data, uint16_t length, void* self)
 {
-#if PY_MAJOR_VERSION < 3
-  PyObject_CallMethod((PyObject*)self, "on_file_control", "iiiis#",
+  PyObject_CallMethod((PyObject*)self, "on_file_control", "iiii" BUF_TC "#",
       friendnumber, receive_send, filenumber, control_type, data, length);
-#else
-  PyObject_CallMethod((PyObject*)self, "on_file_control", "iiiiy#",
-      friendnumber, receive_send, filenumber, control_type, data, length);
-#endif
 }
 
 static void callback_file_data(Tox *m, int32_t friendnumber, uint8_t filenumber,
     const uint8_t* data, uint16_t length, void* self)
 {
-#if PY_MAJOR_VERSION < 3
-  PyObject_CallMethod((PyObject*)self, "on_file_data", "iis#",
+  PyObject_CallMethod((PyObject*)self, "on_file_data", "ii" BUF_TC "#",
       friendnumber, filenumber, data, length);
-#else
-  PyObject_CallMethod((PyObject*)self, "on_file_data", "iiy#",
-      friendnumber, filenumber, data, length);
-#endif
 }
 
 static int init_helper(ToxCore* self, PyObject* args)
