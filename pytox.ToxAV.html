@@ -1,0 +1,368 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pytox.ToxAV Class &mdash; PyTox 0.0.23 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.0.23',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="PyTox 0.0.23 documentation" href="index.html" />
+    <link rel="prev" title="pytox.Tox Class" href="pytox.Tox.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body>
+
+
+<script type="text/javascript">
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new
+  Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-41538912-3', 'aitjcize.github.io');
+  ga('send', 'pageview');
+</script>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="pytox.Tox.html" title="pytox.Tox Class"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">PyTox 0.0.23 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="pytox-toxav-class">
+<h1>pytox.ToxAV Class<a class="headerlink" href="#pytox-toxav-class" title="Permalink to this headline">¶</a></h1>
+<p>PyTox wraps libtoxav API with the object pytox.ToxAV, all the toxav API methods
+are in this class.</p>
+<dl class="class">
+<dt id="pytox.ToxAV">
+<em class="property">class </em><tt class="descclassname">pytox.</tt><tt class="descname">ToxAV</tt><a class="headerlink" href="#pytox.ToxAV" title="Permalink to this definition">¶</a></dt>
+<dd><p>ToxAV object</p>
+<dl class="method">
+<dt id="pytox.ToxAV.answer">
+<tt class="descname">answer</tt><big>(</big><em>call_index</em>, <em>call_type</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.answer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Answer incomming call.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#pytox.ToxAV.call" title="pytox.ToxAV.call"><tt class="xref py py-meth docutils literal"><span class="pre">call()</span></tt></a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.call">
+<tt class="descname">call</tt><big>(</big><em>friend_id</em>, <em>call_type</em>, <em>seconds</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.call" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call a friend with <em>friend_id</em>, with <em>seconds</em> ringing timeout. Returns the index <em>call_index</em> of the call.</p>
+<p><em>call_type</em> can be one of following value:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="44%" />
+<col width="56%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">control_type</th>
+<th class="head">description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>ToxAV.TypeAudio</td>
+<td>audio only call</td>
+</tr>
+<tr class="row-odd"><td>ToxAV.TypeVideo</td>
+<td>audio and video call</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.cancel">
+<tt class="descname">cancel</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.cancel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cancel outgoing request.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.capability_supported">
+<tt class="descname">capability_supported</tt><big>(</big><em>capability</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.capability_supported" title="Permalink to this definition">¶</a></dt>
+<dd><p>Query if certain capability is supported.</p>
+<p><em>capability</em> can be one of following value:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="56%" />
+<col width="44%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">control_type</th>
+<th class="head">description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>ToxAV.AudioEncoding</td>
+<td>audio encoding</td>
+</tr>
+<tr class="row-odd"><td>ToxAV.AudioDecoding</td>
+<td>audio decoding</td>
+</tr>
+<tr class="row-even"><td>ToxAV.VideoEncoding</td>
+<td>video encoding</td>
+</tr>
+<tr class="row-odd"><td>ToxAV.VideoEncoding</td>
+<td>video decoding</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.change_settings">
+<tt class="descname">change_settings</tt><big>(</big><em>call_index</em>, <em>csettings</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.change_settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Notify peer that we are changing call settings. <em>settings</em> is adictionary of new settings like the one returned by get_peer_csettings</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#pytox.ToxAV.get_peer_csettings" title="pytox.ToxAV.get_peer_csettings"><tt class="xref py py-meth docutils literal"><span class="pre">get_peer_csettings()</span></tt></a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.get_call_state">
+<tt class="descname">get_call_state</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.get_call_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get current call state</p>
+<p>The state returned can be one of following value:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="100%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">state</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>ToxAV.CallNonExistent</td>
+</tr>
+<tr class="row-odd"><td>ToxAV.CallInviting</td>
+</tr>
+<tr class="row-even"><td>ToxAV.CallStarting</td>
+</tr>
+<tr class="row-odd"><td>ToxAV.CallActive</td>
+</tr>
+<tr class="row-even"><td>ToxAV.CallHold</td>
+</tr>
+<tr class="row-odd"><td>ToxAV.CallHanged_up</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.get_peer_csettings">
+<tt class="descname">get_peer_csettings</tt><big>(</big><em>call_index</em>, <em>peer_num</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.get_peer_csettings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get peer transmission type. It can either be audio or video. <em>peer_num</em> is always 0 for now.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.get_peer_id">
+<tt class="descname">get_peer_id</tt><big>(</big><em>call_index</em>, <em>peer_num</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.get_peer_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get <em>friend_number</em> of peer participating in conversation. <em>peer_num</em> is always 0 for now.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.get_tox">
+<tt class="descname">get_tox</tt><big>(</big><big>)</big><a class="headerlink" href="#pytox.ToxAV.get_tox" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the Tox object associated with this ToxAV instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.hangup">
+<tt class="descname">hangup</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.hangup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hangup active call.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.kill_transmission">
+<tt class="descname">kill_transmission</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.kill_transmission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call this at the end of the transmission.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.on_audio_data">
+<tt class="descname">on_audio_data</tt><big>(</big><em>call_index</em>, <em>size</em>, <em>data</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.on_audio_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Receive decoded audio packet. Default implementation does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.on_cancel">
+<tt class="descname">on_cancel</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.on_cancel" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_cancel handler. Default implementation does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.on_end">
+<tt class="descname">on_end</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.on_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_end handler. Default implementation does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.on_invite">
+<tt class="descname">on_invite</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.on_invite" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_invite handler. Default implementation does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.on_peer_cs_change">
+<tt class="descname">on_peer_cs_change</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.on_peer_cs_change" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_peer_cs_change handler. Default implementation does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.on_peer_timeout">
+<tt class="descname">on_peer_timeout</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.on_peer_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_peer_timeout handler. Default implementation does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.on_reject">
+<tt class="descname">on_reject</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.on_reject" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_reject handler. Default implementation does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.on_request_timeout">
+<tt class="descname">on_request_timeout</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.on_request_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_request_timeout handler. Default implementation does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.on_ringing">
+<tt class="descname">on_ringing</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.on_ringing" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_ringing handler. Default implementation does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.on_self_cs_change">
+<tt class="descname">on_self_cs_change</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.on_self_cs_change" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_self_cs_change handler. Default implementation does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.on_start">
+<tt class="descname">on_start</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.on_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>on_start handler. Default implementation does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.on_video_data">
+<tt class="descname">on_video_data</tt><big>(</big><em>call_index</em>, <em>width</em>, <em>height</em>, <em>data</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.on_video_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Receive decoded video packet. Default implementation does nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.prepare_transmission">
+<tt class="descname">prepare_transmission</tt><big>(</big><em>call_index</em>, <em>support_video</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.prepare_transmission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Must be call before any RTP transmission occurs. <em>support_video</em> is either True or False.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.reject">
+<tt class="descname">reject</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.reject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reject incomming call.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.send_audio">
+<tt class="descname">send_audio</tt><big>(</big><em>call_index</em>, <em>frame_size</em>, <em>data</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.send_audio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Encode and send video packet. <em>data</em> should be a str or buffercontaining singal channel 16 bit signed PCM audio data.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.send_video">
+<tt class="descname">send_video</tt><big>(</big><em>call_index</em>, <em>data</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.send_video" title="Permalink to this definition">¶</a></dt>
+<dd><p>Encode and send video packet. <em>data</em> should be a str or buffercontaining a image in RGB888 format.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytox.ToxAV.stop_call">
+<tt class="descname">stop_call</tt><big>(</big><em>call_index</em><big>)</big><a class="headerlink" href="#pytox.ToxAV.stop_call" title="Permalink to this definition">¶</a></dt>
+<dd><p>Terminate transmission. Note that transmission will be terminated without informing remote peer.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pytox.Tox.html"
+                        title="previous chapter">pytox.Tox Class</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="pytox.Tox.html" title="pytox.Tox Class"
+             >previous</a> |</li>
+        <li><a href="index.html">PyTox 0.0.23 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Wei-Ning Huang.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
