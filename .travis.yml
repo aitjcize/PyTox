@@ -42,6 +42,7 @@ before_script:
   - make -j2
   - sudo make install
   - cd ..
+  - sudo ldconfig > /dev/null
 script:
   - pip install .
   - python tests/tests.py
