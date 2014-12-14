@@ -26,7 +26,7 @@ Module Documentation
 .. toctree::
     :maxdepth: 1
 
-    tox
+    pytox
 
 Class Documentation
 -------------------
@@ -34,8 +34,8 @@ Class Documentation
 .. toctree::
     :maxdepth: 1
 
-    tox.Tox
-    tox.ToxAV
+    pytox.Tox
+    pytox.ToxAV
 
 Indices and tables
 ------------------

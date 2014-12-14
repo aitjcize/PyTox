@@ -7,7 +7,7 @@ def supports_av():
     out, err = h.communicate()
     return 'toxav' in str(out)
 
-sources = ["pytox/tox.c", "pytox/core.c", "pytox/util.c"]
+sources = ["pytox/pytox.c", "pytox/core.c", "pytox/util.c"]
 libraries = ["toxcore"]
 cflags = ["-Wall", "-Wno-declaration-after-statement"]
 
