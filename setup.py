@@ -3,9 +3,9 @@ from subprocess import Popen, PIPE
 
 
 def supports_av():
-    h = Popen("ldconfig -p | grep toxav", shell=True, stdout=PIPE)
+    h = Popen("ld -ltoxav", shell=True, stderr=PIPE)
     out, err = h.communicate()
-    return 'toxav' in str(out)
+    return 'toxav' not in str(err)
 
 sources = ["pytox/pytox.c", "pytox/core.c", "pytox/util.c"]
 libraries = ["toxcore"]
