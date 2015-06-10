@@ -169,27 +169,47 @@ static int init_helper(ToxCore* self, PyObject* args)
   }
 
   int ipv6enabled = TOX_ENABLE_IPV6_DEFAULT;
+  PyObject *opt = NULL;
 
   if (args) {
-    if (!PyArg_ParseTuple(args, "|i", &ipv6enabled)) {
-      PyErr_SetString(PyExc_TypeError, "ipv6enabled should be boolean");
-      return -1;
-    }
+      if (!PyArg_ParseTuple(args, "O", &opt)) {
+          PyErr_SetString(PyExc_TypeError, "ipv6enabled should be boolean");
+          return -1;
+      }
+      printf("opt=%p\n", opt);
   }
 
   struct Tox_Options options = {0};
-  
+  tox_options_default(&options);
   options.ipv6_enabled = ipv6enabled;
-  Tox* tox = tox_new(&options, NULL);
 
+  if (opt != NULL) {
+      char *buf = NULL;
+      size_t sz = 0;
+      PyObject *p = PyObject_GetAttrString(opt, "savedata_data");
+      PyBytes_AsStringAndSize(p, &buf, &sz);
+      printf("p=%p, %d, %d\n", p, PyBytes_Size(p), sz);
+
+      if (sz > 0) {
+          options.savedata_data = calloc(1, sz);
+          memcpy(options.savedata_data, buf, sz);
+          options.savedata_length = sz;
+          options.savedata_type = TOX_SAVEDATA_TYPE_TOX_SAVE;
+      }
+  }
+
+  TOX_ERR_NEW errnew = 0;
+  Tox* tox = tox_new(&options, &errnew);
+  
   if (tox == NULL) {
       fprintf(stderr, "Warning: failed to initialize toxcore with ipv6, "
-          "trying ipv4.\n");
+              "trying ipv4. err: %d\n", errnew);
 
       options.ipv6_enabled = 0;
-      tox = tox_new(&options, NULL);
+      errnew = 0;
+      tox = tox_new(&options, &errnew);
       if (tox == NULL) {
-        PyErr_SetString(ToxOpError, "failed to initialize toxcore");
+          PyErr_SetString(ToxOpError, "failed to initialize toxcore");
         return -1;
       }
   }
@@ -1317,10 +1337,38 @@ ToxCore_bootstrap_from_address(ToxCore* self, PyObject* args)
   }
 
   hex_string_to_bytes(public_key, TOX_PUBLIC_KEY_SIZE, pk);
-  int ret = tox_bootstrap(self->tox, address, port, pk, NULL);
-
+  bool ret = tox_bootstrap(self->tox, address, port, pk, NULL);
+  
   if (!ret) {
     PyErr_SetString(ToxOpError, "failed to resolve address");
+    return NULL;
+  }
+
+  Py_RETURN_NONE;
+}
+
+static PyObject*
+ToxCore_add_tcp_relay(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  uint16_t port = 0;
+  uint8_t* public_key = NULL;
+  char* address = NULL;
+  int addr_length = 0;
+  int pk_length = 0;
+  uint8_t pk[TOX_PUBLIC_KEY_SIZE];
+
+  if (!PyArg_ParseTuple(args, "s#Hs#", &address, &addr_length, &port,
+        &public_key, &pk_length)) {
+    return NULL;
+  }
+
+  hex_string_to_bytes(public_key, TOX_PUBLIC_KEY_SIZE, pk);
+  bool ret = tox_add_tcp_relay(self->tox, address, port, pk, NULL);
+  
+  if (!ret) {
+    PyErr_SetString(ToxOpError, "failed to add tcp relay");
     return NULL;
   }
 
@@ -1333,6 +1381,7 @@ ToxCore_isconnected(ToxCore* self, PyObject* args)
   CHECK_TOX(self);
 
   TOX_CONNECTION conns = tox_self_get_connection_status(self->tox);
+
   switch (conns) {
   case TOX_CONNECTION_TCP:
   case TOX_CONNECTION_UDP:
@@ -1942,6 +1991,11 @@ PyMethodDef Tox_methods[] = {
     "bootstrap_from_address(address, port, public_key)\n"
     "Resolves address into an IP address. If successful, sends a 'get nodes'"
     "request to the given node with ip, port."
+  },
+  {
+    "add_tcp_relay", (PyCFunction)ToxCore_add_tcp_relay, METH_VARARGS,
+    "add_tcp_relay(address, port, public_key)\n"
+    ""
   },
   {
     "isconnected", (PyCFunction)ToxCore_isconnected, METH_NOARGS,
