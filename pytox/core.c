@@ -134,6 +134,37 @@ static void callback_group_namelist_change(Tox *tox, int groupid,
       groupid, peernumber, change);
 }
 
+static void callback_file_chunk_request(Tox *tox, uint32_t friend_number, uint32_t file_number,
+                                        uint64_t position, size_t length, void *self)
+{
+    PyObject_CallMethod((PyObject*)self, "on_file_chunk_request", "iiKi",
+                        friend_number, file_number, position, length);
+}
+
+
+static void callback_file_recv(Tox *tox, uint32_t friend_number, uint32_t file_number, uint32_t kind,
+                               uint64_t file_size,
+                               const uint8_t *filename, size_t filename_length, void *self)
+{
+    PyObject_CallMethod((PyObject*)self, "on_file_recv", "iiiKs#",
+                        friend_number, file_number, kind, file_size, filename, filename_length);
+}
+
+static void callback_file_recv_control(Tox *tox, uint32_t friend_number, uint32_t file_number,
+                                       TOX_FILE_CONTROL control, void *self)
+{
+    PyObject_CallMethod((PyObject*)self, "on_file_recv_control", "iii",
+                        friend_number, file_number, control);
+}
+
+static void callback_file_recv_chunk(Tox *tox, uint32_t friend_number, uint32_t file_number,
+                                     uint64_t position,
+                                     const uint8_t *data, size_t length, void *self)
+{
+    PyObject_CallMethod((PyObject*)self, "on_file_recv_chunk", "iiKs#",
+                        friend_number, file_number, position, data, length);
+}
+
 /*
 static void callback_file_send_request(Tox *m, uint32_t friendnumber,
     uint8_t filenumber, uint64_t filesize, const uint8_t* filename,
@@ -196,6 +227,14 @@ static int init_helper(ToxCore* self, PyObject* args)
           options.savedata_length = sz;
           options.savedata_type = TOX_SAVEDATA_TYPE_TOX_SAVE;
       }
+
+      options.tcp_port = 54433;
+
+      /*
+      options.proxy_type = TOX_PROXY_TYPE_HTTP;
+      options.proxy_host = "127.0.0.1";
+      options.proxy_port = 8117;
+      */
   }
 
   TOX_ERR_NEW errnew = 0;
@@ -236,6 +275,11 @@ static int init_helper(ToxCore* self, PyObject* args)
   // tox_callback_file_send_request(tox, callback_file_send_request, self);
   // tox_callback_file_control(tox, callback_file_control, self);
   // tox_callback_file_data(tox, callback_file_data, self);
+  tox_callback_file_chunk_request(tox, callback_file_chunk_request, self);
+  tox_callback_file_recv_control(tox, callback_file_recv_control, self);
+  tox_callback_file_recv(tox, callback_file_recv, self);
+  tox_callback_file_recv_chunk(tox, callback_file_recv_chunk, self);
+  
 
   self->tox = tox;
 
@@ -282,7 +326,7 @@ ToxCore_callback_stub(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_getaddress(ToxCore* self, PyObject* args)
+ToxCore_self_get_address(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -297,7 +341,7 @@ ToxCore_getaddress(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_add_friend(ToxCore* self, PyObject* args)
+ToxCore_friend_add(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -356,7 +400,7 @@ ToxCore_add_friend(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_add_friend_norequest(ToxCore* self, PyObject* args)
+ToxCore_friend_add_norequest(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -380,7 +424,7 @@ ToxCore_add_friend_norequest(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_friend_id(ToxCore* self, PyObject* args)
+ToxCore_friend_by_public_key(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -404,7 +448,7 @@ ToxCore_get_friend_id(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_client_id(ToxCore* self, PyObject* args)
+ToxCore_friend_get_public_key(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -427,7 +471,7 @@ ToxCore_get_client_id(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_delfriend(ToxCore* self, PyObject* args)
+ToxCore_friend_delete(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -446,7 +490,7 @@ ToxCore_delfriend(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_friend_connection_status(ToxCore* self, PyObject* args)
+ToxCore_friend_get_connection_status(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -482,7 +526,7 @@ ToxCore_friend_exists(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_send_message(ToxCore* self, PyObject* args)
+ToxCore_friend_send_message(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -495,9 +539,10 @@ ToxCore_send_message(ToxCore* self, PyObject* args)
   }
 
   TOX_MESSAGE_TYPE type = 0;
-  uint32_t ret = tox_friend_send_message(self->tox, friend_num, type, message, length, NULL);
+  TOX_ERR_FRIEND_SEND_MESSAGE errmsg = 0;
+  uint32_t ret = tox_friend_send_message(self->tox, friend_num, type, message, length, &errmsg);
   if (ret == 0) {
-    PyErr_SetString(ToxOpError, "failed to send message");
+     PyErr_SetString(ToxOpError, "failed to send message");
     return NULL;
   }
 
@@ -529,7 +574,7 @@ ToxCore_send_action(ToxCore* self, PyObject* args)
 */
 
 static PyObject*
-ToxCore_set_name(ToxCore* self, PyObject* args)
+ToxCore_self_set_name(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -549,7 +594,7 @@ ToxCore_set_name(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_self_name(ToxCore* self, PyObject* args)
+ToxCore_self_get_name(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -566,7 +611,7 @@ ToxCore_get_self_name(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_self_name_size(ToxCore* self, PyObject* args)
+ToxCore_self_get_name_size(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -580,7 +625,7 @@ ToxCore_get_self_name_size(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_name(ToxCore* self, PyObject* args)
+ToxCore_friend_get_name(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -601,7 +646,7 @@ ToxCore_get_name(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_name_size(ToxCore* self, PyObject* args)
+ToxCore_friend_get_name_size(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -621,7 +666,7 @@ ToxCore_get_name_size(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_set_status_message(ToxCore* self, PyObject* args)
+ToxCore_self_set_status_message(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -640,7 +685,7 @@ ToxCore_set_status_message(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_set_user_status(ToxCore* self, PyObject* args)
+ToxCore_self_set_status(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -661,7 +706,7 @@ ToxCore_set_user_status(ToxCore* self, PyObject* args)
 
 
 static PyObject*
-ToxCore_get_status_message_size(ToxCore* self, PyObject* args)
+ToxCore_friend_get_status_message_size(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -675,7 +720,7 @@ ToxCore_get_status_message_size(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_status_message(ToxCore* self, PyObject* args)
+ToxCore_friend_get_status_message(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -722,7 +767,7 @@ ToxCore_get_self_status_message(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_self_status_message_size(ToxCore* self, PyObject* args)
+ToxCore_self_get_status_message_size(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -736,7 +781,7 @@ ToxCore_get_self_status_message_size(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_user_status(ToxCore* self, PyObject* args)
+ToxCore_friend_get_status(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -751,7 +796,7 @@ ToxCore_get_user_status(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_self_user_status(ToxCore* self, PyObject* args)
+ToxCore_self_get_status(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -760,7 +805,7 @@ ToxCore_get_self_user_status(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_last_online(ToxCore* self, PyObject* args)
+ToxCore_friend_get_last_online(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -784,7 +829,7 @@ ToxCore_get_last_online(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_set_user_is_typing(ToxCore* self, PyObject* args)
+ToxCore_self_set_typing(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -800,7 +845,7 @@ ToxCore_set_user_is_typing(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_is_typing(ToxCore* self, PyObject* args)
+ToxCore_friend_get_typing(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -818,7 +863,7 @@ ToxCore_get_is_typing(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_count_friendlist(ToxCore* self, PyObject* args)
+ToxCore_self_get_friend_list_size(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -838,7 +883,7 @@ ToxCore_get_num_online_friends(ToxCore* self, PyObject* args)
 */
 
 static PyObject*
-ToxCore_get_friendlist(ToxCore* self, PyObject* args)
+ToxCore_self_get_friend_list(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -1141,6 +1186,113 @@ ToxCore_get_chatlist(ToxCore* self, PyObject* args)
   return plist;
 }
 
+static PyObject*
+ToxCore_file_send(ToxCore* self, PyObject*args)
+{
+    CHECK_TOX(self);
+    uint32_t friend_number = 0;
+    uint32_t kind = 0;
+    uint64_t file_size = 0;
+    uint8_t* file_id = NULL;
+    uint8_t* filename = 0;
+    int filename_length = 0;
+
+    if (!PyArg_ParseTuple(args, "iiKss#", &friend_number, &kind, &file_size, &file_id,
+                          &filename, &filename_length)) {
+        return NULL;
+    }
+
+    uint32_t file_number =
+        tox_file_send(self->tox, friend_number, kind, file_size, file_id, filename, filename_length, NULL);
+    if (file_number == UINT32_MAX) {
+        PyErr_SetString(ToxOpError, "tox_file_send() failed");
+        return NULL;
+    }
+
+    return PyLong_FromLong(file_number);
+}
+
+static PyObject*
+ToxCore_file_control(ToxCore* self, PyObject* args)
+{
+    CHECK_TOX(self);
+    uint32_t friend_number = 0;
+    uint32_t file_number = 0;
+    int control = 0;
+
+    if (!PyArg_ParseTuple(args, "", &friend_number, &file_number, &control)) {
+        return NULL;
+    }
+
+    bool ret = tox_file_control(self->tox, friend_number, file_number, control, NULL);
+
+    if (ret) Py_RETURN_TRUE;
+    PyErr_SetString(ToxOpError, "tox_file_control() failed");
+    Py_RETURN_FALSE;
+}
+
+static PyObject*
+ToxCore_file_send_chunk(ToxCore* self, PyObject* args)
+{
+    CHECK_TOX(self);
+    uint32_t friend_number = 0;
+    uint32_t file_number = 0;
+    uint64_t position = 0;
+    uint8_t data = 0;
+    size_t length = 0;
+
+    if (!PyArg_ParseTuple(args, "iiKs#", &friend_number, &file_number, &position,
+                          &data, &length)) {
+        return NULL;
+    }
+
+    bool ret = tox_file_send_chunk(self->tox, friend_number, file_number, position,
+                                   data, length, NULL);
+
+    if (ret) Py_RETURN_TRUE;
+    PyErr_SetString(ToxOpError, "tox_file_send_chunk() failed");
+    Py_RETURN_FALSE;
+}
+
+static PyObject*
+ToxCore_file_seek(ToxCore* self, PyObject* args)
+{
+    CHECK_TOX(self);
+    uint32_t friend_number = 0;
+    uint32_t file_number = 0;
+    uint64_t position = 0;
+
+    if (!PyArg_ParseTuple(args, "iiK", &friend_number, &file_number, &position)) {
+        return NULL;
+    }
+
+    bool ret = tox_file_seek(self->tox, friend_number, file_number, position, NULL);
+   
+    if (ret) Py_RETURN_TRUE;
+    PyErr_SetString(ToxOpError, "tox_file_seek() failed");
+    Py_RETURN_FALSE;
+}
+
+static PyObject*
+ToxCore_file_get_file_id(ToxCore* self, PyObject* args)
+{
+    CHECK_TOX(self);
+    uint32_t friend_number = 0;
+    uint32_t file_number = 0;
+    uint8_t* file_id = 0;
+
+    if (!PyArg_ParseTuple(args, "iis", &friend_number, &file_number, &file_id)) {
+        return NULL;
+    }
+
+    TOX_ERR_FILE_GET err = 0;
+    bool ret = tox_file_get_file_id(self->tox, friend_number, file_number, file_id, &err);
+   
+    if (ret) Py_RETURN_TRUE;
+    PyErr_SetString(ToxOpError, "tox_file_get_file_id() failed");
+    Py_RETURN_FALSE;
+}
+
 /*
 static PyObject*
 ToxCore_new_filesender(ToxCore* self, PyObject* args)
@@ -1272,7 +1424,7 @@ ToxCore_file_data_remaining(ToxCore* self, PyObject* args)
 */
 
 static PyObject*
-ToxCore_get_nospam(ToxCore* self, PyObject* args)
+ToxCore_self_get_nospam(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -1282,7 +1434,7 @@ ToxCore_get_nospam(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_set_nospam(ToxCore* self, PyObject* args)
+ToxCore_self_set_nospam(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -1298,7 +1450,7 @@ ToxCore_set_nospam(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_keys(ToxCore* self, PyObject* args)
+ToxCore_self_get_public_key(ToxCore* self, PyObject* args)
 {
   uint8_t public_key[TOX_PUBLIC_KEY_SIZE];
   uint8_t secret_key[TOX_PUBLIC_KEY_SIZE];
@@ -1320,7 +1472,7 @@ ToxCore_get_keys(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_bootstrap_from_address(ToxCore* self, PyObject* args)
+ToxCore_bootstrap(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -1376,7 +1528,7 @@ ToxCore_add_tcp_relay(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_isconnected(ToxCore* self, PyObject* args)
+ToxCore_self_get_connection_status(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -1403,7 +1555,7 @@ ToxCore_kill(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_do_interval(ToxCore* self, PyObject* args)
+ToxCore_iteration_interval(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -1413,7 +1565,7 @@ ToxCore_do_interval(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_do(ToxCore* self, PyObject* args)
+ToxCore_iterate(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -1426,7 +1578,7 @@ ToxCore_do(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_size(ToxCore* self, PyObject* args)
+ToxCore_get_savedata_size(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -1436,7 +1588,7 @@ ToxCore_size(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_save(ToxCore* self, PyObject* args)
+ToxCore_get_savedata(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -1669,40 +1821,40 @@ PyMethodDef Tox_methods[] = {
     "Callback for receiving file data, default implementation does nothing."
   },
   {
-    "get_address", (PyCFunction)ToxCore_getaddress, METH_NOARGS,
-    "get_address()\n"
+    "self_get_address", (PyCFunction)ToxCore_self_get_address, METH_NOARGS,
+    "self_get_address()\n"
     "Return address to give to others."
   },
   {
-    "add_friend", (PyCFunction)ToxCore_add_friend, METH_VARARGS,
-    "add_friend(address, message)\n"
+    "friend_add", (PyCFunction)ToxCore_friend_add, METH_VARARGS,
+    "friend_add(address, message)\n"
     "Add a friend."
   },
   {
-    "add_friend_norequest", (PyCFunction)ToxCore_add_friend_norequest,
+    "friend_add_norequest", (PyCFunction)ToxCore_friend_add_norequest,
     METH_VARARGS,
-    "add_friend_norequest(address)\n"
+    "friend_add_norequest(address)\n"
     "Add a friend without sending request."
   },
   {
-    "get_friend_id", (PyCFunction)ToxCore_get_friend_id, METH_VARARGS,
-    "get_friend_id(friend_id)\n"
+    "friend_by_public_key", (PyCFunction)ToxCore_friend_by_public_key, METH_VARARGS,
+    "friend_by_public_key(friend_id)\n"
     "Return the friend id associated to that client id."
   },
   {
-    "get_client_id", (PyCFunction)ToxCore_get_client_id, METH_VARARGS,
-    "get_client_id(friend_number)\n"
+    "friend_get_public_key", (PyCFunction)ToxCore_friend_get_public_key, METH_VARARGS,
+    "friend_get_public_key(friend_number)\n"
     "Return the public key associated to that friend number."
   },
   {
-    "del_friend", (PyCFunction)ToxCore_delfriend, METH_VARARGS,
-    "del_friend(friend_number)\n"
+    "friend_delete", (PyCFunction)ToxCore_friend_delete, METH_VARARGS,
+    "friend_delete(friend_number)\n"
     "Remove a friend."
   },
   {
-    "get_friend_connection_status",
-    (PyCFunction)ToxCore_get_friend_connection_status, METH_VARARGS,
-    "get_friend_connection_status(friend_number)\n"
+    "friend_get_connection_status",
+    (PyCFunction)ToxCore_friend_get_connection_status, METH_VARARGS,
+    "friend_get_connection_status(friend_number)\n"
     "Return True if friend is connected(Online) else False."
   },
   {
@@ -1711,8 +1863,8 @@ PyMethodDef Tox_methods[] = {
     "Checks if there exists a friend with given friendnumber."
   },
   {
-    "send_message", (PyCFunction)ToxCore_send_message, METH_VARARGS,
-    "send_message(friend_number, message)\n"
+    "friend_send_message", (PyCFunction)ToxCore_friend_send_message, METH_VARARGS,
+    "friend_send_message(friend_number, message)\n"
     "Send a text chat message to an online friend."
   },
   /*  {
@@ -1721,38 +1873,38 @@ PyMethodDef Tox_methods[] = {
     "Send an action to an online friend."
     },*/
   {
-    "set_name", (PyCFunction)ToxCore_set_name, METH_VARARGS,
-    "set_name(name)\n"
-    "Set our nickname."
+    "self_set_name", (PyCFunction)ToxCore_self_set_name, METH_VARARGS,
+    "self_set_name(name)\n"
+    "Set our self nickname."
   },
   {
-    "get_self_name", (PyCFunction)ToxCore_get_self_name, METH_NOARGS,
-    "get_self_name()\n"
-    "Get your nickname."
+    "self_get_name", (PyCFunction)ToxCore_self_get_name, METH_NOARGS,
+    "self_get_name()\n"
+    "Get our self nickname."
   },
   {
-    "get_self_name_size", (PyCFunction)ToxCore_get_self_name_size, METH_NOARGS,
-    "get_self_name_size()\n"
-    "Get your nickname string length"
+    "self_get_name_size", (PyCFunction)ToxCore_self_get_name_size, METH_NOARGS,
+    "self_get_name_size()\n"
+    "Get our self nickname string length"
   },
   {
-    "get_name", (PyCFunction)ToxCore_get_name, METH_VARARGS,
-    "get_name(friend_number)\n"
+    "friend_get_name", (PyCFunction)ToxCore_friend_get_name, METH_VARARGS,
+    "friend_get_name(friend_number)\n"
     "Get nickname of *friend_number*."
   },
   {
-    "get_name_size", (PyCFunction)ToxCore_get_name_size, METH_VARARGS,
-    "get_name_size(friend_number)\n"
+    "friend_get_name_size", (PyCFunction)ToxCore_friend_get_name_size, METH_VARARGS,
+    "friend_get_name_size(friend_number)\n"
     "Get nickname length of *friend_number*."
   },
   {
-    "set_status_message", (PyCFunction)ToxCore_set_status_message, METH_VARARGS,
-    "set_status_message(message)\n"
-    "Set our user status message."
+    "self_set_status_message", (PyCFunction)ToxCore_self_set_status_message, METH_VARARGS,
+    "self_set_status_message(message)\n"
+    "Set our self status message."
   },
   {
-    "set_user_status", (PyCFunction)ToxCore_set_user_status, METH_VARARGS,
-    "set_user_status(status)\n"
+    "self_set_status", (PyCFunction)ToxCore_self_set_status, METH_VARARGS,
+    "self_set_status(status)\n"
     "Set our user status, status can have following values:\n\n"
     "+------------------------+--------------------+\n"
     "| kind                   | description        |\n"
@@ -1767,15 +1919,15 @@ PyMethodDef Tox_methods[] = {
     "+------------------------+--------------------+\n"
   },
   {
-    "get_status_message_size", (PyCFunction)ToxCore_get_status_message_size,
+    "friend_get_status_message_size", (PyCFunction)ToxCore_friend_get_status_message_size,
     METH_VARARGS,
-    "get_status_message_size(friend_number)\n"
+    "friend_get_status_message_size(friend_number)\n"
     "Return the length of *friend_number*'s status message."
   },
   {
-    "get_status_message", (PyCFunction)ToxCore_get_status_message,
+    "friend_get_status_message", (PyCFunction)ToxCore_friend_get_status_message,
     METH_VARARGS,
-    "get_status_message(friend_number)\n"
+    "friend_get_status_message(friend_number)\n"
     "Get status message of a friend."
   },
   {
@@ -1785,51 +1937,51 @@ PyMethodDef Tox_methods[] = {
     "Get status message of yourself."
   },
   {
-    "get_self_status_message_size",
-    (PyCFunction)ToxCore_get_self_status_message_size,
+    "self_get_status_message_size",
+    (PyCFunction)ToxCore_self_get_status_message_size,
     METH_NOARGS,
-    "get_self_status_message_size()\n"
+    "self_get_status_message_size()\n"
     "Get status message string length of yourself."
   },
   {
-    "get_user_status", (PyCFunction)ToxCore_get_user_status,
+    "friend_get_status", (PyCFunction)ToxCore_friend_get_status,
     METH_VARARGS,
-    "get_user_status(friend_number)\n"
+    "friend_get_status(friend_number)\n"
     "Get friend status.\n\n"
     ".. seealso ::\n"
     "    :meth:`.set_user_status`"
   },
   {
-    "get_self_user_status", (PyCFunction)ToxCore_get_self_user_status,
+    "self_get_status", (PyCFunction)ToxCore_self_get_status,
     METH_NOARGS,
-    "get_self_user_status()\n"
+    "self_get_status()\n"
     "Get user status of youself.\n\n"
     ".. seealso ::\n"
     "    :meth:`.set_user_status`"
   },
   {
-    "get_last_online", (PyCFunction)ToxCore_get_last_online,
+    "friend_get_last_online", (PyCFunction)ToxCore_friend_get_last_online,
     METH_VARARGS,
-    "get_last_online(friend_number)\n"
+    "friend_get_last_online(friend_number)\n"
     "returns datetime.datetime object representing the last time "
     "*friend_number* was seen online, or None if never seen."
   },
   {
-    "set_user_is_typing", (PyCFunction)ToxCore_set_user_is_typing,
+    "self_set_typing", (PyCFunction)ToxCore_self_set_typing,
     METH_VARARGS,
-    "set_user_is_typing(friend_number, is_typing)\n"
+    "self_set_typing(friend_number, is_typing)\n"
     "Set user typing status.\n\n"
   },
   {
-    "get_is_typing", (PyCFunction)ToxCore_get_is_typing,
+    "friend_get_typing", (PyCFunction)ToxCore_friend_get_typing,
     METH_VARARGS,
-    "get_is_typing(friend_number)\n"
+    "friend_get_typing(friend_number)\n"
     "Return True is user is typing.\n\n"
   },
   {
-    "count_friendlist", (PyCFunction)ToxCore_count_friendlist,
+    "self_get_friend_list_size", (PyCFunction)ToxCore_self_get_friend_list_size,
     METH_NOARGS,
-    "count_friendlist()\n"
+    "self_get_friend_list_size()\n"
     "Return the number of friends."
   },
   /*  {
@@ -1839,9 +1991,9 @@ PyMethodDef Tox_methods[] = {
     "Return the number of online friends."
     },*/
   {
-    "get_friendlist", (PyCFunction)ToxCore_get_friendlist,
+    "self_get_friend_list", (PyCFunction)ToxCore_self_get_friend_list,
     METH_NOARGS,
-    "get_friendlist()\n"
+    "self_get_friend_list()\n"
     "Get a list of valid friend numbers."
   },
   {
@@ -1922,6 +2074,31 @@ PyMethodDef Tox_methods[] = {
     "get_chatlist()\n"
     "Return a list of valid group numbers."
   },
+  {
+    "file_send", (PyCFunction)ToxCore_file_send, METH_VARARGS,
+    "file_send(friend_number, kind, file_size, file_id, filename)\n"
+    "Send a file send request. Returns file number to be sent."
+  },
+  {
+    "file_control", (PyCFunction)ToxCore_file_control, METH_VARARGS,
+    "file_control(friend_number, file_number, control)\n"
+    "Send a file send request. Returns file number to be sent."
+  },
+  {
+    "file_send_chunk", (PyCFunction)ToxCore_file_send_chunk, METH_VARARGS,
+    "file_send_chunk(friend_number, file_number, position, data)\n"
+    "Send a file send request. Returns file number to be sent."
+  },
+  {
+    "file_seek", (PyCFunction)ToxCore_file_seek, METH_VARARGS,
+    "file_seek(friend_number, file_number, position)\n"
+    "Send a file send request. Returns file number to be sent."
+  },
+  {
+    "file_get_file_id", (PyCFunction)ToxCore_file_get_file_id, METH_VARARGS,
+    "file_get_file_id(friend_number, file_number, file_id)\n"
+    "Send a file send request. Returns file number to be sent."
+  },
   /*  {
     "new_file_sender", (PyCFunction)ToxCore_new_filesender, METH_VARARGS,
     "new_file_sender(friend_number, file_size, filename)\n"
@@ -1967,28 +2144,28 @@ PyMethodDef Tox_methods[] = {
     "0 for sending and 1 for receiving."
     },*/
   {
-    "get_nospam", (PyCFunction)ToxCore_get_nospam,
+    "self_get_nospam", (PyCFunction)ToxCore_self_get_nospam,
     METH_NOARGS,
-    "get_nospam()\n"
+    "self_get_nospam()\n"
     "get nospam part from ID"
   },
   {
-    "set_nospam", (PyCFunction)ToxCore_set_nospam,
+    "self_set_nospam", (PyCFunction)ToxCore_self_set_nospam,
     METH_VARARGS,
-    "set_nospam(nospam)\n"
+    "self_set_nospam(nospam)\n"
     "set nospam part of ID. *nospam* should be of type uint32"
   },
   {
-    "get_keys", (PyCFunction)ToxCore_get_keys,
+    "self_get_public_key", (PyCFunction)ToxCore_self_get_public_key,
     METH_NOARGS,
-    "get_keys()\n"
+    "self_get_public_key()\n"
     "Get the public and secret key from the Tox object. Return a tuple "
     "(public_key, secret_key)"
   },
   {
-    "bootstrap_from_address", (PyCFunction)ToxCore_bootstrap_from_address,
+    "bootstrap", (PyCFunction)ToxCore_bootstrap,
     METH_VARARGS,
-    "bootstrap_from_address(address, port, public_key)\n"
+    "bootstrap(address, port, public_key)\n"
     "Resolves address into an IP address. If successful, sends a 'get nodes'"
     "request to the given node with ip, port."
   },
@@ -1998,8 +2175,8 @@ PyMethodDef Tox_methods[] = {
     ""
   },
   {
-    "isconnected", (PyCFunction)ToxCore_isconnected, METH_NOARGS,
-    "isconnected()\n"
+    "self_get_connection_status", (PyCFunction)ToxCore_self_get_connection_status, METH_NOARGS,
+    "self_get_connection_status()\n"
     "Return False if we are not connected to the DHT."
   },
   {
@@ -2008,30 +2185,31 @@ PyMethodDef Tox_methods[] = {
     "Run this before closing shop."
   },
   {
-    "do_interval", (PyCFunction)ToxCore_do_interval, METH_NOARGS,
-    "do_interval()\n"
-    "returns time (in ms) before the next tox_do() needs to be run on success."
+    "iteration_interval", (PyCFunction)ToxCore_iteration_interval, METH_NOARGS,
+    "iteration_interval()\n"
+    "returns time (in ms) before the next tox_iterate() needs to be run on success."
   },
   {
-    "do", (PyCFunction)ToxCore_do, METH_NOARGS,
-    "do()\n"
+    "iterate", (PyCFunction)ToxCore_iterate, METH_NOARGS,
+    "iterate()\n"
     "The main loop that needs to be run at least 20 times per second."
   },
   {
-    "size", (PyCFunction)ToxCore_size, METH_NOARGS,
-    "size()\n"
+    "get_savedata_size", (PyCFunction)ToxCore_get_savedata_size, METH_NOARGS,
+    "get_savedata_size()\n"
     "return size of messenger data (for saving)."
   },
   {
-    "save", (PyCFunction)ToxCore_save, METH_VARARGS,
-    "save()\n"
+    "get_savedata", (PyCFunction)ToxCore_get_savedata, METH_VARARGS,
+    "get_savedata()\n"
     "Return messenger blob in str."
   },
+  /*
   {
     "save_to_file", (PyCFunction)ToxCore_save_to_file, METH_VARARGS,
     "save_to_file(filename)\n"
     "Save the messenger to a file."
-  },
+    },*/
   /*{
     "load", (PyCFunction)ToxCore_load, METH_VARARGS,
     "load(blob)\n"
@@ -2107,12 +2285,28 @@ void ToxCore_install_dict()
   SET(ERR_FRIEND_ADD_BAD_CHECKSUM)
   SET(ERR_FRIEND_ADD_SET_NEW_NOSPAM)
   SET(ERR_FRIEND_ADD_MALLOC)
+      SET(CONNECTION_NONE)
+      SET(CONNECTION_TCP)
+      SET(CONNECTION_UDP)
+      SET(PROXY_TYPE_NONE)
+      SET(PROXY_TYPE_HTTP)
+      SET(PROXY_TYPE_SOCKS5)
+      SET(MESSAGE_TYPE_NORMAL)
+      SET(MESSAGE_TYPE_ACTION)
+      SET(SAVEDATA_TYPE_NONE)
+      SET(SAVEDATA_TYPE_TOX_SAVE)
+      SET(SAVEDATA_TYPE_SECRET_KEY)
   SET(USER_STATUS_NONE)
   SET(USER_STATUS_AWAY)
   SET(USER_STATUS_BUSY)
   SET(CHAT_CHANGE_PEER_ADD)
   SET(CHAT_CHANGE_PEER_DEL)
   SET(CHAT_CHANGE_PEER_NAME)
+      SET(FILE_KIND_DATA)
+      SET(FILE_KIND_AVATAR)
+      SET(FILE_CONTROL_RESUME)
+      SET(FILE_CONTROL_PAUSE)
+      SET(FILE_CONTROL_CANCEL)
       // SET(FILECONTROL_ACCEPT)
       // SET(FILECONTROL_PAUSE)
       // SET(FILECONTROL_KILL)
