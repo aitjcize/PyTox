@@ -161,7 +161,7 @@ static void callback_file_recv_chunk(Tox *tox, uint32_t friend_number, uint32_t 
                                      uint64_t position,
                                      const uint8_t *data, size_t length, void *self)
 {
-    PyObject_CallMethod((PyObject*)self, "on_file_recv_chunk", "iiKs#",
+    PyObject_CallMethod((PyObject*)self, "on_file_recv_chunk", "iiK" BUF_TC "#",
                         friend_number, file_number, position, data, length);
 }
 
@@ -1202,10 +1202,11 @@ ToxCore_file_send(ToxCore* self, PyObject*args)
         return NULL;
     }
 
+    TOX_ERR_FILE_SEND err = 0;
     uint32_t file_number =
-        tox_file_send(self->tox, friend_number, kind, file_size, file_id, filename, filename_length, NULL);
+        tox_file_send(self->tox, friend_number, kind, file_size, file_id, filename, filename_length, &err);
     if (file_number == UINT32_MAX) {
-        PyErr_SetString(ToxOpError, "tox_file_send() failed");
+        PyErr_Format(ToxOpError, "tox_file_send() failed: %d", err);
         return NULL;
     }
 
@@ -1220,7 +1221,7 @@ ToxCore_file_control(ToxCore* self, PyObject* args)
     uint32_t file_number = 0;
     int control = 0;
 
-    if (!PyArg_ParseTuple(args, "", &friend_number, &file_number, &control)) {
+    if (!PyArg_ParseTuple(args, "iii", &friend_number, &file_number, &control)) {
         return NULL;
     }
 
@@ -1238,7 +1239,7 @@ ToxCore_file_send_chunk(ToxCore* self, PyObject* args)
     uint32_t friend_number = 0;
     uint32_t file_number = 0;
     uint64_t position = 0;
-    uint8_t data = 0;
+    uint8_t *data = 0;
     size_t length = 0;
 
     if (!PyArg_ParseTuple(args, "iiKs#", &friend_number, &file_number, &position,
@@ -1246,11 +1247,13 @@ ToxCore_file_send_chunk(ToxCore* self, PyObject* args)
         return NULL;
     }
 
+    TOX_ERR_FILE_SEND_CHUNK err = 0;
     bool ret = tox_file_send_chunk(self->tox, friend_number, file_number, position,
-                                   data, length, NULL);
+                                   data, length, &err);
 
     if (ret) Py_RETURN_TRUE;
-    PyErr_SetString(ToxOpError, "tox_file_send_chunk() failed");
+
+    PyErr_Format(ToxOpError, "tox_file_send_chunk() failed:%d", err);
     Py_RETURN_FALSE;
 }
 
@@ -1279,8 +1282,8 @@ ToxCore_file_get_file_id(ToxCore* self, PyObject* args)
     CHECK_TOX(self);
     uint32_t friend_number = 0;
     uint32_t file_number = 0;
-    uint8_t* file_id = 0;
-
+    uint8_t* file_id = NULL;
+    
     if (!PyArg_ParseTuple(args, "iis", &friend_number, &file_number, &file_id)) {
         return NULL;
     }
@@ -1289,7 +1292,7 @@ ToxCore_file_get_file_id(ToxCore* self, PyObject* args)
     bool ret = tox_file_get_file_id(self->tox, friend_number, file_number, file_id, &err);
    
     if (ret) Py_RETURN_TRUE;
-    PyErr_SetString(ToxOpError, "tox_file_get_file_id() failed");
+    PyErr_Format(ToxOpError, "tox_file_get_file_id() failed: %d", err);
     Py_RETURN_FALSE;
 }
 
