@@ -192,6 +192,66 @@ static void callback_file_data(Tox *m, uint32_t friendnumber, uint8_t filenumber
       friendnumber, filenumber, data, length);
 }
 */
+
+
+static void init_options(PyObject* pyopts, struct Tox_Options* tox_opts)
+{
+    char *buf = NULL;
+    Py_ssize_t sz = 0;
+    PyObject *p = NULL;
+    
+    p = PyObject_GetAttrString(pyopts, "savedata_data");
+    PyBytes_AsStringAndSize(p, &buf, &sz);
+    if (sz > 0) {
+        tox_opts->savedata_data = calloc(1, sz);
+        memcpy((void*)tox_opts->savedata_data, buf, sz);
+        tox_opts->savedata_length = sz;
+        tox_opts->savedata_type = TOX_SAVEDATA_TYPE_TOX_SAVE;
+    }
+
+    p = PyObject_GetAttrString(pyopts, "proxy_host");
+    buf = PyUnicode_AsUTF8AndSize(p, &sz);
+    if (sz > 0) {
+        tox_opts->proxy_host = calloc(1, sz);
+        memcpy((void*)tox_opts->proxy_host, buf, sz);
+    }
+    
+    p = PyObject_GetAttrString(pyopts, "proxy_port");
+    if (p) {
+        tox_opts->proxy_port = PyLong_AsLong(p);
+    }
+
+    p = PyObject_GetAttrString(pyopts, "proxy_type");
+    if (p) {
+        tox_opts->proxy_type = PyLong_AsLong(p);
+    }
+    
+    p = PyObject_GetAttrString(pyopts, "ipv6_enabled");
+    if (p) {
+        tox_opts->ipv6_enabled = p == Py_True;
+    }
+
+    p = PyObject_GetAttrString(pyopts, "udp_enabled");
+    if (p) {
+        tox_opts->udp_enabled = p == Py_True;
+    }
+
+    p = PyObject_GetAttrString(pyopts, "start_port");
+    if (p) {
+        tox_opts->start_port = PyLong_AsLong(p);
+    }
+
+    p = PyObject_GetAttrString(pyopts, "end_port");
+    if (p) {
+        tox_opts->end_port = PyLong_AsLong(p);
+    }
+
+    p = PyObject_GetAttrString(pyopts, "tcp_port");
+    if (p) {
+        tox_opts->tcp_port = PyLong_AsLong(p);
+    }
+}
+
 static int init_helper(ToxCore* self, PyObject* args)
 {
   if (self->tox != NULL) {
@@ -199,58 +259,28 @@ static int init_helper(ToxCore* self, PyObject* args)
     self->tox = NULL;
   }
 
-  int ipv6enabled = TOX_ENABLE_IPV6_DEFAULT;
-  PyObject *opt = NULL;
+  PyObject *opts = NULL;
 
   if (args) {
-      if (!PyArg_ParseTuple(args, "O", &opt)) {
-          PyErr_SetString(PyExc_TypeError, "ipv6enabled should be boolean");
+      if (!PyArg_ParseTuple(args, "O", &opts)) {
+          PyErr_SetString(PyExc_TypeError, "must supply a ToxOptions param");
           return -1;
       }
-      printf("opt=%p\n", opt);
   }
 
   struct Tox_Options options = {0};
   tox_options_default(&options);
-  options.ipv6_enabled = ipv6enabled;
 
-  if (opt != NULL) {
-      char *buf = NULL;
-      size_t sz = 0;
-      PyObject *p = PyObject_GetAttrString(opt, "savedata_data");
-      PyBytes_AsStringAndSize(p, &buf, &sz);
-      printf("p=%p, %d, %d\n", p, PyBytes_Size(p), sz);
-
-      if (sz > 0) {
-          options.savedata_data = calloc(1, sz);
-          memcpy(options.savedata_data, buf, sz);
-          options.savedata_length = sz;
-          options.savedata_type = TOX_SAVEDATA_TYPE_TOX_SAVE;
-      }
-
-      options.tcp_port = 54433;
-
-      /*
-      options.proxy_type = TOX_PROXY_TYPE_HTTP;
-      options.proxy_host = "127.0.0.1";
-      options.proxy_port = 8117;
-      */
+  if (opts != NULL) {
+      init_options(opts, &options);
   }
 
-  TOX_ERR_NEW errnew = 0;
-  Tox* tox = tox_new(&options, &errnew);
+  TOX_ERR_NEW err = 0;
+  Tox* tox = tox_new(&options, &err);
   
   if (tox == NULL) {
-      fprintf(stderr, "Warning: failed to initialize toxcore with ipv6, "
-              "trying ipv4. err: %d\n", errnew);
-
-      options.ipv6_enabled = 0;
-      errnew = 0;
-      tox = tox_new(&options, &errnew);
-      if (tox == NULL) {
-          PyErr_SetString(ToxOpError, "failed to initialize toxcore");
-        return -1;
-      }
+      PyErr_Format(ToxOpError, "failed to initialize toxcore: %d", err);
+      return -1;
   }
 
   tox_callback_friend_request(tox, callback_friend_request, self);
