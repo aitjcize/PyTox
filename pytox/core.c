@@ -98,10 +98,10 @@ static void callback_read_receipt(Tox *tox, uint32_t friendnumber,
       receipt);
 }
 
-static void callback_connection_status(Tox *tox, uint32_t friendnumber,
+static void callback_friend_connection_status(Tox *tox, uint32_t friendnumber,
     TOX_CONNECTION status, void* self)
 {
-  PyObject_CallMethod((PyObject*)self, "on_connection_status", "iO",
+  PyObject_CallMethod((PyObject*)self, "on_friend_connection_status", "iO",
       friendnumber, PyBool_FromLong(status));
 }
 
@@ -210,7 +210,7 @@ static void init_options(PyObject* pyopts, struct Tox_Options* tox_opts)
     }
 
     p = PyObject_GetAttrString(pyopts, "proxy_host");
-    buf = PyUnicode_AsUTF8AndSize(p, &sz);
+    PyStringUnicode_AsStringAndSize(p, &buf, &sz);
     if (sz > 0) {
         tox_opts->proxy_host = calloc(1, sz);
         memcpy((void*)tox_opts->proxy_host, buf, sz);
@@ -297,7 +297,7 @@ static int init_helper(ToxCore* self, PyObject* args)
   // tox_callback_read_receipt(tox, callback_read_receipt, self);
   tox_callback_friend_read_receipt(tox, callback_read_receipt, self);
   // tox_callback_connection_status(tox, callback_connection_status, self);
-  tox_callback_friend_connection_status(tox, callback_connection_status, self);
+  tox_callback_friend_connection_status(tox, callback_friend_connection_status, self);
   tox_callback_group_invite(tox, callback_group_invite, self);
   tox_callback_group_message(tox, callback_group_message, self);
   tox_callback_group_action(tox, callback_group_action, self);
