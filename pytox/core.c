@@ -388,10 +388,12 @@ ToxCore_friend_add(ToxCore* self, PyObject* args)
   uint8_t pk[TOX_ADDRESS_SIZE];
   hex_string_to_bytes(address, TOX_ADDRESS_SIZE, pk);
 
-  int ret = tox_friend_add(self->tox, pk, data, data_length, NULL);
-  int success = 0;
-
-  switch (ret) {
+  TOX_ERR_FRIEND_ADD err = 0;
+  uint32_t friend_number = 0;
+  friend_number = tox_friend_add(self->tox, pk, data, data_length, &err);
+  int success = friend_number == UINT32_MAX ? 0 : 1;
+  
+  switch (err) {
   case TOX_ERR_FRIEND_ADD_TOO_LONG:
     PyErr_SetString(ToxOpError, "message too long");
     break;
@@ -419,11 +421,12 @@ ToxCore_friend_add(ToxCore* self, PyObject* args)
     PyErr_SetString(ToxOpError, "increasing the friend list size fails");
     break;
   default:
-    success = 1;
+      // success = 1;
+      break;
   }
 
   if (success) {
-    return PyLong_FromLong(ret);
+    return PyLong_FromLong(friend_number);
   } else {
     return NULL;
   }
@@ -444,9 +447,11 @@ ToxCore_friend_add_norequest(ToxCore* self, PyObject* args)
   uint8_t pk[TOX_ADDRESS_SIZE];
   hex_string_to_bytes(address, TOX_ADDRESS_SIZE, pk);
 
-  int res = tox_friend_add_norequest(self->tox, pk, NULL);
+  TOX_ERR_FRIEND_ADD err = 0;
+  int res = tox_friend_add_norequest(self->tox, pk, &err);
   if (res == -1) {
-    PyErr_SetString(ToxOpError, "failed to add friend");
+    // PyErr_SetString(ToxOpError, "failed to add friend");
+    PyErr_Format(ToxOpError, "failed to add friend: %d", err);
     return NULL;
   }
 
