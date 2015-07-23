@@ -23,7 +23,7 @@ RUN cd opus-1.0.3 && ./configure && make && make install
 
 # installing vpx
 RUN apt-get install -y yasm
-RUN git clone http://git.chromium.org/webm/libvpx.git
+RUN git clone https://chromium.googlesource.com/webm/libvpx
 RUN cd libvpx && ./configure --enable-shared && make && make install
 
 # creating librarys' links and updating cache
