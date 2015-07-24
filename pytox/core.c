@@ -781,7 +781,7 @@ ToxCore_friend_get_status_message(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_get_self_status_message(ToxCore* self, PyObject* args)
+ToxCore_self_get_status_message(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
@@ -1488,7 +1488,7 @@ ToxCore_self_set_nospam(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_self_get_public_key(ToxCore* self, PyObject* args)
+ToxCore_self_get_keys(ToxCore* self, PyObject* args)
 {
   uint8_t public_key[TOX_PUBLIC_KEY_SIZE];
   uint8_t secret_key[TOX_PUBLIC_KEY_SIZE];
@@ -1755,12 +1755,6 @@ PyMethodDef Tox_methods[] = {
     "nothing."
   },
   {
-    "on_friend_action", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
-    "on_friend_action(friend_number, action)\n"
-    "Callback for receiving friend actions, default implementation does "
-    "nothing."
-  },
-  {
     "on_name_change", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
     "on_name_change(friend_number, new_name)\n"
     "Callback for receiving friend name changes, default implementation does "
@@ -1838,25 +1832,24 @@ PyMethodDef Tox_methods[] = {
     "+---------------------------+----------------------+\n"
   },
   {
-    "on_file_send_request", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
-    "on_file_send_request(friend_number, file_number, file_size, filename)\n"
-    "Callback for receiving file send requests, default implementation does "
-    "nothing."
+    "on_file_recv", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_file_recv(friend_number, file_number,  kind, file_size, filename)\n"
+    "Callback for receiving file transfer, default implementation does nothing."
   },
   {
-    "on_file_control", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
-    "on_file_control(friend_number, receive_send, file_number, control_type, "
-    "data)\n"
-    "Callback for receiving file send control, default implementation does "
-    "nothing. See :meth:`.file_send_control` for the meaning of *receive_send* "
-    "and *control_type*.\n\n"
-    ".. seealso ::\n"
-    "    :meth:`.file_send_control`"
+    "on_file_recv_control", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_file_recv_control(friend_number, file_number, control)\n"
+    "Callback for receiving file control, default implementation does nothing."
   },
   {
-    "on_file_data", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
-    "on_file_data(friend_number, file_number, data)\n"
-    "Callback for receiving file data, default implementation does nothing."
+    "on_file_recv_chunk", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_file_recv_chunk(friend_number, file_number, position, data)\n"
+    "Callback for receiving file chunk, default implementation does nothing."
+  },
+  {
+    "on_file_chunk_request", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_file_chunk_request(friend_number, file_number, position, length)\n"
+    "Callback for more file chunk, default implementation does nothing."
   },
   {
     "self_get_address", (PyCFunction)ToxCore_self_get_address, METH_NOARGS,
@@ -1969,9 +1962,9 @@ PyMethodDef Tox_methods[] = {
     "Get status message of a friend."
   },
   {
-    "get_self_status_message", (PyCFunction)ToxCore_get_self_status_message,
+    "self_get_status_message", (PyCFunction)ToxCore_self_get_status_message,
     METH_NOARGS,
-    "get_self_status_message()\n"
+    "self_get_status_message()\n"
     "Get status message of yourself."
   },
   {
@@ -2137,50 +2130,6 @@ PyMethodDef Tox_methods[] = {
     "file_get_file_id(friend_number, file_number, file_id)\n"
     "Send a file send request. Returns file number to be sent."
   },
-  /*  {
-    "new_file_sender", (PyCFunction)ToxCore_new_filesender, METH_VARARGS,
-    "new_file_sender(friend_number, file_size, filename)\n"
-    "Send a file send request. Returns file number to be sent."
-    },*/
-  /*
-  {
-    "file_send_control", (PyCFunction)ToxCore_file_sendcontrol, METH_VARARGS,
-    "file_send_control(friend_number, send_receive, file_number, control_type"
-    "[, data=None])\n"
-    "Send file transfer control.\n\n"
-    "*send_receive* is 0 for sending and 1 for receiving.\n\n"
-    "*control_type* can be one of following value:\n\n"
-    "+-------------------------------+------------------------+\n"
-    "| control_type                  | description            |\n"
-    "+===============================+========================+\n"
-    "| Tox.FILECONTROL_ACCEPT        | accepts transfer       |\n"
-    "+-------------------------------+------------------------+\n"
-    "| Tox.FILECONTROL_PAUSE         | pause transfer         |\n"
-    "+-------------------------------+------------------------+\n"
-    "| Tox.FILECONTROL_KILL          | kill/rejct transfer    |\n"
-    "+-------------------------------+------------------------+\n"
-    "| Tox.FILECONTROL_FINISHED      | transfer finished      |\n"
-    "+-------------------------------+------------------------+\n"
-    "| Tox.FILECONTROL_RESUME_BROKEN | resume broken transfer |\n"
-    "+-------------------------------+------------------------+\n"
-    },*/
-  /*{
-    "file_send_data", (PyCFunction)ToxCore_file_senddata, METH_VARARGS,
-    "file_send_data(friend_number, file_number, data)\n"
-    "Send file data."
-    },*/
-  /*{
-    "file_data_size", (PyCFunction)ToxCore_file_data_size, METH_VARARGS,
-    "file_data_size(friend_number)\n"
-    "Returns the recommended/maximum size of the filedata you send with "
-    ":meth:`.file_send_data`."},*/
-  /*{
-    "file_data_remaining", (PyCFunction)ToxCore_file_data_remaining,
-    METH_VARARGS,
-    "file_data_remaining(friend_number, file_number, send_receive)\n"
-    "Give the number of bytes left to be sent/received. *send_receive* is "
-    "0 for sending and 1 for receiving."
-    },*/
   {
     "self_get_nospam", (PyCFunction)ToxCore_self_get_nospam,
     METH_NOARGS,
@@ -2194,9 +2143,9 @@ PyMethodDef Tox_methods[] = {
     "set nospam part of ID. *nospam* should be of type uint32"
   },
   {
-    "self_get_public_key", (PyCFunction)ToxCore_self_get_public_key,
+    "self_get_keys", (PyCFunction)ToxCore_self_get_keys,
     METH_NOARGS,
-    "self_get_public_key()\n"
+    "self_get_keys()\n"
     "Get the public and secret key from the Tox object. Return a tuple "
     "(public_key, secret_key)"
   },
