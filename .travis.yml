@@ -36,7 +36,7 @@ before_script:
   - cd ..
   # creating librarys' links and updating cache
   - sudo ldconfig
-  - git clone https://github.com/irungentoo/ProjectTox-Core.git toxcore
+  - git clone https://github.com/irungentoo/toxcore.git toxcore
   - cd toxcore
   - autoreconf -i
   - ./configure --prefix=/usr --disable-tests --disable-ntox

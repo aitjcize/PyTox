@@ -50,8 +50,8 @@ static void callback_friend_request(Tox* tox, const uint8_t* public_key,
 static void callback_friend_message(Tox *tox, uint32_t friendnumber, TOX_MESSAGE_TYPE type,
     const uint8_t* message, size_t length, void* self)
 {
-  PyObject_CallMethod((PyObject*)self, "on_friend_message", "is#", friendnumber,
-      message, length - (message[length - 1] == 0));
+    PyObject_CallMethod((PyObject*)self, "on_friend_message", "iis#", friendnumber, type,
+                        message, length - (message[length - 1] == 0));
 }
 
 /*
@@ -87,7 +87,7 @@ static void callback_user_status(Tox *tox, uint32_t friendnumber, TOX_USER_STATU
 static void callback_typing_change(Tox *tox, uint32_t friendnumber,
     bool is_typing, void* self)
 {
-  PyObject_CallMethod((PyObject*)self, "on_typing_change", "iO", friendnumber,
+  PyObject_CallMethod((PyObject*)self, "on_friend_typing", "iO", friendnumber,
       PyBool_FromLong(is_typing));
 }
 
@@ -566,14 +566,15 @@ ToxCore_friend_send_message(ToxCore* self, PyObject* args)
   CHECK_TOX(self);
 
   int friend_num = 0;
+  int msg_type = 0;
   int length = 0;
   uint8_t* message = NULL;
 
-  if (!PyArg_ParseTuple(args, "is#", &friend_num, &message, &length)) {
+  if (!PyArg_ParseTuple(args, "iis#", &friend_num, &msg_type, &message, &length)) {
     return NULL;
   }
 
-  TOX_MESSAGE_TYPE type = 0;
+  TOX_MESSAGE_TYPE type = msg_type;
   TOX_ERR_FRIEND_SEND_MESSAGE errmsg = 0;
   uint32_t ret = tox_friend_send_message(self->tox, friend_num, type, message, length, &errmsg);
   if (ret == 0) {
@@ -926,7 +927,7 @@ ToxCore_self_get_friend_list(ToxCore* self, PyObject* args)
   uint32_t count = tox_self_get_friend_list_size(self->tox);
   uint32_t* list = (uint32_t*)malloc(count * sizeof(uint32_t));
 
-  uint32_t n = 0;
+  uint32_t n = count;
   tox_self_get_friend_list(self->tox, list);
 
   if (!(plist = PyList_New(0))) {
@@ -1304,10 +1305,11 @@ ToxCore_file_seek(ToxCore* self, PyObject* args)
         return NULL;
     }
 
-    bool ret = tox_file_seek(self->tox, friend_number, file_number, position, NULL);
+    TOX_ERR_FILE_SEEK err = 0;
+    bool ret = tox_file_seek(self->tox, friend_number, file_number, position, &err);
    
     if (ret) Py_RETURN_TRUE;
-    PyErr_SetString(ToxOpError, "tox_file_seek() failed");
+    PyErr_Format(ToxOpError, "tox_file_seek() failed: %d", err);
     Py_RETURN_FALSE;
 }
 
@@ -1775,8 +1777,8 @@ PyMethodDef Tox_methods[] = {
     "    :meth:`.set_user_status`"
   },
   {
-    "on_typing_change", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
-    "on_typing_change(friend_number, is_typing)\n"
+    "on_friend_typing", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_friend_typing(friend_number, is_typing)\n"
     "Callback for receiving friend status changes, default implementation "
     "does nothing.\n\n"
   },
@@ -1895,7 +1897,7 @@ PyMethodDef Tox_methods[] = {
   },
   {
     "friend_send_message", (PyCFunction)ToxCore_friend_send_message, METH_VARARGS,
-    "friend_send_message(friend_number, message)\n"
+    "friend_send_message(friend_number, type, message)\n"
     "Send a text chat message to an online friend."
   },
   /*  {
