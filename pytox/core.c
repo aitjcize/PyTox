@@ -54,15 +54,6 @@ static void callback_friend_message(Tox *tox, uint32_t friendnumber, TOX_MESSAGE
                         message, length - (message[length - 1] == 0));
 }
 
-/*
-static void callback_action(Tox *tox, int32_t friendnumber,
-    const uint8_t* action, size_t length, void* self)
-{
-  PyObject_CallMethod((PyObject*)self, "on_friend_action", "is#", friendnumber,
-      action, length - (action[length - 1] == 0));
-}
-*/
-
 static void callback_name_change(Tox *tox, uint32_t friendnumber,
     const uint8_t* newname, size_t length, void* self)
 {
@@ -165,35 +156,6 @@ static void callback_file_recv_chunk(Tox *tox, uint32_t friend_number, uint32_t 
                         friend_number, file_number, position, data, length);
 }
 
-/*
-static void callback_file_send_request(Tox *m, uint32_t friendnumber,
-    uint8_t filenumber, uint64_t filesize, const uint8_t* filename,
-    size_t filename_length, void* self)
-{
-  PyObject_CallMethod((PyObject*)self, "on_file_send_request", "iiKs#",
-      friendnumber, filenumber, filesize, filename,
-      filename_length - (filename[filename_length - 1] == 0));
-}
-*/
-/*
-static void callback_file_control(Tox *m, uint32_t friendnumber,
-    uint8_t receive_send, uint8_t filenumber, uint8_t control_type,
-    const uint8_t* data, size_t length, void* self)
-{
-  PyObject_CallMethod((PyObject*)self, "on_file_control", "iiii" BUF_TC "#",
-      friendnumber, receive_send, filenumber, control_type, data, length);
-}
-*/
-/*
-static void callback_file_data(Tox *m, uint32_t friendnumber, uint8_t filenumber,
-    const uint8_t* data, size_t length, void* self)
-{
-  PyObject_CallMethod((PyObject*)self, "on_file_data", "ii" BUF_TC "#",
-      friendnumber, filenumber, data, length);
-}
-*/
-
-
 static void init_options(PyObject* pyopts, struct Tox_Options* tox_opts)
 {
     char *buf = NULL;
@@ -285,31 +247,20 @@ static int init_helper(ToxCore* self, PyObject* args)
 
   tox_callback_friend_request(tox, callback_friend_request, self);
   tox_callback_friend_message(tox, callback_friend_message, self);
-  // tox_callback_friend_action(tox, callback_action, self);
-  // tox_callback_name_change(tox, callback_name_change, self);
   tox_callback_friend_name(tox, callback_name_change, self);
-  // tox_callback_status_message(tox, callback_status_message, self);
   tox_callback_friend_status_message(tox, callback_status_message, self);
-  // tox_callback_user_status(tox, callback_user_status, self);
   tox_callback_friend_status(tox, callback_user_status, self);
-  // tox_callback_typing_change(tox, callback_typing_change, self);
   tox_callback_friend_typing(tox, callback_typing_change, self);
-  // tox_callback_read_receipt(tox, callback_read_receipt, self);
   tox_callback_friend_read_receipt(tox, callback_read_receipt, self);
-  // tox_callback_connection_status(tox, callback_connection_status, self);
   tox_callback_friend_connection_status(tox, callback_friend_connection_status, self);
   tox_callback_group_invite(tox, callback_group_invite, self);
   tox_callback_group_message(tox, callback_group_message, self);
   tox_callback_group_action(tox, callback_group_action, self);
   tox_callback_group_namelist_change(tox, callback_group_namelist_change, self);
-  // tox_callback_file_send_request(tox, callback_file_send_request, self);
-  // tox_callback_file_control(tox, callback_file_control, self);
-  // tox_callback_file_data(tox, callback_file_data, self);
   tox_callback_file_chunk_request(tox, callback_file_chunk_request, self);
   tox_callback_file_recv_control(tox, callback_file_recv_control, self);
   tox_callback_file_recv(tox, callback_file_recv, self);
   tox_callback_file_recv_chunk(tox, callback_file_recv_chunk, self);
-  
 
   self->tox = tox;
 
@@ -450,7 +401,6 @@ ToxCore_friend_add_norequest(ToxCore* self, PyObject* args)
   TOX_ERR_FRIEND_ADD err = 0;
   int res = tox_friend_add_norequest(self->tox, pk, &err);
   if (res == -1) {
-    // PyErr_SetString(ToxOpError, "failed to add friend");
     PyErr_Format(ToxOpError, "failed to add friend: %d", err);
     return NULL;
   }
@@ -584,30 +534,6 @@ ToxCore_friend_send_message(ToxCore* self, PyObject* args)
 
   return PyLong_FromUnsignedLong(ret);
 }
-
-/* 合并到send_message
-static PyObject*
-ToxCore_send_action(ToxCore* self, PyObject* args)
-{
-  CHECK_TOX(self);
-
-  int friend_num = 0;
-  int length = 0;
-  uint8_t* action = NULL;
-
-  if (!PyArg_ParseTuple(args, "is#", &friend_num, &action, &length)) {
-    return NULL;
-  }
-
-  uint32_t ret = tox_send_action(self->tox, friend_num, action, length);
-  if (ret == 0) {
-    PyErr_SetString(ToxOpError, "failed to send action");
-    return NULL;
-  }
-
-  return PyLong_FromUnsignedLong(ret);
-}
-*/
 
 static PyObject*
 ToxCore_self_set_name(ToxCore* self, PyObject* args)
@@ -906,17 +832,6 @@ ToxCore_self_get_friend_list_size(ToxCore* self, PyObject* args)
   uint32_t count = tox_self_get_friend_list_size(self->tox);
   return PyLong_FromUnsignedLong(count);
 }
-
-/*
-static PyObject*
-ToxCore_get_num_online_friends(ToxCore* self, PyObject* args)
-{
-  CHECK_TOX(self);
-
-  uint32_t count = tox_get_num_online_friends(self->tox);
-  return PyLong_FromUnsignedLong(count);
-}
-*/
 
 static PyObject*
 ToxCore_self_get_friend_list(ToxCore* self, PyObject* args)
@@ -1333,136 +1248,6 @@ ToxCore_file_get_file_id(ToxCore* self, PyObject* args)
     Py_RETURN_FALSE;
 }
 
-/*
-static PyObject*
-ToxCore_new_filesender(ToxCore* self, PyObject* args)
-{
-  CHECK_TOX(self);
-
-  int32_t friendnumber = 0;
-  uint64_t filesize = 0;
-  uint8_t* filename = 0;
-  int filename_length = 0;
-
-  if (!PyArg_ParseTuple(args, "iKs#", &friendnumber, &filesize, &filename,
-        &filename_length)) {
-    return NULL;
-  }
-
-  int ret = tox_new_file_sender(self->tox, friendnumber, filesize, filename,
-      filename_length);
-
-  if (ret == -1) {
-    PyErr_SetString(ToxOpError, "tox_new_file_sender() failed");
-    return NULL;
-  }
-
-  return PyLong_FromLong(ret);
-}
-
-static PyObject*
-ToxCore_file_sendcontrol(ToxCore* self, PyObject* args)
-{
-  CHECK_TOX(self);
-
-  int32_t friendnumber = 0;
-  uint8_t send_receive = 0;
-  int filenumber = 0;
-  uint8_t message_id = 0;
-  uint8_t* data = NULL;
-  int data_length = 0;
-
-
-  if (!PyArg_ParseTuple(args, "ibib|s#", &friendnumber, &send_receive,
-        &filenumber, &message_id, &data, &data_length)) {
-    return NULL;
-  }
-
-  int ret = tox_file_send_control(self->tox, friendnumber, send_receive,
-      filenumber, message_id, data, data_length);
-
-  if (ret == -1) {
-    PyErr_SetString(ToxOpError, "tox_file_send_control() failed");
-    return NULL;
-  }
-
-  Py_RETURN_NONE;
-}
-
-static PyObject*
-ToxCore_file_senddata(ToxCore* self, PyObject* args)
-{
-  CHECK_TOX(self);
-
-  int32_t friendnumber = 0;
-  int filenumber = 0;
-  uint8_t* data = NULL;
-  uint32_t data_length = 0;
-
-
-  if (!PyArg_ParseTuple(args, "iis#", &friendnumber, &filenumber, &data,
-        &data_length)) {
-    return NULL;
-  }
-
-  int ret = tox_file_send_data(self->tox, friendnumber, filenumber, data,
-      data_length);
-
-  if (ret == -1) {
-    PyErr_SetString(ToxOpError, "tox_file_send_data() failed");
-    return NULL;
-  }
-
-  Py_RETURN_NONE;
-}
-
-static PyObject*
-ToxCore_file_data_size(ToxCore* self, PyObject* args)
-{
-  CHECK_TOX(self);
-
-  int32_t friendnumber = 0;
-  if (!PyArg_ParseTuple(args, "i", &friendnumber)) {
-    return NULL;
-  }
-
-  int ret = tox_file_data_size(self->tox, friendnumber);
-
-  if (ret == -1) {
-    PyErr_SetString(ToxOpError, "tox_file_data_size() failed");
-    return NULL;
-  }
-
-  return PyLong_FromLong(ret);
-}
-
-static PyObject*
-ToxCore_file_data_remaining(ToxCore* self, PyObject* args)
-{
-  CHECK_TOX(self);
-
-  int32_t friendnumber = 0;
-  int filenumber = 0;
-  int send_receive = 0;
-
-
-  if (!PyArg_ParseTuple(args, "iii", &friendnumber, &filenumber,
-        &send_receive)) {
-    return NULL;
-  }
-
-  uint64_t ret = tox_file_data_remaining(self->tox, friendnumber, filenumber,
-      send_receive);
-
-  if (!ret) {
-    PyErr_SetString(ToxOpError, "tox_file_data_remaining() failed");
-    return NULL;
-  }
-
-  return PyLong_FromUnsignedLongLong(ret);
-}
-*/
-
 static PyObject*
 ToxCore_self_get_nospam(ToxCore* self, PyObject* args)
 {
@@ -1678,71 +1463,6 @@ ToxCore_save_to_file(ToxCore* self, PyObject* args)
   Py_RETURN_NONE;
 }
 
-/*
-static PyObject*
-ToxCore_load(ToxCore* self, PyObject* args)
-{
-  CHECK_TOX(self);
-
-  uint8_t* data = NULL;
-  int length = 0;
-
-  if (!PyArg_ParseTuple(args, "s#", &data, &length)) {
-    PyErr_SetString(ToxOpError, "no data specified");
-    return NULL;
-  }
-
-  if (tox_load(self->tox, data, length) == -1) {
-    PyErr_SetString(ToxOpError, "tox_load(): load failed");
-    return NULL;
-  }
-
-  Py_RETURN_NONE;
-}
-*/
-/*
-static PyObject*
-ToxCore_load_from_file(ToxCore* self, PyObject* args)
-{
-  CHECK_TOX(self);
-
-  char* filename = NULL;
-
-  if (!PyArg_ParseTuple(args, "s", &filename)) {
-    return NULL;
-  }
-
-  FILE* fp = fopen(filename, "r");
-  if (fp == NULL) {
-    PyErr_SetString(ToxOpError,
-        "tox_load(): failed to open file for reading");
-    return NULL;
-  }
-
-  size_t length = 0;
-  fseek(fp, 0, SEEK_END);
-  length = ftell(fp);
-  fseek(fp, 0, SEEK_SET);
-
-  uint8_t* data = (uint8_t*)malloc(length * sizeof(char));
-
-  if (fread(data, length, 1, fp) != 1) {
-    PyErr_SetString(ToxOpError,
-        "tox_load(): corrupted data file");
-    free(data);
-    return NULL;
-  }
-
-  if (tox_load(self->tox, data, length) == -1) {
-    PyErr_SetString(ToxOpError, "tox_load(): load failed");
-    free(data);
-    return NULL;
-  }
-
-  free(data);
-  Py_RETURN_NONE;
-}
-*/
 PyMethodDef Tox_methods[] = {
   {
     "on_friend_request", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
@@ -1900,11 +1620,6 @@ PyMethodDef Tox_methods[] = {
     "friend_send_message(friend_number, type, message)\n"
     "Send a text chat message to an online friend."
   },
-  /*  {
-    "send_action", (PyCFunction)ToxCore_send_action, METH_VARARGS,
-    "send_action(friend_number, action)\n"
-    "Send an action to an online friend."
-    },*/
   {
     "self_set_name", (PyCFunction)ToxCore_self_set_name, METH_VARARGS,
     "self_set_name(name)\n"
@@ -2017,12 +1732,6 @@ PyMethodDef Tox_methods[] = {
     "self_get_friend_list_size()\n"
     "Return the number of friends."
   },
-  /*  {
-    "get_num_online_friends", (PyCFunction)ToxCore_get_num_online_friends,
-    METH_NOARGS,
-    "get_num_online_friends()\n"
-    "Return the number of online friends."
-    },*/
   {
     "self_get_friend_list", (PyCFunction)ToxCore_self_get_friend_list,
     METH_NOARGS,
@@ -2193,22 +1902,6 @@ PyMethodDef Tox_methods[] = {
     "get_savedata()\n"
     "Return messenger blob in str."
   },
-  /*
-  {
-    "save_to_file", (PyCFunction)ToxCore_save_to_file, METH_VARARGS,
-    "save_to_file(filename)\n"
-    "Save the messenger to a file."
-    },*/
-  /*{
-    "load", (PyCFunction)ToxCore_load, METH_VARARGS,
-    "load(blob)\n"
-    "Load the messenger from *blob*."
-  },
-  {
-    "load_from_file", (PyCFunction)ToxCore_load_from_file, METH_VARARGS,
-    "load_from_file(filename)\n"
-    "Load the messenger from file."
-    },*/
   {NULL}
 };
 
@@ -2296,11 +1989,6 @@ void ToxCore_install_dict()
       SET(FILE_CONTROL_RESUME)
       SET(FILE_CONTROL_PAUSE)
       SET(FILE_CONTROL_CANCEL)
-      // SET(FILECONTROL_ACCEPT)
-      // SET(FILECONTROL_PAUSE)
-      // SET(FILECONTROL_KILL)
-      // SET(FILECONTROL_FINISHED)
-      // SET(FILECONTROL_RESUME_BROKEN)
   SET(GROUPCHAT_TYPE_TEXT)
   SET(GROUPCHAT_TYPE_AV)
 
