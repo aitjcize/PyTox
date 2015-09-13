@@ -189,27 +189,52 @@ class AV(ToxAV):
         cv2.waitKey(1)
 
 
-class Phone(Tox):
+class ToxOptions():
     def __init__(self):
-        if exists(DATA):
-            self.load_from_file(DATA)
+        self.ipv6_enabled = True
+        self.udp_enabled = True
+        self.proxy_type = 0  # 1=http, 2=socks
+        self.proxy_host = ''
+        self.proxy_port = 0
+        self.start_port = 0
+        self.end_port = 0
+        self.tcp_port = 0
+        self.savedata_type = 0  # 1=toxsave, 2=secretkey
+        self.savedata_data = b''
+        self.savedata_length = 0
 
-        self.set_name("PyTox-Phone")
-        print('ID: %s' % self.get_address())
+
+def save_to_file(tox, fname):
+    data = tox.get_savedata()
+    with open(fname, 'wb') as f:
+        f.write(data)
+
+
+def load_from_file(fname):
+    return open(fname, 'rb').read()
+
+
+class Phone(Tox):
+    def __init__(self, opts=None):
+        if opts is not None:
+            super(Phone, self).__init__(opts)
+
+        self.self_set_name("PyTox-Phone")
+        print('ID: %s' % self.self_get_address())
 
         self.connect()
         self.av = AV(self, 1, debug=True)
 
     def connect(self):
         print('connecting...')
-        self.bootstrap_from_address(SERVER[0], SERVER[1], SERVER[2])
+        self.bootstrap(SERVER[0], SERVER[1], SERVER[2])
 
     def loop(self):
         checked = False
 
         try:
             while True:
-                status = self.isconnected()
+                status = self.self_get_connection_status()
 
                 if not checked and status:
                     print('Connected to DHT.')
@@ -227,7 +252,7 @@ class Phone(Tox):
                     if args:
                         if args[0] == "add":
                             try:
-                                self.add_friend(args[1], "Hi")
+                                self.friend_add(args[1], "Hi")
                             except:
                                 pass
                             print('Friend added')
@@ -236,7 +261,7 @@ class Phone(Tox):
                                 if len(args) > 2:
                                     friend_number = int(args[1])
                                     msg = ' '.join(args[2:])
-                                    self.send_message(friend_number, msg)
+                                    self.friend_send_message(friend_number, Tox.MESSAGE_TYPE_NORMAL, msg)
                             except:
                                 pass
                         elif args[0] == "call":
@@ -260,31 +285,37 @@ class Phone(Tox):
                         else:
                             print('Invalid command:', args)
 
-                self.do()
+                self.iterate()
         except KeyboardInterrupt:
-            self.save_to_file(DATA)
+            save_to_file(self, DATA)
             cap.release()
             cv2.destroyAllWindows()
 
     def on_friend_request(self, pk, message):
         print('Friend request from %s: %s' % (pk, message))
-        self.add_friend_norequest(pk)
+        self.friend_add_norequest(pk)
         print('Accepted.')
 
     def on_friend_message(self, friendId, message):
-        name = self.get_name(friendId)
+        name = self.friend_get_name(friendId)
         print('%s: %s' % (name, message))
 
     def on_connection_status(self, friendId, status):
-        print('%s %s' % (self.get_name(friendId),
+        print('%s %s' % (self.friend_get_name(friendId),
                          'online' if status else 'offline'))
 
     def call(self, friend_number):
-        print('Calling %s ...' % self.get_name(friend_number))
+        print('Calling %s ...' % self.friend_get_name(friend_number))
         self.call_idx = self.av.call(friend_number, self.av.TypeVideo, 60)
 
+opts = None
 if len(sys.argv) == 2:
     DATA = sys.argv[1]
+    if exists(DATA):
+        opts = ToxOptions()
+        opts.savedata_data = load_from_file(DATA)
+        opts.savedata_length = len(opts.savedata_data)
+        opts.savedata_type = Tox.SAVEDATA_TYPE_TOX_SAVE
 
-t = Phone()
+t = Phone(opts)
 t.loop()
