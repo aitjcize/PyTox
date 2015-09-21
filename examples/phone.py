@@ -83,16 +83,18 @@ class AV(ToxAV):
     def on_invite(self, idx):
         self.update_settings(idx)
 
+        call_type = "video" if self.call_type == self.TypeVideo else "audio"
         print("Incoming %s call from %d:%s ..." %
-                ("video" if self.call_type == self.TypeVideo else "audio",
-                  idx, self.core.get_name(self.get_peer_id(idx, 0))))
+              (call_type, idx, self.core.friend_get_name(idx)))
 
         self.answer(idx, self.call_type)
         print("Answered, in call...")
 
     def on_start(self, idx):
         self.update_settings(idx)
-        self.prepare_transmission(idx, self.jbufdc * 2, self.VADd, True)
+
+        video_enabled = True if self.call_type == self.TypeVideo else False
+        self.prepare_transmission(idx, video_enabled)
 
         self.stop = False
         self.aistream = audio.open(format=pyaudio.paInt16,
@@ -249,41 +251,46 @@ class Phone(Tox):
 
                 if readable:
                     args = sys.stdin.readline().strip().split()
-                    if args:
-                        if args[0] == "add":
-                            try:
-                                self.friend_add(args[1], "Hi")
-                            except:
+                    if not args:
+                        pass
+
+                    if args[0] == "add":
+                        try:
+                            self.friend_add(args[1], "Hi")
+                        except:
+                            pass
+                        print('Friend added')
+                    elif args[0] == "msg":
+                        try:
+                            if len(args) <= 2:
                                 pass
-                            print('Friend added')
-                        elif args[0] == "msg":
-                            try:
-                                if len(args) > 2:
-                                    friend_number = int(args[1])
-                                    msg = ' '.join(args[2:])
-                                    self.friend_send_message(friend_number, Tox.MESSAGE_TYPE_NORMAL, msg)
-                            except:
-                                pass
-                        elif args[0] == "call":
+                            friend_number = int(args[1])
+                            msg = ' '.join(args[2:])
+                            self.friend_send_message(friend_number,
+                                                     Tox.MESSAGE_TYPE_NORMAL,
+                                                     msg)
+                        except:
+                            pass
+                    elif args[0] == "call":
+                        if len(args) == 2:
+                            self.call(int(args[1]))
+                    elif args[0] == "cancel":
+                        try:
                             if len(args) == 2:
-                                self.call(int(args[1]))
-                        elif args[0] == "cancel":
-                            try:
-                                if len(args) == 2:
-                                    self.av.cancel(int(args[1]), 'cancel')
-                                    print('Canceling...')
-                            except:
-                                pass
-                        elif args[0] == "hangup":
-                            try:
-                                self.av.hangup(self.call_idx)
-                                self.av.kill_transmission(self.call_idx)
-                            except:
-                                pass
-                        elif args[0] == "quit":
-                            raise KeyboardInterrupt
-                        else:
-                            print('Invalid command:', args)
+                                self.av.cancel(int(args[1]), 'cancel')
+                                print('Canceling...')
+                        except:
+                            pass
+                    elif args[0] == "hangup":
+                        try:
+                            self.av.hangup(self.call_idx)
+                            self.av.kill_transmission(self.call_idx)
+                        except:
+                            pass
+                    elif args[0] == "quit":
+                        raise KeyboardInterrupt
+                    else:
+                        print('Invalid command:', args)
 
                 self.iterate()
         except KeyboardInterrupt:
@@ -296,7 +303,7 @@ class Phone(Tox):
         self.friend_add_norequest(pk)
         print('Accepted.')
 
-    def on_friend_message(self, friendId, message):
+    def on_friend_message(self, friendId, type, message):
         name = self.friend_get_name(friendId)
         print('%s: %s' % (name, message))
 
