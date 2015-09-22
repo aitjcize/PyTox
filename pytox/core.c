@@ -39,7 +39,7 @@ static void callback_self_connection_status(Tox* tox, TOX_CONNECTION connection_
                                             void *self)
 {
     PyObject_CallMethod((PyObject*)self, "on_self_connection_status", "i",
-                        PyLong_FromLong(connection_status));
+                        connection_status);
 }
 
 static void callback_friend_request(Tox* tox, const uint8_t* public_key,
@@ -1369,15 +1369,9 @@ ToxCore_self_get_connection_status(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  TOX_CONNECTION conns = tox_self_get_connection_status(self->tox);
+  TOX_CONNECTION conn = tox_self_get_connection_status(self->tox);
 
-  switch (conns) {
-  case TOX_CONNECTION_TCP:
-  case TOX_CONNECTION_UDP:
-    Py_RETURN_TRUE;
-  default:
-    Py_RETURN_FALSE;
-  }
+  return PyLong_FromLong(conn);
 }
 
 static PyObject*
@@ -1934,43 +1928,43 @@ PyTypeObject ToxCoreType = {
 void ToxCore_install_dict()
 {
 #define SET(name)                                            \
-  PyObject* obj_##name = PyLong_FromLong(TOX_##name);        \
-  PyDict_SetItemString(dict, #name, obj_##name);             \
-  Py_DECREF(obj_##name);
+    PyObject* obj_##name = PyLong_FromLong(TOX_##name);      \
+    PyDict_SetItemString(dict, #name, obj_##name);           \
+    Py_DECREF(obj_##name);
 
-  PyObject* dict = PyDict_New();
-  SET(ERR_FRIEND_ADD_TOO_LONG)
-  SET(ERR_FRIEND_ADD_NO_MESSAGE)
-  SET(ERR_FRIEND_ADD_OWN_KEY)
-  SET(ERR_FRIEND_ADD_ALREADY_SENT)
-  SET(ERR_FRIEND_ADD_NULL)
-  SET(ERR_FRIEND_ADD_BAD_CHECKSUM)
-  SET(ERR_FRIEND_ADD_SET_NEW_NOSPAM)
-  SET(ERR_FRIEND_ADD_MALLOC)
-      SET(CONNECTION_NONE)
-      SET(CONNECTION_TCP)
-      SET(CONNECTION_UDP)
-      SET(PROXY_TYPE_NONE)
-      SET(PROXY_TYPE_HTTP)
-      SET(PROXY_TYPE_SOCKS5)
-      SET(MESSAGE_TYPE_NORMAL)
-      SET(MESSAGE_TYPE_ACTION)
-      SET(SAVEDATA_TYPE_NONE)
-      SET(SAVEDATA_TYPE_TOX_SAVE)
-      SET(SAVEDATA_TYPE_SECRET_KEY)
-  SET(USER_STATUS_NONE)
-  SET(USER_STATUS_AWAY)
-  SET(USER_STATUS_BUSY)
-  SET(CHAT_CHANGE_PEER_ADD)
-  SET(CHAT_CHANGE_PEER_DEL)
-  SET(CHAT_CHANGE_PEER_NAME)
-      SET(FILE_KIND_DATA)
-      SET(FILE_KIND_AVATAR)
-      SET(FILE_CONTROL_RESUME)
-      SET(FILE_CONTROL_PAUSE)
-      SET(FILE_CONTROL_CANCEL)
-  SET(GROUPCHAT_TYPE_TEXT)
-  SET(GROUPCHAT_TYPE_AV)
+    PyObject* dict = PyDict_New();
+    SET(ERR_FRIEND_ADD_TOO_LONG)
+    SET(ERR_FRIEND_ADD_NO_MESSAGE)
+    SET(ERR_FRIEND_ADD_OWN_KEY)
+    SET(ERR_FRIEND_ADD_ALREADY_SENT)
+    SET(ERR_FRIEND_ADD_NULL)
+    SET(ERR_FRIEND_ADD_BAD_CHECKSUM)
+    SET(ERR_FRIEND_ADD_SET_NEW_NOSPAM)
+    SET(ERR_FRIEND_ADD_MALLOC)
+    SET(CONNECTION_NONE)
+    SET(CONNECTION_TCP)
+    SET(CONNECTION_UDP)
+    SET(PROXY_TYPE_NONE)
+    SET(PROXY_TYPE_HTTP)
+    SET(PROXY_TYPE_SOCKS5)
+    SET(MESSAGE_TYPE_NORMAL)
+    SET(MESSAGE_TYPE_ACTION)
+    SET(SAVEDATA_TYPE_NONE)
+    SET(SAVEDATA_TYPE_TOX_SAVE)
+    SET(SAVEDATA_TYPE_SECRET_KEY)
+    SET(USER_STATUS_NONE)
+    SET(USER_STATUS_AWAY)
+    SET(USER_STATUS_BUSY)
+    SET(CHAT_CHANGE_PEER_ADD)
+    SET(CHAT_CHANGE_PEER_DEL)
+    SET(CHAT_CHANGE_PEER_NAME)
+    SET(FILE_KIND_DATA)
+    SET(FILE_KIND_AVATAR)
+    SET(FILE_CONTROL_RESUME)
+    SET(FILE_CONTROL_PAUSE)
+    SET(FILE_CONTROL_CANCEL)
+    SET(GROUPCHAT_TYPE_TEXT)
+    SET(GROUPCHAT_TYPE_AV)
 
 #undef SET
 
