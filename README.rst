@@ -7,28 +7,46 @@
 
 PyTox
 =====
-Python binding for `Project Tox <https://github.com/irungentoo/ProjectTox-Core>`_.
+Python binding for `Project Tox <https://github.com/irungentoo/toxcore>`_.
 
 PyTox provides a Pythonic binding, i.e Object-oriented instead of C style, raise exception instead of returning error code. A simple example is as follows:
 
 .. code-block:: python
 
+    class ToxOptions():
+        def __init__(self):
+            self.ipv6_enabled = True
+            self.udp_enabled = True
+            self.proxy_type = 0  # 1=http, 2=socks
+            self.proxy_host = ''
+            self.proxy_port = 0
+            self.start_port = 0
+            self.end_port = 0
+            self.tcp_port = 0
+            self.savedata_type = 0  # 1=toxsave, 2=secretkey
+            self.savedata_data = b''
+            self.savedata_length = 0
+
+
     class EchoBot(Tox):
+        def __init__(self, opts):
+            super(EchoBot, self).__init__(opts)
+
         def loop(self):
             while True:
-                self.do()
+                self.iterate()
                 time.sleep(0.03)
     
         def on_friend_request(self, pk, message):
             print 'Friend request from %s: %s' % (pk, message)
-            self.add_friend_norequest(pk)
+            self.friend_add_norequest(pk)
             print 'Accepted.'
     
         def on_friend_message(self, friendId, message):
-            name = self.get_name(friendId)
+            name = self.self_get_name(friendId)
             print '%s: %s' % (name, message)
             print 'EchoBot: %s' % message
-            self.send_message(friendId, message)
+            self.friend_send_message(friendId, Tox.MESSAGE_TYPE_NORMAL, message)
 
 As you can see callbacks are mapped into class method instead of using it the the c ways. For more details please refer to `examples/echo.py <https://github.com/aitjcize/PyTox/blob/master/examples/echo.py>`_.
 
@@ -54,7 +72,7 @@ Full API documentation can be read `here <http://aitjcize.github.io/PyTox/>`_.
 
 Todo
 ----
-- Complete API binding (use toos/apicomplete.py to check)
+- Complete API binding (use tools/apicomplete.py to check)
 - Unittest for ToxAV
 
 

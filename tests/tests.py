@@ -63,18 +63,16 @@ class ToxOptions():
         self.savedata_type = 0  # 1=toxsave, 2=secretkey
         self.savedata_data = b''
         self.savedata_length = 0
-        
+
 
 class AliceTox(Tox):
     def __init__(self, opts):
         super(AliceTox, self).__init__(opts)
-    pass
 
 
 class BobTox(Tox):
     def __init__(self, opts):
         super(BobTox, self).__init__(opts)
-    pass
 
 
 class ToxTest(unittest.TestCase):
@@ -82,7 +80,7 @@ class ToxTest(unittest.TestCase):
         opt = ToxOptions()
         self.alice = AliceTox(opt)
         self.bob = BobTox(opt)
-        
+
         self.loop_until_connected()
 
     def tearDown(self):
@@ -105,12 +103,27 @@ class ToxTest(unittest.TestCase):
 
     def loop_until_connected(self):
         """
+        t:on_self_connection_status
         t:self_get_connection_status
         """
 
-        while self.alice.self_get_connection_status() == Tox.CONNECTION_NONE \
-              or self.bob.self_get_connection_status() == Tox.CONNECTION_NONE:
+        def on_self_connection_status(self, status):
+            if status != Tox.CONNECTION_NONE:
+                self.mycon_status = True
+            else:
+                self.mycon_status = False
+            assert self.self_get_connection_status() == status
+
+        self.alice.mycon_status = False
+        self.bob.mycon_status = False
+        AliceTox.on_self_connection_status = on_self_connection_status
+        BobTox.on_self_connection_status = on_self_connection_status
+
+        while not self.alice.mycon_status or not self.bob.mycon_status:
             self.loop(50)
+
+        AliceTox.on_self_connection_status = Tox.on_self_connection_status
+        BobTox.on_self_connection_status = Tox.on_self_connection_status
 
     def wait_callback(self, obj, attr):
         count = 0
@@ -148,7 +161,7 @@ class ToxTest(unittest.TestCase):
                 self.loop(50)
                 assert count < THRESHOLD
                 count += 1
-                
+
         return ret
 
     def bob_add_alice_as_friend(self):
@@ -165,51 +178,47 @@ class ToxTest(unittest.TestCase):
             assert pk == bob_addr[:CLIENT_ID_SIZE]
             assert message == MSG
             self.friend_add_norequest(pk)
-            self.fr = True
+            self.friend_added = True
 
-        def on_friend_connection_status(self, friend_number, status):
-            if status is True:  self.cs = True
-            pass
-            
         AliceTox.on_friend_request = on_friend_request
-        AliceTox.on_friend_connection_status = on_friend_connection_status
-        BobTox.on_friend_connection_status = on_friend_connection_status
 
         alice_addr = self.alice.self_get_address()
-        self.alice.fr = False
+        self.alice.friend_added = False
         self.bob.friend_add(alice_addr, MSG)
 
-        assert self.wait_callback(self.alice, 'fr')
+        assert self.wait_callback(self.alice, 'friend_added')
         AliceTox.on_friend_request = Tox.on_friend_request
 
         self.bid = self.alice.friend_by_public_key(bob_addr)
         self.aid = self.bob.friend_by_public_key(alice_addr)
 
         #: Wait until both are online
-        def on_connection_status(self, friend_id, status):
+        def on_friend_connection_status(self, friend_id, status):
             assert status is True
-            self.cs = True
+            self.friend_conn_status = True
 
-        def on_user_status(self, friend_id, new_status):
-            self.us = True
+        def on_friend_status(self, friend_id, new_status):
+            self.friend_status = True
 
-        # AliceTox.on_connection_status = on_connection_status
-        # BobTox.on_connection_status = on_connection_status
-        AliceTox.on_user_status = on_user_status
-        BobTox.on_user_status = on_user_status
+        AliceTox.on_friend_connection_status = on_friend_connection_status
+        BobTox.on_friend_connection_status = on_friend_connection_status
+        AliceTox.on_friend_status = on_friend_status
+        BobTox.on_friend_status = on_friend_status
 
-        self.alice.cs = False
-        self.bob.cs = False
-        self.alice.us = False
-        self.bob.us = False
+        self.alice.friend_conn_status = False
+        self.bob.friend_conn_status = False
+        self.alice.friend_status = False
+        self.bob.friend_status = False
 
-        assert self.wait_callbacks(self.alice, ['cs', 'us'])
-        assert self.wait_callbacks(self.bob, ['cs', 'us'])
+        assert self.wait_callbacks(self.alice,
+                                   ['friend_conn_status', 'friend_status'])
+        assert self.wait_callbacks(self.bob,
+                                   ['friend_conn_status', 'friend_status'])
 
-        AliceTox.on_connection_status = Tox.on_connection_status
-        BobTox.on_connection_status = Tox.on_connection_status
-        AliceTox.on_user_status = Tox.on_user_status
-        BobTox.on_user_status = Tox.on_user_status
+        AliceTox.on_friend_connection_status = Tox.on_friend_connection_status
+        BobTox.on_friend_connection_status = Tox.on_friend_connection_status
+        AliceTox.on_friend_status = Tox.on_friend_status
+        BobTox.on_friend_status = Tox.on_friend_status
 
     def test_bootstrap(self):
         """
@@ -253,25 +262,24 @@ class ToxTest(unittest.TestCase):
         t:friend_set_status_message
         t:friend_get_status_message
         t:friend_get_status_message_size
-        t:on_status_message
-        t:set_status_message
+        t:on_friend_status_message
         """
         self.bob_add_alice_as_friend()
 
         MSG = 'Happy'
         AID = self.aid
 
-        def on_status_message(self, friend_id, new_message):
+        def on_friend_status_message(self, friend_id, new_message):
             assert friend_id == AID
             assert new_message == MSG
             self.sm = True
 
-        BobTox.on_status_message = on_status_message
+        BobTox.on_friend_status_message = on_friend_status_message
         self.bob.sm = False
 
         self.alice.self_set_status_message(MSG)
         assert self.wait_callback(self.bob, 'sm')
-        BobTox.on_status_message = Tox.on_status_message
+        BobTox.on_friend_status_message = Tox.on_friend_status_message
 
         assert self.alice.self_get_status_message() == MSG
         assert self.alice.self_get_status_message_size() == len(MSG)
@@ -284,24 +292,23 @@ class ToxTest(unittest.TestCase):
         t:self_set_status
         t:friend_get_status
         t:friend_get_status
-        t:on_user_status
-        t:set_user_status
+        t:on_friend_status
         """
         self.bob_add_alice_as_friend()
 
         AID = self.aid
 
-        def on_user_status(self, friend_id, new_status):
+        def on_friend_status(self, friend_id, new_status):
             assert friend_id == AID
             assert new_status == Tox.USER_STATUS_BUSY
-            self.us = True
+            self.friend_status = True
 
         self.alice.self_set_status(Tox.USER_STATUS_BUSY)
 
-        BobTox.on_user_status = on_user_status
-        self.bob.us = False
-        assert self.wait_callback(self.bob, 'us')
-        BobTox.on_user_status = Tox.on_user_status
+        BobTox.on_friend_status = on_friend_status
+        self.bob.friend_status = False
+        assert self.wait_callback(self.bob, 'friend_status')
+        BobTox.on_friend_status = Tox.on_friend_status
 
         assert self.alice.self_get_status() == Tox.USER_STATUS_BUSY
         assert self.bob.friend_get_status(self.aid) == Tox.USER_STATUS_BUSY
@@ -309,24 +316,24 @@ class ToxTest(unittest.TestCase):
     def test_connection_status(self):
         """
         t:friend_get_connection_status
-        t:on_connection_status
+        t:on_friend_connection_status
         """
         self.bob_add_alice_as_friend()
 
         AID = self.aid
 
-        def on_connection_status(self, friend_id, status):
+        def on_friend_connection_status(self, friend_id, status):
             assert friend_id == AID
             assert status is False
-            self.cs = True
+            self.friend_conn_status = True
 
         opt = ToxOptions()
-        BobTox.on_friend_connection_status = on_connection_status
-        self.bob.cs = False
+        BobTox.on_friend_connection_status = on_friend_connection_status
+        self.bob.friend_conn_status = False
         self.alice.kill()
         self.alice = Tox(opt)
-        assert self.wait_callback(self.bob, 'cs')
-        BobTox.on_friend_connection_status = Tox.on_connection_status
+        assert self.wait_callback(self.bob, 'friend_conn_status')
+        BobTox.on_friend_connection_status = Tox.on_friend_connection_status
 
         assert self.bob.friend_get_connection_status(self.aid) is False
 
@@ -349,29 +356,6 @@ class ToxTest(unittest.TestCase):
         self.alice = Tox(opt)
         assert addr == self.alice.self_get_address()
 
-    # def test_tox_from_file(self):
-    #     """
-    #     t:save_to_file
-    #     t:load_from_file
-    #     """
-    #     self.alice.save_to_file('data')
-    #     addr = self.alice.self_get_address()
-
-    #     self.alice.kill()
-    #     self.alice = Tox()
-
-    #     #: Test invalid file
-    #     try:
-    #         self.alice.load_from_file('not_exists')
-    #     except OperationFailedError:
-    #         pass
-    #     else:
-    #         assert False
-
-    #     self.alice.load_from_file('data')
-
-    #     assert addr == self.alice.self_get_address()
-
     def test_friend(self):
         """
         t:friend_delete
@@ -382,7 +366,7 @@ class ToxTest(unittest.TestCase):
         t:self_set_name
         t:friend_get_name
         t:friend_get_name_size
-        t:on_name_change
+        t:on_friend_name
         """
 
         #: Test friend request
@@ -406,19 +390,17 @@ class ToxTest(unittest.TestCase):
         assert self.bob.self_get_friend_list() == [self.aid]
         assert self.alice.self_get_friend_list_size() == 1
         assert self.bob.self_get_friend_list_size() == 1
-        # assert self.alice.get_num_online_friends() == 1
-        # assert self.bob.get_num_online_friends() == 1
 
         #: Test friend name
         NEWNAME = 'Jenny'
         AID = self.aid
 
-        def on_name_change(self, fid, newname):
+        def on_friend_name(self, fid, newname):
             assert fid == AID
             assert newname == NEWNAME
             self.nc = True
 
-        BobTox.on_name_change = on_name_change
+        BobTox.on_friend_name = on_friend_name
 
         self.bob.nc = False
         self.alice.self_set_name(NEWNAME)
@@ -426,7 +408,7 @@ class ToxTest(unittest.TestCase):
         assert self.wait_callback(self.bob, 'nc')
         assert self.bob.friend_get_name(self.aid) == NEWNAME
         assert self.bob.friend_get_name_size(self.aid) == len(NEWNAME)
-        BobTox.on_name_change = Tox.on_name_change
+        BobTox.on_friend_name = Tox.on_friend_name
 
     def test_friend_message_and_action(self):
         """
@@ -477,7 +459,7 @@ class ToxTest(unittest.TestCase):
 
     def test_meta_status(self):
         """
-        t:on_read_receipt
+        t:on_friend_read_receipt
         t:on_friend_typing
         t:self_set_typing
         t:friend_get_typing
@@ -488,16 +470,16 @@ class ToxTest(unittest.TestCase):
         AID = self.aid
 
         #: Test typing status
-        def on_typing_change(self, fid, is_typing):
+        def on_friend_typing(self, fid, is_typing):
             assert fid == AID
             assert is_typing is True
             assert self.friend_get_typing(fid) is True
-            self.ut = True
+            self.friend_typing = True
 
-        BobTox.on_friend_typing = on_typing_change
-        self.bob.ut = False
+        BobTox.on_friend_typing = on_friend_typing
+        self.bob.friend_typing = False
         self.alice.self_set_typing(self.bid, True)
-        assert self.wait_callback(self.bob, 'ut')
+        assert self.wait_callback(self.bob, 'friend_typing')
         BobTox.on_friend_typing = Tox.on_friend_typing
 
         #: Test last online
@@ -661,7 +643,7 @@ class ToxTest(unittest.TestCase):
 
         BID = self.bid
         CONTEXT = {'FILE': bytes(), 'RECEIVED': 0, 'START': False, 'SENT': 0}
-        
+
         self.alice.completed = False
         self.bob.completed = False
 
@@ -670,10 +652,9 @@ class ToxTest(unittest.TestCase):
             assert size == FILE_SIZE
             assert filename == FILE_NAME
             retv = self.file_seek(fid, filenumber, OFFSET)
-            assert retv == True
+            assert retv is True
             self.file_control(fid, filenumber, Tox.FILE_CONTROL_RESUME)
 
-        
         def on_file_recv_control(self, fid, file_number, control):
             assert fid == BID
         #     if receive_send == 0 and ct == Tox.FILE_CONTROL_FINISHED:
@@ -691,7 +672,7 @@ class ToxTest(unittest.TestCase):
                 m.update(CONTEXT['FILE'])
                 assert m.hexdigest() == FILE_DIGEST
                 self.completed = True
-                self.file_control(fid, file_number, Tox.FILE_CONTROL_CANCEL)                
+                self.file_control(fid, file_number, Tox.FILE_CONTROL_CANCEL)
                 return
             CONTEXT['FILE'] += data
             CONTEXT['RECEIVED'] += len(data)
@@ -699,7 +680,6 @@ class ToxTest(unittest.TestCase):
             #    assert self.file_data_remaining(
             #        fid, file_number, 1) == FILE_SIZE - CONTEXT['RECEIVED']
 
-        
         # AliceTox.on_file_send_request = on_file_send_request
         # AliceTox.on_file_control = on_file_control
         # AliceTox.on_file_data = on_file_data
@@ -720,7 +700,6 @@ class ToxTest(unittest.TestCase):
                 return
             data = FILE[position:(position + length)]
             self.file_send_chunk(fid, file_number, position, data)
-
 
         BobTox.on_file_recv_control = on_file_recv_control2
         BobTox.on_file_chunk_request = on_file_chunk_request
