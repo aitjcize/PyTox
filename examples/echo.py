@@ -60,9 +60,9 @@ class AV(ToxAV):
                                        "max_video_height": 1080})
         except:
             pass
-        self.prepare_transmission(
-            idx, self.jbufdc * 2, self.VADd,
-            True if self.call_type == self.TypeVideo else False)
+
+        video_enabled = True if self.call_type == self.TypeVideo else False
+        self.prepare_transmission(idx, vide_enabled)
 
     def on_end(self, idx):
         self.kill_transmission(idx)
@@ -153,7 +153,7 @@ class EchoBot(Tox):
         self.friend_add_norequest(pk)
         print('Accepted.')
 
-    def on_friend_message(self, friendId, message):
+    def on_friend_message(self, friendId, type, message):
         name = self.friend_get_name(friendId)
         print('%s: %s' % (name, message))
         print('EchoBot: %s' % message)

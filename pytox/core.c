@@ -1454,7 +1454,7 @@ PyMethodDef Tox_methods[] = {
   },
   {
     "on_friend_message", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
-    "on_friend_message(friend_number, message)\n"
+    "on_friend_message(friend_number, type, message)\n"
     "Callback for receiving friend messages, default implementation does "
     "nothing."
   },
