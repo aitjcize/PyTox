@@ -23,12 +23,12 @@ RUN cd opus-1.0.3 && ./configure && make && make install
 
 # installing vpx
 RUN apt-get install -y yasm
-RUN git clone http://git.chromium.org/webm/libvpx.git
+RUN git clone https://chromium.googlesource.com/webm/libvpx
 RUN cd libvpx && ./configure --enable-shared && make && make install
 
 # creating librarys' links and updating cache
 RUN ldconfig
-RUN git clone https://github.com/irungentoo/ProjectTox-Core.git toxcore
+RUN git clone https://github.com/irungentoo/toxcore.git toxcore
 RUN cd toxcore && autoreconf -i
 RUN cd toxcore && ./configure --prefix=/usr --disable-tests --disable-ntox
 RUN cd toxcore && make

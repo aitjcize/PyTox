@@ -28,7 +28,7 @@ before_script:
   - cd ..
   # installing vpx
   - sudo apt-get install yasm
-  - git clone http://git.chromium.org/webm/libvpx.git > /dev/null
+  - git clone https://chromium.googlesource.com/webm/libvpx > /dev/null
   - cd libvpx
   - ./configure --enable-shared > /dev/null
   - make -j3 >/dev/null
@@ -36,7 +36,7 @@ before_script:
   - cd ..
   # creating librarys' links and updating cache
   - sudo ldconfig
-  - git clone https://github.com/irungentoo/ProjectTox-Core.git toxcore
+  - git clone https://github.com/irungentoo/toxcore.git toxcore
   - cd toxcore
   - autoreconf -i
   - ./configure --prefix=/usr --disable-tests --disable-ntox

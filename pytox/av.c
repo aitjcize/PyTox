@@ -530,7 +530,7 @@ ToxAV_prepare_transmission(ToxAV* self, PyObject* args)
 {
   int call_index = 0, support_video = 0;
 
-  if (!PyArg_ParseTuple(args, "iIIi", &call_index, &support_video)) {
+  if (!PyArg_ParseTuple(args, "ii", &call_index, &support_video)) {
     return NULL;
   }
 
