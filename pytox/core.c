@@ -1245,20 +1245,26 @@ ToxCore_file_get_file_id(ToxCore* self, PyObject* args)
     CHECK_TOX(self);
     uint32_t friend_number = 0;
     uint32_t file_number = 0;
-    uint8_t* file_id = NULL;
 
-    if (!PyArg_ParseTuple(args, "iis", &friend_number, &file_number, &file_id)) {
+    if (!PyArg_ParseTuple(args, "ii", &friend_number, &file_number)) {
         return NULL;
     }
+
+    uint8_t file_id[TOX_FILE_ID_LENGTH + 1];
+    file_id[TOX_FILE_ID_LENGTH] = 0;
+
+    uint8_t hex[TOX_FILE_ID_LENGTH * 2 + 1];
+    memset(hex, 0, TOX_FILE_ID_LENGTH * 2 + 1);
 
     TOX_ERR_FILE_GET err = 0;
     bool ret = tox_file_get_file_id(self->tox, friend_number, file_number, file_id, &err);
     if (!ret) {
         PyErr_Format(ToxOpError, "tox_file_get_file_id() failed: %d", err);
-        Py_RETURN_FALSE;
+        Py_RETURN_NONE;
     }
 
-    Py_RETURN_TRUE;
+    bytes_to_hex_string(file_id, TOX_FILE_ID_LENGTH, hex);
+    return PYSTRING_FromStringAndSize((char*)hex, TOX_FILE_ID_LENGTH * 2);
 }
 
 static PyObject*
@@ -1812,8 +1818,8 @@ PyMethodDef Tox_methods[] = {
   },
   {
     "file_get_file_id", (PyCFunction)ToxCore_file_get_file_id, METH_VARARGS,
-    "file_get_file_id(friend_number, file_number, file_id)\n"
-    "Send a file send request. Returns file number to be sent."
+    "file_get_file_id(friend_number, file_number)\n"
+    "Send a file send request. Returns file id's hex string"
   },
   {
     "self_get_nospam", (PyCFunction)ToxCore_self_get_nospam,

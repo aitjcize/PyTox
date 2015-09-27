@@ -625,6 +625,7 @@ class ToxTest(unittest.TestCase):
         t:file_send_chunk
         t:file_control
         t:file_seek
+        t:file_get_file_id
         t:on_file_recv
         t:on_file_recv_control
         t:on_file_recv_chunk
@@ -705,6 +706,9 @@ class ToxTest(unittest.TestCase):
         BobTox.on_file_chunk_request = on_file_chunk_request
 
         FN = self.bob.file_send(self.aid, 0, FILE_SIZE, FILE_NAME, FILE_NAME)
+        FID = self.bob.file_get_file_id(self.aid, FN)
+        hexFID = "".join("{:02x}".format(c) for c in FILE_NAME.encode())
+        assert FID.startswith(hexFID.upper())
 
         while not self.alice.completed and not self.bob.completed:
             self.alice.iterate()
