@@ -707,7 +707,7 @@ class ToxTest(unittest.TestCase):
 
         FN = self.bob.file_send(self.aid, 0, FILE_SIZE, FILE_NAME, FILE_NAME)
         FID = self.bob.file_get_file_id(self.aid, FN)
-        hexFID = "".join("{:02x}".format(c) for c in FILE_NAME.encode())
+        hexFID = "".join("{:02x}".format(ord(c)) for _, c in enumerate(FILE_NAME))
         assert FID.startswith(hexFID.upper())
 
         while not self.alice.completed and not self.bob.completed:
