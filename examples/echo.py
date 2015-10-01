@@ -157,7 +157,7 @@ class EchoBot(Tox):
         name = self.friend_get_name(friendId)
         print('%s: %s' % (name, message))
         print('EchoBot: %s' % message)
-        self.friend_send_message(friendId, Tox.MESSAGE_TYPE_NORMAIL, message)
+        self.friend_send_message(friendId, Tox.MESSAGE_TYPE_NORMAL, message)
 
 
 opts = None
