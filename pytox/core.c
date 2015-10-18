@@ -107,7 +107,7 @@ static void callback_friend_connection_status(Tox *tox, uint32_t friendnumber,
 static void callback_group_invite(Tox *tox, int32_t friendnumber, uint8_t type,
     const uint8_t *data, uint16_t length, void *self)
 {
-  PyObject_CallMethod((PyObject*)self, "on_group_invite", "iis#",
+  PyObject_CallMethod((PyObject*)self, "on_group_invite", "ii" BUF_TC "#",
       friendnumber, type, data, length);
 }
 // TODO group old api
