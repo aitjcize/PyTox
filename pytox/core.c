@@ -107,7 +107,7 @@ static void callback_friend_connection_status(Tox *tox, uint32_t friendnumber,
 static void callback_group_invite(Tox *tox, int32_t friendnumber, uint8_t type,
     const uint8_t *data, uint16_t length, void *self)
 {
-  PyObject_CallMethod((PyObject*)self, "on_group_invite", "ii" BUF_TC "#",
+  PyObject_CallMethod((PyObject*)self, "on_group_invite", "iis#",
       friendnumber, type, data, length);
 }
 // TODO group old api
@@ -144,8 +144,18 @@ static void callback_file_recv(Tox *tox, uint32_t friend_number, uint32_t file_n
                                uint64_t file_size,
                                const uint8_t *filename, size_t filename_length, void *self)
 {
-    PyObject_CallMethod((PyObject*)self, "on_file_recv", "iiiKs#",
-                        friend_number, file_number, kind, file_size, filename, filename_length);
+    if (kind == TOX_FILE_KIND_AVATAR) {
+        assert(TOX_HASH_LENGTH == filename_length);
+        char filename_hex[TOX_HASH_LENGTH * 2 + 1];
+        memset(filename_hex, 0, TOX_HASH_LENGTH * 2 + 1);
+        bytes_to_hex_string(filename, filename_length, (uint8_t*)filename_hex);
+
+        PyObject_CallMethod((PyObject*)self, "on_file_recv", "iiiKs#",
+                            friend_number, file_number, kind, file_size, filename_hex, TOX_HASH_LENGTH * 2);
+    } else {
+        PyObject_CallMethod((PyObject*)self, "on_file_recv", "iiiKs#",
+                            friend_number, file_number, kind, file_size, filename, filename_length);
+    }
 }
 
 static void callback_file_recv_control(Tox *tox, uint32_t friend_number, uint32_t file_number,
