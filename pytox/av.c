@@ -29,11 +29,6 @@
 
 extern PyObject* ToxOpError;
 
-#define CALLBACK_DEF(name)                                                 \
-  void ToxAVCore_callback_##name(void* agent, int32_t call_index, void* self)  \
-  {                                                                        \
-    PyObject_CallMethod((PyObject*)self, #name, "i", call_index);          \
-  }
 
 static void
 ToxAVCore_callback_call(ToxAV *toxAV, uint32_t friend_number, bool audio_enabled,
@@ -41,6 +36,38 @@ ToxAVCore_callback_call(ToxAV *toxAV, uint32_t friend_number, bool audio_enabled
 {
     PyObject_CallMethod((PyObject*)self, "on_call", "iii",
                         friend_number, audio_enabled, video_enabled);
+}
+
+static void
+ToxAVCore_callback_call_state(ToxAV *toxAV, uint32_t friend_number, uint32_t state, void *self)
+{
+    PyObject_CallMethod((PyObject*)self, "on_call_state", "ii", friend_number, state);
+}
+
+static void
+ToxAVCore_callback_bit_rate_status(ToxAV *toxAV, uint32_t friend_number,
+                                   uint32_t audio_bit_rate, uint32_t video_bit_rate, void *self)
+{
+    PyObject_CallMethod((PyObject*)self, "on_bit_rate_status", "iii",
+                        friend_number, audio_bit_rate, video_bit_rate);
+}
+
+static void
+ToxAVCore_callback_audio_receive_frame(ToxAV *toxAV, uint32_t friend_number,const int16_t *pcm,
+                                       size_t sample_count, uint8_t channels, uint32_t sampling_rate,
+                                       void *self)
+{
+    PyObject_CallMethod((PyObject*)self, "on_audio_receive_frame", "iiiii",
+                        friend_number, pcm, sample_count, channels, sampling_rate);
+}
+
+static void
+ToxAVCore_callback_video_receive_frame(ToxAV *toxAV, uint32_t friend_number, uint16_t width,
+                                       uint16_t height, const uint8_t *y, const uint8_t *u, const uint8_t *v,
+                                       int32_t ystride, int32_t ustride, int32_t vstride,  void *self)
+{
+    PyObject_CallMethod((PyObject*)self, "on_video_receive_frame", "iiiiiiiii",
+                        friend_number, width, height, y, u, v, ystride, ustride, vstride);
 }
 
 static void i420_to_rgb(const vpx_image_t *img, unsigned char *out)
@@ -236,14 +263,10 @@ static int init_helper(ToxAVCore *self, PyObject* args)
     self->cs.max_video_width = self->cs.max_video_height = 0;
 
     toxav_callback_call(self->av, ToxAVCore_callback_call, self);
-
-#define REG_CALLBACK(id, name)                                          \
-    toxav_register_callstate_callback(self->av, ToxAVCore_callback_##name, id, self)
-
-#undef REG_CALLBACK
-
-    toxav_register_audio_callback(self->av, ToxAVCore_audio_recv_callback, self);
-    toxav_register_video_callback(self->av, ToxAVCore_video_recv_callback, self);
+    toxav_callback_call_state(self->av, ToxAVCore_callback_call_state, self);
+    toxav_callback_bit_rate_status(self->av, ToxAVCore_callback_bit_rate_status, self);
+    toxav_callback_audio_receive_frame(self->av, ToxAVCore_callback_audio_receive_frame, self);
+    toxav_callback_video_receive_frame(self->av, ToxAVCore_callback_video_receive_frame, self);
 
     if (self->av == NULL) {
         PyErr_Format(ToxOpError, "failed to allocate toxav %d", err);
@@ -328,21 +351,92 @@ ToxAVCore_call(ToxAVCore *self, PyObject* args)
 }
 
 static PyObject*
-ToxAVCore_hangup(ToxAVCore *self, PyObject* args)
+ToxAVCore_call_control(ToxAVCore *self, PyObject* args)
 {
-  int call_index = 0;
+    uint32_t friend_number;
+    uint32_t control;
 
-  if (!PyArg_ParseTuple(args, "i", &call_index)) {
-    return NULL;
-  }
+    if (!PyArg_ParseTuple(args, "ii", &friend_number, &control)) {
+        return NULL;
+    }
 
-  int ret = toxav_hangup(self->av, call_index);
-  if (ret < 0) {
-    ToxAVCore_set_Error(ret);
-    return NULL;
-  }
+    TOXAV_ERR_CALL_CONTROL err = 0;
+    bool ret = toxav_call_control(self->av, friend_number, control, &err);
+    if (ret == false) {
+        PyErr_Format(ToxOpError, "toxav call control error: %d", err);
+        return NULL;
+    }
+    return PyBool_FromLong(ret);
+}
 
-  Py_RETURN_NONE;
+static PyObject*
+ToxAVCore_bit_rate_set(ToxAVCore *self, PyObject* args)
+{
+    uint32_t friend_number;
+    uint32_t audio_bit_rate;
+    uint32_t video_bit_rate;
+
+    if (!PyArg_ParseTuple(args, "iii", &friend_number, &audio_bit_rate, &video_bit_rate)) {
+        return NULL;
+    }
+
+    TOXAV_ERR_BIT_RATE_SET err = 0;
+    bool ret = toxav_bit_rate_set(self->av, friend_number, audio_bit_rate, video_bit_rate, &err);
+    if (ret == false) {
+        PyErr_Format(ToxOpError, "toxav bit rate set error: %d", err);
+        return NULL;
+    }
+    return PyBool_FromLong(ret);
+}
+
+static PyObject*
+ToxAVCore_audio_send_frame(ToxAVCore *self, PyObject* args)
+{
+    uint32_t friend_number;
+    int16_t *pcm = NULL;
+    size_t sample_count;
+    uint8_t channels;
+    uint32_t sampling_rate;
+
+    // TODO how recv int16_t here
+    if (!PyArg_ParseTuple(args, "iiiii", &friend_number, &pcm,
+        &sample_count, &channels, &sampling_rate)) {
+        return NULL;
+    }
+
+    TOXAV_ERR_SEND_FRAME err = 0;
+    bool ret = toxav_audio_send_frame(self->av, friend_number, pcm,
+                                      sample_count, channels, sampling_rate, &err);
+    if (ret == false) {
+        PyErr_Format(ToxOpError, "toxav audio send frame error: %d", err);
+        return NULL;
+    }
+    return PyBool_FromLong(ret);
+}
+
+static PyObject*
+ToxAVCore_video_send_frame(ToxAVCore *self, PyObject* args)
+{
+    uint32_t friend_number;
+    uint16_t width;
+    uint16_t height;
+    uint8_t *y = NULL;
+    uint8_t *u = NULL;
+    uint8_t *v = NULL;
+
+    if (!PyArg_ParseTuple(args, "iiiiii", &friend_number, &width, &height,
+                          y, u, v)) {
+        return NULL;
+    }
+
+    TOXAV_ERR_SEND_FRAME err = 0;
+    bool ret = toxav_video_send_frame(self->av, friend_number, width, height,
+                                      y, u, v, &err);
+    if (ret == false) {
+        PyErr_Format(ToxOpError, "toxav video send frame error: %d", err);
+        return NULL;
+    }
+    return PyBool_FromLong(ret);
 }
 
 static PyObject*
@@ -364,140 +458,6 @@ ToxAVCore_answer(ToxAVCore *self, PyObject* args)
     }
 
     Py_RETURN_TRUE;
-}
-
-static PyObject*
-ToxAVCore_reject(ToxAVCore *self, PyObject* args)
-{
-  int call_index = 0;
-  const char* res = NULL;
-
-  if (!PyArg_ParseTuple(args, "is", &call_index, &res)) {
-    return NULL;
-  }
-
-  int ret = toxav_reject(self->av, call_index, res);
-  if (ret < 0) {
-    ToxAVCore_set_Error(ret);
-    return NULL;
-  }
-
-  Py_RETURN_NONE;
-}
-
-static PyObject*
-ToxAVCore_cancel(ToxAVCore *self, PyObject* args)
-{
-  int call_index = 0, peer_id = 0;
-  const char* res = NULL;
-
-  if (!PyArg_ParseTuple(args, "iis", &call_index, &peer_id, &res)) {
-    return NULL;
-  }
-
-  int ret = toxav_cancel(self->av, call_index, peer_id, res);
-  if (ret < 0) {
-    ToxAVCore_set_Error(ret);
-    return NULL;
-  }
-
-  Py_RETURN_NONE;
-}
-
-static PyObject*
-ToxAVCore_change_settings(ToxAVCore *self, PyObject* args)
-{
-  int call_index = 0;
-  PyObject* settings = NULL;
-
-  if (!PyArg_ParseTuple(args, "iO", &call_index, &settings)) {
-    return NULL;
-  }
-
-  if (!PyDict_Check(settings)) {
-    PyErr_SetString(PyExc_TypeError, "settings should be a dictionary");
-    return NULL;
-  }
-
-#define CHECK_AND_UPDATE(d, name)                                    \
-  PyObject* key_##name = PYSTRING_FromString(#name);                 \
-  if (PyDict_Contains(d, key_##name)) {                              \
-    self->cs.name = PyLong_AsLong(PyDict_GetItemString(d, #name));   \
-  }                                                                  \
-  Py_DECREF(key_##name);
-
-  CHECK_AND_UPDATE(settings, call_type);
-  CHECK_AND_UPDATE(settings, video_bitrate);
-  CHECK_AND_UPDATE(settings, max_video_width);
-  CHECK_AND_UPDATE(settings, max_video_height);
-  CHECK_AND_UPDATE(settings, audio_bitrate);
-  CHECK_AND_UPDATE(settings, audio_frame_duration);
-  CHECK_AND_UPDATE(settings, audio_sample_rate);
-  CHECK_AND_UPDATE(settings, audio_channels);
-
-#undef CHECK_AND_UPDATE
-
-  int ret = toxav_change_settings(self->av, call_index, &self->cs);
-  if (ret < 0) {
-    ToxAVCore_set_Error(ret);
-    return NULL;
-  }
-
-  Py_RETURN_NONE;
-}
-
-static PyObject*
-ToxAVCore_stop_call(ToxAVCore *self, PyObject* args)
-{
-  int call_index = 0;
-
-  if (!PyArg_ParseTuple(args, "i", &call_index)) {
-    return NULL;
-  }
-
-  int ret = toxav_stop_call(self->av, call_index);
-  if (ret < 0) {
-    ToxAVCore_set_Error(ret);
-    return NULL;
-  }
-
-  Py_RETURN_NONE;
-}
-
-static PyObject*
-ToxAVCore_prepare_transmission(ToxAVCore *self, PyObject* args)
-{
-  int call_index = 0, support_video = 0;
-
-  if (!PyArg_ParseTuple(args, "ii", &call_index, &support_video)) {
-    return NULL;
-  }
-
-  int ret = toxav_prepare_transmission(self->av, call_index, support_video);
-  if (ret < 0) {
-    ToxAVCore_set_Error(ret);
-    return NULL;
-  }
-
-  Py_RETURN_NONE;
-}
-
-static PyObject*
-ToxAVCore_kill_transmission(ToxAVCore *self, PyObject* args)
-{
-  int call_index = 0;
-
-  if (!PyArg_ParseTuple(args, "i", &call_index)) {
-    return NULL;
-  }
-
-  int ret = toxav_kill_transmission(self->av, call_index);
-  if (ret < 0) {
-    ToxAVCore_set_Error(ret);
-    return NULL;
-  }
-
-  Py_RETURN_NONE;
 }
 
 #define RTP_PAYLOAD_SIZE 65535
@@ -564,99 +524,6 @@ ToxAVCore_send_audio(ToxAVCore *self, PyObject* args)
 }
 
 static PyObject*
-ToxAVCore_get_peer_csettings(ToxAVCore *self, PyObject* args)
-{
-  int call_index = 0, peer = 0;
-
-  if (!PyArg_ParseTuple(args, "ii", &call_index, &peer)) {
-    return NULL;
-  }
-
-  ToxAvCSettings cs;
-  int ret = toxav_get_peer_csettings(self->av, call_index, peer, &cs);
-  if (ret < 0) {
-    ToxAVCore_set_Error(ret);
-    return NULL;
-  }
-
-#define SET_VALUE(d, attr)                                         \
-  PyObject* attr = PyLong_FromLong(cs.attr);                       \
-  PyDict_SetItemString(d, #attr, attr);                            \
-  Py_DECREF(attr);
-
-  PyObject* d = PyDict_New();
-
-  SET_VALUE(d, call_type);
-
-  SET_VALUE(d, video_bitrate);
-  SET_VALUE(d, max_video_width);
-  SET_VALUE(d, max_video_height);
-
-  SET_VALUE(d, audio_bitrate);
-  SET_VALUE(d, audio_frame_duration);
-  SET_VALUE(d, audio_sample_rate);
-  SET_VALUE(d, audio_channels);
-
-#undef SET_VALUE
-
-  return d;
-}
-
-static PyObject*
-ToxAVCore_get_peer_id(ToxAVCore *self, PyObject* args)
-{
-  int call_index = 0, peer = 0;
-
-  if (!PyArg_ParseTuple(args, "ii", &call_index, &peer)) {
-    return NULL;
-  }
-
-  int ret = toxav_get_peer_id(self->av, call_index, peer);
-  if (ret < 0) {
-    ToxAVCore_set_Error(ret);
-    return NULL;
-  }
-
-  return PyLong_FromLong(ret);
-}
-
-static PyObject*
-ToxAVCore_get_call_state(ToxAVCore *self, PyObject* args)
-{
-  int call_index = 0;
-
-  if (!PyArg_ParseTuple(args, "i", &call_index)) {
-    return NULL;
-  }
-
-  int ret = toxav_get_call_state(self->av, call_index);
-  if (ret < 0) {
-    ToxAVCore_set_Error(ret);
-    return NULL;
-  }
-
-  return PyLong_FromLong(ret);
-}
-
-static PyObject*
-ToxAVCore_capability_supported(ToxAVCore *self, PyObject* args)
-{
-  int call_index = 0, cap = 0;
-
-  if (!PyArg_ParseTuple(args, "ii", &call_index, &cap)) {
-    return NULL;
-  }
-
-  int ret = toxav_capability_supported(self->av, call_index, cap);
-  if (ret < 0) {
-    ToxAVCore_set_Error(ret);
-    return NULL;
-  }
-
-  return PyBool_FromLong(ret);
-}
-
-static PyObject*
 ToxAVCore_get_tox(ToxAVCore *self, PyObject* args)
 {
   Py_INCREF(self->core);
@@ -684,172 +551,62 @@ ToxAVCore_callback_stub(ToxAVCore *self, PyObject* args)
   Py_RETURN_NONE;
 }
 
-#define METHOD_DEF(name)                                   \
-  {                                                        \
-    #name, (PyCFunction)ToxAVCore_callback_stub, METH_VARARGS, \
-    #name "(call_index)\n"                                        \
-    #name " handler. Default implementation does nothing." \
-  }
-
 PyMethodDef ToxAVCore_methods[] = {
-  METHOD_DEF(on_invite),
-  METHOD_DEF(on_ringing),
-  METHOD_DEF(on_start),
-  METHOD_DEF(on_cancel),
-  METHOD_DEF(on_reject),
-  METHOD_DEF(on_end),
-  METHOD_DEF(on_request_timeout),
-  METHOD_DEF(on_peer_timeout),
-  METHOD_DEF(on_peer_cs_change),
-  METHOD_DEF(on_self_cs_change),
-  {
-    "call", (PyCFunction)ToxAVCore_call, METH_VARARGS,
-    "call(friend_number, audio_bit_rate, video_bit_rate)\n"
-    "Call a friend with *friend_number*."
-    "Returns True if success.\n\n"
-  },
-  {
-    "hangup", (PyCFunction)ToxAVCore_hangup, METH_VARARGS,
-    "hangup(call_index)\n"
-    "Hangup active call."
-  },
-  {
-    "answer", (PyCFunction)ToxAVCore_answer, METH_VARARGS,
-    "answer(call_index, call_type)\n"
-    "Answer incomming call.\n\n"
-    ".. seealso ::\n"
-    "    :meth:`.call`"
-  },
-  {
-    "reject", (PyCFunction)ToxAVCore_reject, METH_VARARGS,
-    "reject(call_index)\n"
-    "Reject incomming call."
-  },
-  {
-    "cancel", (PyCFunction)ToxAVCore_cancel, METH_VARARGS,
-    "cancel(call_index)\n"
-    "Cancel outgoing request."
-  },
-  {
-    "change_settings", (PyCFunction)ToxAVCore_change_settings, METH_VARARGS,
-    "change_settings(call_index, csettings)\n"
-    "Notify peer that we are changing call settings. *settings* is a"
-    "dictionary of new settings like the one returned by "
-    "get_peer_csettings\n\n"
-    ".. seealso ::\n"
-    "    :meth:`.get_peer_csettings`"
-  },
-  {
-    "stop_call", (PyCFunction)ToxAVCore_stop_call, METH_VARARGS,
-    "stop_call(call_index)\n"
-    "Terminate transmission. Note that transmission will be terminated "
-    "without informing remote peer."
-  },
-  {
-    "prepare_transmission", (PyCFunction)ToxAVCore_prepare_transmission,
-    METH_VARARGS,
-    "prepare_transmission(call_index, support_video)\n"
-    "Must be call before any RTP transmission occurs. *support_video* is "
-    "either True or False."
-  },
-  {
-    "kill_transmission", (PyCFunction)ToxAVCore_kill_transmission, METH_VARARGS,
-    "kill_transmission(call_index)\n"
-    "Call this at the end of the transmission."
-  },
-  {
-    "on_video_data", (PyCFunction)ToxAVCore_callback_stub, METH_VARARGS,
-    "on_video_data(call_index, width, height, data)\n"
-    "Receive decoded video packet. Default implementation does nothing."
-  },
-  {
-    "on_audio_data", (PyCFunction)ToxAVCore_callback_stub, METH_VARARGS,
-    "on_audio_data(call_index, size, data)\n"
-    "Receive decoded audio packet. Default implementation does nothing."
-  },
-  {
-    "send_video", (PyCFunction)ToxAVCore_send_video, METH_VARARGS,
-    "send_video(call_index, data)\n"
-    "Encode and send video packet. *data* should be a str or buffer"
-    "containing a image in RGB888 format."
-  },
-  {
-    "send_audio", (PyCFunction)ToxAVCore_send_audio, METH_VARARGS,
-    "send_audio(call_index, frame_size, data)\n"
-    "Encode and send video packet. *data* should be a str or buffer"
-    "containing singal channel 16 bit signed PCM audio data."
-  },
-  {
-    "get_peer_csettings",
-    (PyCFunction)ToxAVCore_get_peer_csettings, METH_VARARGS,
-    "get_peer_csettings(call_index, peer_num)\n"
-    "Get peer transmission type. It can either be audio or video. "
-    "*peer_num* is always 0 for now."
-  },
-  {
-    "get_peer_id", (PyCFunction)ToxAVCore_get_peer_id, METH_VARARGS,
-    "get_peer_id(call_index, peer_num)\n"
-    "Get *friend_number* of peer participating in conversation. *peer_num* "
-    "is always 0 for now."
-
-  },
-  {
-    "get_call_state", (PyCFunction)ToxAVCore_get_call_state, METH_VARARGS,
-    "get_call_state(call_index)\n"
-    "Get current call state\n\n"
-    "The state returned can be one of following value:\n\n"
-    "+------------------------+\n"
-    "| state                  |\n"
-    "+========================+\n"
-    "| ToxAV.CallNonExistent  |\n"
-    "+------------------------+\n"
-    "| ToxAV.CallInviting     |\n"
-    "+------------------------+\n"
-    "| ToxAV.CallStarting     |\n"
-    "+------------------------+\n"
-    "| ToxAV.CallActive       |\n"
-    "+------------------------+\n"
-    "| ToxAV.CallHold         |\n"
-    "+------------------------+\n"
-    "| ToxAV.CallHanged_up    |\n"
-    "+------------------------+\n"
-  },
-  {
-    "capability_supported", (PyCFunction)ToxAVCore_capability_supported,
-    METH_VARARGS,
-    "capability_supported(capability)\n"
-    "Query if certain capability is supported.\n\n"
-    "*capability* can be one of following value:\n\n"
-    "+----------------------+-----------------+\n"
-    "| control_type         | description     |\n"
-    "+======================+=================+\n"
-    "| ToxAV.AudioEncoding  | audio encoding  |\n"
-    "+----------------------+-----------------+\n"
-    "| ToxAV.AudioDecoding  | audio decoding  |\n"
-    "+----------------------+-----------------+\n"
-    "| ToxAV.VideoEncoding  | video encoding  |\n"
-    "+----------------------+-----------------+\n"
-    "| ToxAV.VideoEncoding  | video decoding  |\n"
-    "+----------------------+-----------------+\n"
-  },
-  {
-    "get_tox", (PyCFunction)ToxAVCore_get_tox,
-    METH_VARARGS,
-    "get_tox()\n"
-    "Get the Tox object associated with this ToxAV instance."
-  },
-  {
-      "iteration_interval", (PyCFunction)ToxAVCore_iteration_interval,
-      METH_VARARGS,
-      "iteration_interval()\n"
-      "Returns the interval in milliseconds when the next toxav_iterate call shouldbe."
-  },
-  {
-      "iterate", (PyCFunction)ToxAVCore_iterate,
-      METH_VARARGS,
-      "iterate()\n"
-      "Main loop for the session."
-  },
+    {
+        "call", (PyCFunction)ToxAVCore_call, METH_VARARGS,
+        "call(friend_number, audio_bit_rate, video_bit_rate)\n"
+        "Call a friend with *friend_number*."
+        "Returns True on success.\n\n"
+    },
+    {
+        "call_control", (PyCFunction)ToxAVCore_call_control, METH_VARARGS,
+        "call_control(friend_number, control)\n"
+        "Sends a call control command to a friend."
+        "Returns True on success.\n\n"
+    },
+    {
+        "bit_rate_set", (PyCFunction)ToxAVCore_bit_rate_set, METH_VARARGS,
+        "bit_rate_set(friend_number, audio_bit_rate, video_bit_rate)\n"
+        "Set the bit rate to be used in subsequent audio/video frames."
+        "Returns True on success.\n\n"
+    },
+    {
+        "audio_send_frame", (PyCFunction)ToxAVCore_audio_send_frame, METH_VARARGS,
+        "audio_send_frame(friend_number, pcm, sample_count, channels, sampling_rate)\n"
+        "Send an audio frame to a friend."
+        "Returns True on success.\n\n"
+    },
+    {
+        "video_send_frame", (PyCFunction)ToxAVCore_video_send_frame, METH_VARARGS,
+        "video_send_frame(friend_number, width, height, y, u, v)\n"
+        "Send a video frame to a friend."
+        "Returns True on success.\n\n"
+    },
+    {
+        "answer", (PyCFunction)ToxAVCore_answer, METH_VARARGS,
+        "answer(call_index, call_type)\n"
+        "Answer incomming call.\n\n"
+        ".. seealso ::\n"
+        "    :meth:`.call`"
+    },
+    {
+        "get_tox", (PyCFunction)ToxAVCore_get_tox,
+        METH_VARARGS,
+        "get_tox()\n"
+        "Get the Tox object associated with this ToxAV instance."
+    },
+    {
+        "iteration_interval", (PyCFunction)ToxAVCore_iteration_interval,
+        METH_VARARGS,
+        "iteration_interval()\n"
+        "Returns the interval in milliseconds when the next toxav_iterate call shouldbe."
+    },
+    {
+        "iterate", (PyCFunction)ToxAVCore_iterate,
+        METH_VARARGS,
+        "iterate()\n"
+        "Main loop for the session."
+    },
 };
 
 
