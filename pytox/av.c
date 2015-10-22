@@ -35,16 +35,13 @@ extern PyObject* ToxOpError;
     PyObject_CallMethod((PyObject*)self, #name, "i", call_index);          \
   }
 
-CALLBACK_DEF(on_invite);
-CALLBACK_DEF(on_ringing);
-CALLBACK_DEF(on_start);
-CALLBACK_DEF(on_cancel);
-CALLBACK_DEF(on_reject);
-CALLBACK_DEF(on_end);
-CALLBACK_DEF(on_request_timeout);
-CALLBACK_DEF(on_peer_timeout);
-CALLBACK_DEF(on_peer_cs_change);
-CALLBACK_DEF(on_self_cs_change);
+static void
+ToxAVCore_callback_call(ToxAV *toxAV, uint32_t friend_number, bool audio_enabled,
+                        bool video_enabled, void *self)
+{
+    PyObject_CallMethod((PyObject*)self, "on_call", "iii",
+                        friend_number, audio_enabled, video_enabled);
+}
 
 static void i420_to_rgb(const vpx_image_t *img, unsigned char *out)
 {
@@ -179,7 +176,7 @@ void ToxAVCore_audio_recv_callback(void* agent, int32_t call_idx,
 void ToxAVCore_video_recv_callback(void* agent, int32_t call_idx,
     const vpx_image_t* image, void* user)
 {
-  ToxAV* self = (ToxAV*)user;
+  ToxAVCore* self = (ToxAVCore*)user;
 
   if (image == NULL) {
     return;
@@ -215,81 +212,71 @@ void ToxAVCore_video_recv_callback(void* agent, int32_t call_idx,
 
 static int init_helper(ToxAVCore *self, PyObject* args)
 {
-  PyEval_InitThreads();
+    PyEval_InitThreads();
 
-  if (self->av) {
-    toxav_kill(self->av);
-    self->av = NULL;
-  }
+    if (self->av) {
+        toxav_kill(self->av);
+        self->av = NULL;
+    }
 
-  PyObject* core = NULL;
-  int max_calls;
+    PyObject* core = NULL;
 
-  if (!PyArg_ParseTuple(args, "Oi", &core, &max_calls)) {
-    PyErr_SetString(PyExc_TypeError, "must associate with a core instance");
-    return -1;
-  }
+    if (!PyArg_ParseTuple(args, "O", &core)) {
+        PyErr_SetString(PyExc_TypeError, "must associate with a core instance");
+        return -1;
+    }
 
-  self->core = core;
-  Py_INCREF(self->core);
+    self->core = core;
+    Py_INCREF(self->core);
 
-  self->av = toxav_new(((ToxCore*)self->core)->tox, max_calls);
+    TOXAV_ERR_NEW err = 0;
+    self->av = toxav_new(((ToxCore*)self->core)->tox, &err);
 
-  self->cs = av_DefaultSettings;
-  self->cs.max_video_width = self->cs.max_video_height = 0;
+    self->cs = av_DefaultSettings;
+    self->cs.max_video_width = self->cs.max_video_height = 0;
 
-#define REG_CALLBACK(id, name) \
-  toxav_register_callstate_callback(self->av, ToxAVCore_callback_##name, id, self)
+    toxav_callback_call(self->av, ToxAVCore_callback_call, self);
 
-  REG_CALLBACK(av_OnInvite, on_invite);
-  REG_CALLBACK(av_OnRinging, on_ringing);
-  REG_CALLBACK(av_OnStart, on_start);
-  REG_CALLBACK(av_OnCancel, on_cancel);
-  REG_CALLBACK(av_OnReject, on_reject);
-  REG_CALLBACK(av_OnEnd, on_end);
-  REG_CALLBACK(av_OnRequestTimeout, on_request_timeout);
-  REG_CALLBACK(av_OnPeerTimeout, on_peer_timeout);
-  REG_CALLBACK(av_OnPeerCSChange, on_peer_cs_change);
-  REG_CALLBACK(av_OnSelfCSChange, on_self_cs_change);
-
+#define REG_CALLBACK(id, name)                                          \
+    toxav_register_callstate_callback(self->av, ToxAVCore_callback_##name, id, self)
 
 #undef REG_CALLBACK
 
-  toxav_register_audio_callback(self->av, ToxAVCore_audio_recv_callback, self);
-  toxav_register_video_callback(self->av, ToxAVCore_video_recv_callback, self);
+    toxav_register_audio_callback(self->av, ToxAVCore_audio_recv_callback, self);
+    toxav_register_video_callback(self->av, ToxAVCore_video_recv_callback, self);
 
-  if (self->av == NULL) {
-    PyErr_SetString(ToxOpError, "failed to allocate toxav");
-    return -1;
-  }
+    if (self->av == NULL) {
+        PyErr_Format(ToxOpError, "failed to allocate toxav %d", err);
+        return -1;
+    }
 
-  return 0;
+    return 0;
 }
 
 static PyObject*
 ToxAVCore_new(PyTypeObject *type, PyObject* args, PyObject* kwds)
 {
-  ToxAV* self = (ToxAV*)type->tp_alloc(type, 0);
-  self->av = NULL;
-  self->in_image = NULL;
-  self->out_image = NULL;
-  self->i_w = self->i_h = self->o_w = self->o_h = 0;
+    ToxAVCore* self = (ToxAVCore*)type->tp_alloc(type, 0);
+    self->av = NULL;
+    self->in_image = NULL;
+    self->out_image = NULL;
+    self->i_w = self->i_h = self->o_w = self->o_h = 0;
 
-  if (init_helper(self, args) == -1) {
-    return NULL;
-  }
+    if (init_helper(self, args) == -1) {
+        return NULL;
+    }
 
-  return (PyObject*)self;
+    return (PyObject*)self;
 }
 
 static int
 ToxAVCore_init(ToxAVCore *self, PyObject* args, PyObject* kwds)
 {
-  // since __init__ in Python is optional(superclass need to call it
-  // explicitly), we need to initialize self->tox in ToxAVCore_new instead of
-  // init. If ToxAVCore_init is called, we re-initialize self->tox and pass
-  // the new ipv6enabled setting.
-  return init_helper(self, args);
+    // since __init__ in Python is optional(superclass need to call it
+    // explicitly), we need to initialize self->tox in ToxAVCore_new instead of
+    // init. If ToxAVCore_init is called, we re-initialize self->tox and pass
+    // the new ipv6enabled setting.
+    return init_helper(self, args);
 }
 
 static int
@@ -315,57 +302,6 @@ ToxAVCore_set_Error(int ret)
 {
   const char* msg = NULL;
   switch(ret) {
-  case av_ErrorNone:
-    msg = "None";
-    break;
-  case av_ErrorUnknown:
-    msg = "Unknown error";
-    break;
-  case av_ErrorNoCall:
-    msg = "Trying to perform call action while not in a call";
-    break;
-  case av_ErrorInvalidState:
-    msg = "Trying to perform call action while in invalid stat";
-    break;
-  case av_ErrorAlreadyInCallWithPeer:
-    msg = "Trying to call peer when already in a call with peer";
-    break;
-  case av_ErrorReachedCallLimit:
-    msg = "Cannot handle more calls";
-    break;
-  case av_ErrorInitializingCodecs:
-    msg = "Failed creating CSSession";
-    break;
-  case av_ErrorSettingVideoResolution:
-    msg = "Error setting resolution";
-    break;
-  case av_ErrorSettingVideoBitrate:
-    msg = "Error setting bitrate";
-    break;
-  case av_ErrorSplittingVideoPayload:
-    msg = "Error splitting video payload";
-    break;
-  case av_ErrorEncodingVideo:
-    msg = "vpx_codec_encode failed";
-    break;
-  case av_ErrorEncodingAudio:
-    msg = "opus_encode failed";
-    break;
-  case av_ErrorSendingPayload:
-    msg = "Sending lossy packet failed";
-    break;
-  case av_ErrorCreatingRtpSessions:
-    msg = "One of the rtp sessions failed to initialize";
-    break;
-  case av_ErrorNoRtpSession:
-    msg = "Trying to perform rtp action on invalid session";
-    break;
-  case av_ErrorInvalidCodecState:
-    msg = "Codec state not initialized";
-    break;
-  case av_ErrorPacketTooLarge:
-    msg = "Split packet exceeds it's limit";
-    break;
   }
 
   PyErr_SetString(ToxOpError, msg);
@@ -374,21 +310,21 @@ ToxAVCore_set_Error(int ret)
 static PyObject*
 ToxAVCore_call(ToxAVCore *self, PyObject* args)
 {
-  int peer_id = 0;
-  int seconds = 0;
+    uint32_t friend_number;
+    uint32_t audio_bit_rate;
+    uint32_t video_bit_rate;
 
-  if (!PyArg_ParseTuple(args, "iii", &peer_id, &self->cs.call_type, &seconds)) {
-    return NULL;
-  }
+    if (!PyArg_ParseTuple(args, "iii", &friend_number, &audio_bit_rate, &video_bit_rate)) {
+        return NULL;
+    }
 
-  int32_t call_idx = 0;
-  int ret = toxav_call(self->av, &call_idx, peer_id, &self->cs, seconds);
-  if (ret < 0) {
-    ToxAVCore_set_Error(ret);
-    return NULL;
-  }
-
-  return PyLong_FromLong(call_idx);
+    TOXAV_ERR_CALL err = 0;
+    bool ret = toxav_call(self->av, friend_number, audio_bit_rate, video_bit_rate, &err);
+    if (ret == false) {
+        PyErr_Format(ToxOpError, "toxav call error: %d", err);
+        return NULL;
+    }
+    return PyBool_FromLong(ret);
 }
 
 static PyObject*
@@ -412,19 +348,22 @@ ToxAVCore_hangup(ToxAVCore *self, PyObject* args)
 static PyObject*
 ToxAVCore_answer(ToxAVCore *self, PyObject* args)
 {
-  int32_t call_index = 0;
+    uint32_t friend_number;
+    uint32_t audio_bit_rate;
+    uint32_t video_bit_rate;
 
-  if (!PyArg_ParseTuple(args, "ii", &call_index, &self->cs.call_type)) {
-    return NULL;
-  }
+    if (!PyArg_ParseTuple(args, "iii", &friend_number, &audio_bit_rate, &video_bit_rate)) {
+        return NULL;
+    }
 
-  int ret = toxav_answer(self->av, call_index, &self->cs);
-  if (ret < 0) {
-    ToxAVCore_set_Error(ret);
-    return NULL;
-  }
+    TOXAV_ERR_ANSWER err = 0;
+    bool ret = toxav_answer(self->av, friend_number, audio_bit_rate, video_bit_rate, &err);
+    if (ret == false) {
+        PyErr_Format(ToxOpError, "toxav answer error: %d", err);
+        return NULL;
+    }
 
-  Py_RETURN_NONE;
+    Py_RETURN_TRUE;
 }
 
 static PyObject*
@@ -560,6 +499,8 @@ ToxAVCore_kill_transmission(ToxAVCore *self, PyObject* args)
 
   Py_RETURN_NONE;
 }
+
+#define RTP_PAYLOAD_SIZE 65535
 
 static PyObject*
 ToxAVCore_send_video(ToxAVCore *self, PyObject* args)
@@ -723,6 +664,21 @@ ToxAVCore_get_tox(ToxAVCore *self, PyObject* args)
 }
 
 static PyObject*
+ToxAVCore_iteration_interval(ToxAVCore *self)
+{
+    uint32_t interval = toxav_iteration_interval(self->av);
+    return PyLong_FromLong(interval);
+}
+
+static PyObject*
+ToxAVCore_iterate(ToxAVCore *self)
+{
+    toxav_iterate(self->av);
+    Py_RETURN_NONE;
+}
+
+
+static PyObject*
 ToxAVCore_callback_stub(ToxAVCore *self, PyObject* args)
 {
   Py_RETURN_NONE;
@@ -748,17 +704,9 @@ PyMethodDef ToxAVCore_methods[] = {
   METHOD_DEF(on_self_cs_change),
   {
     "call", (PyCFunction)ToxAVCore_call, METH_VARARGS,
-    "call(friend_id, call_type, seconds)\n"
-    "Call a friend with *friend_id*, with *seconds* ringing timeout. "
-    "Returns the index *call_index* of the call.\n\n"
-    "*call_type* can be one of following value:\n\n"
-    "+------------------+-----------------------+\n"
-    "| control_type     | description           |\n"
-    "+==================+=======================+\n"
-    "| ToxAV.TypeAudio  | audio only call       |\n"
-    "+------------------+-----------------------+\n"
-    "| ToxAV.TypeVideo  | audio and video call  |\n"
-    "+------------------+-----------------------+\n"
+    "call(friend_number, audio_bit_rate, video_bit_rate)\n"
+    "Call a friend with *friend_number*."
+    "Returns True if success.\n\n"
   },
   {
     "hangup", (PyCFunction)ToxAVCore_hangup, METH_VARARGS,
@@ -890,10 +838,22 @@ PyMethodDef ToxAVCore_methods[] = {
     "get_tox()\n"
     "Get the Tox object associated with this ToxAV instance."
   },
+  {
+      "iteration_interval", (PyCFunction)ToxAVCore_iteration_interval,
+      METH_VARARGS,
+      "iteration_interval()\n"
+      "Returns the interval in milliseconds when the next toxav_iterate call shouldbe."
+  },
+  {
+      "iterate", (PyCFunction)ToxAVCore_iterate,
+      METH_VARARGS,
+      "iterate()\n"
+      "Main loop for the session."
+  },
 };
 
 
-PyTypeObject ToxAVType = {
+PyTypeObject ToxAVCoreType = {
 #if PY_MAJOR_VERSION >= 3
   PyVarObject_HEAD_INIT(NULL, 0)
 #else
@@ -901,7 +861,7 @@ PyTypeObject ToxAVType = {
   0,                         /*ob_size*/
 #endif
   "ToxAV",                   /*tp_name*/
-  sizeof(ToxAV),           /*tp_basicsize*/
+  sizeof(ToxAVCore),           /*tp_basicsize*/
   0,                         /*tp_itemsize*/
   (destructor)ToxAVCore_dealloc, /*tp_dealloc*/
   0,                         /*tp_print*/
@@ -942,26 +902,26 @@ PyTypeObject ToxAVType = {
 void ToxAVCore_install_dict()
 {
 #define SET(name)                                           \
-  PyObject* obj_##name = PyLong_FromLong(av_##name);         \
-  PyDict_SetItemString(dict, #name, obj_##name);             \
-  Py_DECREF(obj_##name);
+    PyObject* obj_##name = PyLong_FromLong(TOXAV_##name);   \
+    PyDict_SetItemString(dict, #name, obj_##name);          \
+    Py_DECREF(obj_##name);
 
-  PyObject* dict = PyDict_New();
-  SET(TypeAudio);
-  SET(TypeVideo);
-  SET(AudioEncoding);
-  SET(AudioDecoding);
-  SET(VideoEncoding);
-  SET(VideoDecoding);
+    PyObject* dict = PyDict_New();
+    SET(FRIEND_CALL_STATE_ERROR);
+    SET(FRIEND_CALL_STATE_FINISHED);
+    SET(FRIEND_CALL_STATE_SENDING_A);
+    SET(FRIEND_CALL_STATE_SENDING_V);
+    SET(FRIEND_CALL_STATE_ACCEPTING_A);
+    SET(FRIEND_CALL_STATE_ACCEPTING_V);
 
-  SET(CallNonExistent);
-  SET(CallInviting);
-  SET(CallStarting);
-  SET(CallActive);
-  SET(CallHold);
-  SET(CallHungUp);
-
+    SET(CALL_CONTROL_RESUME);
+    SET(CALL_CONTROL_PAUSE);
+    SET(CALL_CONTROL_CANCEL);
+    SET(CALL_CONTROL_MUTE_AUDIO);
+    SET(CALL_CONTROL_UNMUTE_AUDIO);
+    SET(CALL_CONTROL_HIDE_VIDEO);
+    SET(CALL_CONTROL_SHOW_VIDEO);
 #undef SET
 
-  ToxAVType.tp_dict = dict;
+    ToxAVCoreType.tp_dict = dict;
 }

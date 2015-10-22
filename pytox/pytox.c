@@ -66,7 +66,7 @@ PyMODINIT_FUNC initpytox(void)
 
   ToxCore_install_dict();
 #ifdef ENABLE_AV
-  ToxAV_install_dict();
+  ToxAVCore_install_dict();
 #endif
 
   // Initialize toxcore
