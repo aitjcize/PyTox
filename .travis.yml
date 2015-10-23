@@ -42,6 +42,8 @@ before_script:
   - sudo ldconfig
   - git clone https://github.com/irungentoo/toxcore.git toxcore
   - cd toxcore
+  - git fetch origin pull/1375/head:newavapi
+  - git checkout newavapi
   - autoreconf -i
   - ./configure --prefix=/usr --disable-tests --disable-ntox
   - make -j2

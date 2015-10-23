@@ -9,7 +9,7 @@ def supports_av():
 
 sources = ["pytox/pytox.c", "pytox/core.c", "pytox/util.c"]
 libraries = ["toxcore"]
-cflags = ["-Wall", "-Wno-declaration-after-statement", "-I/opt/tox/include"]
+cflags = ["-Wall", "-Wno-declaration-after-statement"]
 
 if supports_av():
     libraries.append("toxav")
