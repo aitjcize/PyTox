@@ -26,37 +26,14 @@
 #include <Python.h>
 #include <tox/toxav.h>
 
-#include <vpx/vpx_image.h>
-typedef enum {
-    av_TypeAudio = 192,
-    av_TypeVideo
-} ToxAvCallType;
-
-typedef struct _ToxAvCSettings {
-    ToxAvCallType call_type;
-
-    uint32_t video_bitrate; /* In kbits/s */
-    uint16_t max_video_width; /* In px */
-    uint16_t max_video_height; /* In px */
-
-    uint32_t audio_bitrate; /* In bits/s */
-    uint16_t audio_frame_duration; /* In ms */
-    uint32_t audio_sample_rate; /* In Hz */
-    uint32_t audio_channels;
-} ToxAvCSettings;
-
-extern const ToxAvCSettings av_DefaultSettings;
-
 /* ToxAV definition */
 typedef struct {
     PyObject_HEAD
     PyObject *core;
     ToxAV *av;
-    vpx_image_t* in_image;
     uint32_t i_w, i_h;
     unsigned char* out_image;
     uint32_t o_w, o_h;
-    ToxAvCSettings cs;
 } ToxAVCore;
 
 void ToxAVCore_install_dict(void);

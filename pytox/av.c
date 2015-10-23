@@ -103,10 +103,6 @@ ToxAVCore_callback_video_receive_frame(ToxAV *toxAV, uint32_t friend_number, uin
 /**
  * NOTE Compatibility with old toxav group calls TODO remove
  */
-
-/**
- * NOTE Compatibility with old toxav group calls TODO remove
- */
 static void
 ToxAVCore_callback_add_av_groupchat(ToxAV *toxAV, int groupnumber, int peernumber, const int16_t *pcm,
                                     unsigned int samples, uint8_t channels, unsigned int sample_rate, void *self)
@@ -145,173 +141,6 @@ ToxAVCore_callback_join_av_groupchat(ToxAV *toxAV, int groupnumber, int peernumb
     PyGILState_Release(gstate);
 }
 
-static void i420_to_rgb(const vpx_image_t *img, unsigned char *out)
-{
-    const int w = img->d_w;
-    const int w2 = w / 2;
-    const int pstride = w * 3;
-    const int h = img->d_h;
-    const int h2 = h / 2;
-
-    const int strideY = img->stride[0];
-    const int strideU = img->stride[1];
-    const int strideV = img->stride[2];
-    int posy, posx;
-
-    for (posy = 0; posy < h2; posy++) {
-        unsigned char *dst = out + pstride * (posy * 2);
-        unsigned char *dst2 = out + pstride * (posy * 2 + 1);
-        const unsigned char *srcY = img->planes[0] + strideY * posy * 2;
-        const unsigned char *srcY2 = img->planes[0] + strideY * (posy * 2 + 1);
-        const unsigned char *srcU = img->planes[1] + strideU * posy;
-        const unsigned char *srcV = img->planes[2] + strideV * posy;
-
-        for (posx = 0; posx < w2; posx++) {
-            unsigned char Y, U, V;
-            short R, G, B;
-            short iR, iG, iB;
-
-            U = *(srcU++);
-            V = *(srcV++);
-            iR = (351 * (V - 128)) / 256;
-            iG = - (179 * (V - 128)) / 256 - (86 * (U - 128)) / 256;
-            iB = (444 * (U - 128)) / 256;
-
-            Y = *(srcY++);
-            R = Y + iR ;
-            G = Y + iG ;
-            B = Y + iB ;
-            R = (R < 0 ? 0 : (R > 255 ? 255 : R));
-            G = (G < 0 ? 0 : (G > 255 ? 255 : G));
-            B = (B < 0 ? 0 : (B > 255 ? 255 : B));
-            *(dst++) = R;
-            *(dst++) = G;
-            *(dst++) = B;
-
-            Y = *(srcY2++);
-            R = Y + iR ;
-            G = Y + iG ;
-            B = Y + iB ;
-            R = (R < 0 ? 0 : (R > 255 ? 255 : R));
-            G = (G < 0 ? 0 : (G > 255 ? 255 : G));
-            B = (B < 0 ? 0 : (B > 255 ? 255 : B));
-            *(dst2++) = R;
-            *(dst2++) = G;
-            *(dst2++) = B;
-
-            Y = *(srcY++) ;
-            R = Y + iR ;
-            G = Y + iG ;
-            B = Y + iB ;
-            R = (R < 0 ? 0 : (R > 255 ? 255 : R));
-            G = (G < 0 ? 0 : (G > 255 ? 255 : G));
-            B = (B < 0 ? 0 : (B > 255 ? 255 : B));
-            *(dst++) = R;
-            *(dst++) = G;
-            *(dst++) = B;
-
-            Y = *(srcY2++);
-            R = Y + iR ;
-            G = Y + iG ;
-            B = Y + iB ;
-            R = (R < 0 ? 0 : (R > 255 ? 255 : R));
-            G = (G < 0 ? 0 : (G > 255 ? 255 : G));
-            B = (B < 0 ? 0 : (B > 255 ? 255 : B));
-            *(dst2++) = R;
-            *(dst2++) = G;
-            *(dst2++) = B;
-        }
-    }
-}
-
-static void rgb_to_i420(unsigned char* rgb, vpx_image_t *img)
-{
-  int upos = 0;
-  int vpos = 0;
-  int x = 0, i = 0;
-  int line = 0;
-
-  for (line = 0; line < img->d_h; ++line) {
-    if (!(line % 2)) {
-      for (x = 0; x < img->d_w; x += 2) {
-        uint8_t r = rgb[3 * i];
-        uint8_t g = rgb[3 * i + 1];
-        uint8_t b = rgb[3 * i + 2];
-
-        img->planes[VPX_PLANE_Y][i++] = ((66*r + 129*g + 25*b) >> 8) + 16;
-        img->planes[VPX_PLANE_U][upos++] = ((-38*r + -74*g + 112*b) >> 8) + 128;
-        img->planes[VPX_PLANE_V][vpos++] = ((112*r + -94*g + -18*b) >> 8) + 128;
-
-        r = rgb[3 * i];
-        g = rgb[3 * i + 1];
-        b = rgb[3 * i + 2];
-
-        img->planes[VPX_PLANE_Y][i++] = ((66*r + 129*g + 25*b) >> 8) + 16;
-      }
-    } else {
-      for (x = 0; x < img->d_w; x += 1) {
-        uint8_t r = rgb[3 * i];
-        uint8_t g = rgb[3 * i + 1];
-        uint8_t b = rgb[3 * i + 2];
-
-        img->planes[VPX_PLANE_Y][i++] = ((66*r + 129*g + 25*b) >> 8) + 16;
-      }
-    }
-  }
-}
-
-void ToxAVCore_audio_recv_callback(void* agent, int32_t call_idx,
-    const int16_t* data, uint16_t size, void* self)
-{
-  PyGILState_STATE gstate = PyGILState_Ensure();
-
-  PyObject_CallMethod((PyObject*)self, "on_audio_data", "iis#", call_idx, size,
-      (char*)data, size << 1);
-
-  if (PyErr_Occurred()) {
-    PyErr_Print();
-  }
-
-  PyGILState_Release(gstate);
-}
-
-void ToxAVCore_video_recv_callback(void* agent, int32_t call_idx,
-    const vpx_image_t* image, void* user)
-{
-  ToxAVCore* self = (ToxAVCore*)user;
-
-  if (image == NULL) {
-    return;
-  }
-
-  if (self->out_image && (self->o_w != image->d_w || self->o_h != image->d_h)) {
-    free(self->out_image);
-    self->out_image = NULL;
-  }
-
-  const int buf_size = image->d_w * image->d_h * 3;
-
-  if (self->out_image == NULL) {
-    self->o_w = image->d_w;
-    self->o_h = image->d_h;
-    self->out_image = malloc(buf_size);
-  }
-
-  i420_to_rgb(image, self->out_image);
-
-  PyGILState_STATE gstate = PyGILState_Ensure();
-
-  PyObject_CallMethod((PyObject*)self, "on_video_data", "iiis#", call_idx,
-      self->o_w, self->o_h, self->out_image, buf_size);
-
-  if (PyErr_Occurred()) {
-    PyErr_Print();
-  }
-
-  PyGILState_Release(gstate);
-}
-
-
 static int init_helper(ToxAVCore *self, PyObject* args)
 {
     PyEval_InitThreads();
@@ -339,9 +168,6 @@ static int init_helper(ToxAVCore *self, PyObject* args)
         return -1;
     }
 
-    self->cs = av_DefaultSettings;
-    self->cs.max_video_width = self->cs.max_video_height = 0;
-
     toxav_callback_call(self->av, ToxAVCore_callback_call, self);
     toxav_callback_call_state(self->av, ToxAVCore_callback_call_state, self);
     toxav_callback_bit_rate_status(self->av, ToxAVCore_callback_bit_rate_status, self);
@@ -353,19 +179,6 @@ static int init_helper(ToxAVCore *self, PyObject* args)
      */
     toxav_add_av_groupchat(self->av, ToxAVCore_callback_add_av_groupchat, self);
     // toxav_join_av_groupchat(self->av, ToxAVCore_callback_join_av_groupchat, self);
-    /* Join a AV group (you need to have been invited first.)
-     *
-     * returns group number on success
-     * returns -1 on failure.
-     *
-     * Audio data callback format (same as the one for toxav_add_av_groupchat()):
-     *   audio_callback(Tox *tox, int groupnumber, int peernumber, const int16_t *pcm, unsigned int samples, uint8_t channels, unsigned int sample_rate, void *userdata)
-     *
-     * Note that total size of pcm in bytes is equal to (samples * channels * sizeof(int16_t)).
-     */
-    int toxav_join_av_groupchat(Tox *tox, int32_t friendnumber, const uint8_t *data, uint16_t length,
-                                void (*audio_callback)(void*, int, int, const int16_t *, unsigned int, uint8_t, unsigned int, void *), void *userdata);
-
 
     return 0;
 }
@@ -375,7 +188,6 @@ ToxAVCore_new(PyTypeObject *type, PyObject* args, PyObject* kwds)
 {
     ToxAVCore* self = (ToxAVCore*)type->tp_alloc(type, 0);
     self->av = NULL;
-    self->in_image = NULL;
     self->out_image = NULL;
     self->i_w = self->i_h = self->o_w = self->o_h = 0;
 
@@ -399,29 +211,12 @@ ToxAVCore_init(ToxAVCore *self, PyObject* args, PyObject* kwds)
 static int
 ToxAVCore_dealloc(ToxAVCore *self)
 {
-  if (self->av) {
-    Py_DECREF(self->core);
-    toxav_kill(self->av);
-    self->av = NULL;
-
-    if (self->in_image) {
-      vpx_img_free(self->in_image);
+    if (self->av) {
+        Py_DECREF(self->core);
+        toxav_kill(self->av);
+        self->av = NULL;
     }
-    if (self->out_image) {
-      free(self->out_image);
-    }
-  }
-  return 0;
-}
-
-static void
-ToxAVCore_set_Error(int ret)
-{
-  const char* msg = NULL;
-  switch(ret) {
-  }
-
-  PyErr_SetString(ToxOpError, msg);
+    return 0;
 }
 
 static PyObject*
@@ -604,69 +399,6 @@ ToxAVCore_group_send_audio(ToxAVCore *self, PyObject* args)
     return PyLong_FromLong(ret);
 }
 
-#define RTP_PAYLOAD_SIZE 65535
-
-static PyObject*
-ToxAVCore_send_video(ToxAVCore *self, PyObject* args)
-{
-  int call_index = 0, len = 0, w = 0, h = 0;
-  char* data = NULL;
-
-  if (!PyArg_ParseTuple(args, "iiis#", &call_index, &w, &h, &data, &len)) {
-    return NULL;
-  }
-
-  if (self->in_image && (self->i_w != w || self->i_h != h)) {
-    vpx_img_free(self->in_image);
-    self->in_image = NULL;
-  }
-
-  if (self->in_image == NULL) {
-    self->i_w = w;
-    self->i_h = h;
-    self->in_image = vpx_img_alloc(NULL, VPX_IMG_FMT_I420, w, h, 1);
-  }
-
-  rgb_to_i420((unsigned char*)data, self->in_image);
-
-  uint8_t encoded_payload[RTP_PAYLOAD_SIZE];
-  int32_t payload_size = toxav_prepare_video_frame(self->av, call_index,
-      encoded_payload, RTP_PAYLOAD_SIZE, self->in_image);
-
-  int ret = toxav_send_video(self->av, call_index, encoded_payload,
-      payload_size);
-  if (ret < 0) {
-    ToxAVCore_set_Error(ret);
-    return NULL;
-  }
-
-  Py_RETURN_NONE;
-}
-
-static PyObject*
-ToxAVCore_send_audio(ToxAVCore *self, PyObject* args)
-{
-  int call_index = 0, frame_size = 0, len = 0;
-  char* data = NULL;
-
-  if (!PyArg_ParseTuple(args, "iis#", &call_index, &frame_size, &data, &len)) {
-    return NULL;
-  }
-
-  uint8_t encoded_payload[RTP_PAYLOAD_SIZE];
-  int32_t payload_size = toxav_prepare_audio_frame(self->av, call_index,
-      encoded_payload, RTP_PAYLOAD_SIZE, (int16_t*)data, frame_size);
-
-  int ret = toxav_send_audio(self->av, call_index, encoded_payload,
-      payload_size);
-  if (ret < 0) {
-    ToxAVCore_set_Error(ret);
-    return NULL;
-  }
-
-  Py_RETURN_NONE;
-}
-
 static PyObject*
 ToxAVCore_get_tox(ToxAVCore *self, PyObject* args)
 {
@@ -728,7 +460,7 @@ PyMethodDef ToxAVCore_methods[] = {
     },
     {
         "answer", (PyCFunction)ToxAVCore_answer, METH_VARARGS,
-        "answer(call_index, call_type)\n"
+        "answer(friend_number, audio_bit_rate, video_bit_rate)\n"
         "Answer incomming call.\n\n"
         ".. seealso ::\n"
         "    :meth:`.call`"
