@@ -27,6 +27,12 @@
 #include "core.h"
 #include "util.h"
 
+#if PY_MAJOR_VERSION < 3
+# define BUF_TCS "s#"
+#else
+# define BUF_TCS "y#"
+#endif
+
 extern PyObject* ToxOpError;
 
 
@@ -57,8 +63,18 @@ ToxAVCore_callback_audio_receive_frame(ToxAV *toxAV, uint32_t friend_number,cons
                                        size_t sample_count, uint8_t channels, uint32_t sampling_rate,
                                        void *self)
 {
-    PyObject_CallMethod((PyObject*)self, "on_audio_receive_frame", "iiiii",
-                        friend_number, pcm, sample_count, channels, sampling_rate);
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    uint32_t length = sample_count * channels * 2;
+
+    PyObject_CallMethod((PyObject*)self, "on_audio_receive_frame", "i" BUF_TCS "iii",
+                        friend_number, (const char*)pcm, length, sample_count, channels, sampling_rate);
+
+    if (PyErr_Occurred()) {
+        PyErr_Print();
+    }
+
+    PyGILState_Release(gstate);
 }
 
 static void
@@ -66,8 +82,67 @@ ToxAVCore_callback_video_receive_frame(ToxAV *toxAV, uint32_t friend_number, uin
                                        uint16_t height, const uint8_t *y, const uint8_t *u, const uint8_t *v,
                                        int32_t ystride, int32_t ustride, int32_t vstride,  void *self)
 {
-    PyObject_CallMethod((PyObject*)self, "on_video_receive_frame", "iiiiiiiii",
-                        friend_number, width, height, y, u, v, ystride, ustride, vstride);
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    uint32_t ylength = height * width;
+    uint32_t ulength = (height/2) * (width/2);
+    uint32_t vlength = (height/2) * (width/2);
+
+    PyObject_CallMethod((PyObject*)self, "on_video_receive_frame", "iii" BUF_TCS BUF_TCS BUF_TCS "iii",
+                        friend_number, width, height,
+                        (char*)y, ylength, (char*)u, ulength, (char*)v, vlength,
+                        ystride, ustride, vstride);
+
+    if (PyErr_Occurred()) {
+        PyErr_Print();
+    }
+
+    PyGILState_Release(gstate);
+}
+
+/**
+ * NOTE Compatibility with old toxav group calls TODO remove
+ */
+
+/**
+ * NOTE Compatibility with old toxav group calls TODO remove
+ */
+static void
+ToxAVCore_callback_add_av_groupchat(ToxAV *toxAV, int groupnumber, int peernumber, const int16_t *pcm,
+                                    unsigned int samples, uint8_t channels, unsigned int sample_rate, void *self)
+{
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    uint32_t length = samples * channels * 2;
+
+    PyObject_CallMethod((PyObject*)self, "on_add_av_groupchat", "ii" BUF_TCS "iii",
+                        groupnumber, peernumber, (char*)pcm, length,
+                        samples, channels, sample_rate);
+
+    if (PyErr_Occurred()) {
+        PyErr_Print();
+    }
+
+    PyGILState_Release(gstate);
+}
+
+static void
+ToxAVCore_callback_join_av_groupchat(ToxAV *toxAV, int groupnumber, int peernumber, const int16_t *pcm,
+                                     unsigned int samples, uint8_t channels, unsigned int sample_rate, void *self)
+{
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    uint32_t length = samples * channels * 2;
+
+    PyObject_CallMethod((PyObject*)self, "on_join_av_groupchat", "ii" BUF_TCS "iii",
+                        groupnumber, peernumber, (char*)pcm, length,
+                        samples, channels, sample_rate);
+
+    if (PyErr_Occurred()) {
+        PyErr_Print();
+    }
+
+    PyGILState_Release(gstate);
 }
 
 static void i420_to_rgb(const vpx_image_t *img, unsigned char *out)
@@ -259,6 +334,11 @@ static int init_helper(ToxAVCore *self, PyObject* args)
     TOXAV_ERR_NEW err = 0;
     self->av = toxav_new(((ToxCore*)self->core)->tox, &err);
 
+    if (self->av == NULL) {
+        PyErr_Format(ToxOpError, "failed to allocate toxav %d", err);
+        return -1;
+    }
+
     self->cs = av_DefaultSettings;
     self->cs.max_video_width = self->cs.max_video_height = 0;
 
@@ -268,10 +348,24 @@ static int init_helper(ToxAVCore *self, PyObject* args)
     toxav_callback_audio_receive_frame(self->av, ToxAVCore_callback_audio_receive_frame, self);
     toxav_callback_video_receive_frame(self->av, ToxAVCore_callback_video_receive_frame, self);
 
-    if (self->av == NULL) {
-        PyErr_Format(ToxOpError, "failed to allocate toxav %d", err);
-        return -1;
-    }
+    /**
+     * NOTE Compatibility with old toxav group calls TODO remove
+     */
+    toxav_add_av_groupchat(self->av, ToxAVCore_callback_add_av_groupchat, self);
+    // toxav_join_av_groupchat(self->av, ToxAVCore_callback_join_av_groupchat, self);
+    /* Join a AV group (you need to have been invited first.)
+     *
+     * returns group number on success
+     * returns -1 on failure.
+     *
+     * Audio data callback format (same as the one for toxav_add_av_groupchat()):
+     *   audio_callback(Tox *tox, int groupnumber, int peernumber, const int16_t *pcm, unsigned int samples, uint8_t channels, unsigned int sample_rate, void *userdata)
+     *
+     * Note that total size of pcm in bytes is equal to (samples * channels * sizeof(int16_t)).
+     */
+    int toxav_join_av_groupchat(Tox *tox, int32_t friendnumber, const uint8_t *data, uint16_t length,
+                                void (*audio_callback)(void*, int, int, const int16_t *, unsigned int, uint8_t, unsigned int, void *), void *userdata);
+
 
     return 0;
 }
@@ -394,13 +488,13 @@ ToxAVCore_audio_send_frame(ToxAVCore *self, PyObject* args)
 {
     uint32_t friend_number;
     int16_t *pcm = NULL;
+    uint32_t pcm_length;
     size_t sample_count;
     uint8_t channels;
     uint32_t sampling_rate;
 
-    // TODO how recv int16_t here
-    if (!PyArg_ParseTuple(args, "iiiii", &friend_number, &pcm,
-        &sample_count, &channels, &sampling_rate)) {
+    if (!PyArg_ParseTuple(args, "i" BUF_TCS "iii", &friend_number,
+                          &pcm, &pcm_length, &sample_count, &channels, &sampling_rate)) {
         return NULL;
     }
 
@@ -423,9 +517,12 @@ ToxAVCore_video_send_frame(ToxAVCore *self, PyObject* args)
     uint8_t *y = NULL;
     uint8_t *u = NULL;
     uint8_t *v = NULL;
+    uint32_t ylength;
+    uint32_t ulength;
+    uint32_t vlength;
 
-    if (!PyArg_ParseTuple(args, "iiiiii", &friend_number, &width, &height,
-                          y, u, v)) {
+    if (!PyArg_ParseTuple(args, "iii" BUF_TCS BUF_TCS BUF_TCS, &friend_number, &width, &height,
+                          &y, &ylength, &u, &ulength, &v, &vlength)) {
         return NULL;
     }
 
@@ -458,6 +555,53 @@ ToxAVCore_answer(ToxAVCore *self, PyObject* args)
     }
 
     Py_RETURN_TRUE;
+}
+
+static PyObject*
+ToxAVCore_join_av_groupchat(ToxAVCore *self, PyObject* args)
+{
+    uint32_t friend_number;
+    uint8_t *data;
+    uint32_t length;
+
+    if (!PyArg_ParseTuple(args, "i" BUF_TCS, &friend_number, &data, &length)) {
+        return NULL;
+    }
+
+    TOXAV_ERR_ANSWER err = 0;
+    bool ret = toxav_join_av_groupchat(self->av, friend_number, data, length,
+                                       ToxAVCore_callback_join_av_groupchat, self);
+    if (ret == false) {
+        PyErr_Format(ToxOpError, "toxav join av groupchat error: %d", err);
+        return NULL;
+    }
+
+    Py_RETURN_TRUE;
+}
+
+static PyObject*
+ToxAVCore_group_send_audio(ToxAVCore *self, PyObject* args)
+{
+    uint32_t group_number;
+    uint8_t *pcm;
+    uint32_t length;
+    uint32_t samples;
+    uint32_t channels;
+    uint32_t sample_rate;
+
+    if (!PyArg_ParseTuple(args, "i" BUF_TCS "iii", &group_number, &pcm, &length,
+                          &samples, &channels, &sample_rate)) {
+        return NULL;
+    }
+
+    TOXAV_ERR_ANSWER err = 0;
+    int ret = toxav_group_send_audio(self->av, group_number, pcm, samples, channels, sample_rate);
+    if (ret == -1) {
+        PyErr_Format(ToxOpError, "toxav group send audio error: %d", err);
+        return NULL;
+    }
+
+    return PyLong_FromLong(ret);
 }
 
 #define RTP_PAYLOAD_SIZE 65535
@@ -606,6 +750,18 @@ PyMethodDef ToxAVCore_methods[] = {
         METH_VARARGS,
         "iterate()\n"
         "Main loop for the session."
+    },
+    {
+        "join_av_groupchat", (PyCFunction)ToxAVCore_join_av_groupchat, METH_VARARGS,
+        "join_av_groupchat(friend_number, data)\n"
+        "Join a AV group (you need to have been invited first.)"
+        "Returns -1 on failure.\n\n"
+    },
+    {
+        "group_send_audio", (PyCFunction)ToxAVCore_group_send_audio, METH_VARARGS,
+        "group_send_audio(groupnumber, pcm, samples, channels, sample_rate)\n"
+        "Send audio to the group chat."
+        "Returns -1 on failure.\n\n"
     },
 };
 
