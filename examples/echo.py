@@ -62,7 +62,7 @@ class AV(ToxAV):
             pass
 
         video_enabled = True if self.call_type == self.TypeVideo else False
-        self.prepare_transmission(idx, vide_enabled)
+        self.prepare_transmission(idx, video_enabled)
 
     def on_end(self, idx):
         self.kill_transmission(idx)
