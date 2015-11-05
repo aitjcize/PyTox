@@ -104,7 +104,7 @@ ToxAVCore_callback_video_receive_frame(ToxAV *toxAV, uint32_t friend_number, uin
  * NOTE Compatibility with old toxav group calls TODO remove
  */
 static void
-ToxAVCore_callback_add_av_groupchat(ToxAV *toxAV, int groupnumber, int peernumber, const int16_t *pcm,
+ToxAVCore_callback_add_av_groupchat(/*Tox*/void *tox, int groupnumber, int peernumber, const int16_t *pcm,
                                     unsigned int samples, uint8_t channels, unsigned int sample_rate, void *self)
 {
     PyGILState_STATE gstate = PyGILState_Ensure();
@@ -123,7 +123,7 @@ ToxAVCore_callback_add_av_groupchat(ToxAV *toxAV, int groupnumber, int peernumbe
 }
 
 static void
-ToxAVCore_callback_join_av_groupchat(ToxAV *toxAV, int groupnumber, int peernumber, const int16_t *pcm,
+ToxAVCore_callback_join_av_groupchat(/*Tox*/void *tox, int groupnumber, int peernumber, const int16_t *pcm,
                                      unsigned int samples, uint8_t channels, unsigned int sample_rate, void *self)
 {
     PyGILState_STATE gstate = PyGILState_Ensure();
@@ -177,8 +177,8 @@ static int init_helper(ToxAVCore *self, PyObject* args)
     /**
      * NOTE Compatibility with old toxav group calls TODO remove
      */
-    toxav_add_av_groupchat(self->av, ToxAVCore_callback_add_av_groupchat, self);
-    // toxav_join_av_groupchat(self->av, ToxAVCore_callback_join_av_groupchat, self);
+    Tox *tox = ((ToxCore*)self->core)->tox;
+    toxav_add_av_groupchat(tox, ToxAVCore_callback_add_av_groupchat, self);
 
     return 0;
 }
@@ -363,11 +363,11 @@ ToxAVCore_join_av_groupchat(ToxAVCore *self, PyObject* args)
         return NULL;
     }
 
-    TOXAV_ERR_ANSWER err = 0;
-    bool ret = toxav_join_av_groupchat(self->av, friend_number, data, length,
+    Tox *tox = ((ToxCore*)self->core)->tox;
+    bool ret = toxav_join_av_groupchat(tox, friend_number, data, length,
                                        ToxAVCore_callback_join_av_groupchat, self);
     if (ret == false) {
-        PyErr_Format(ToxOpError, "toxav join av groupchat error: %d", err);
+        PyErr_Format(ToxOpError, "toxav join av groupchat error.");
         return NULL;
     }
 
@@ -389,10 +389,10 @@ ToxAVCore_group_send_audio(ToxAVCore *self, PyObject* args)
         return NULL;
     }
 
-    TOXAV_ERR_ANSWER err = 0;
-    int ret = toxav_group_send_audio(self->av, group_number, pcm, samples, channels, sample_rate);
+    Tox *tox = ((ToxCore*)self->core)->tox;
+    int ret = toxav_group_send_audio(tox, group_number, (int16_t*)pcm, samples, channels, sample_rate);
     if (ret == -1) {
-        PyErr_Format(ToxOpError, "toxav group send audio error: %d", err);
+        PyErr_Format(ToxOpError, "toxav group send audio error.");
         return NULL;
     }
 
