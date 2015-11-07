@@ -36,16 +36,33 @@ SERVER = [
 
 DATA = 'echo.data'
 
+# echo.py features
+# accept friend request
+# echo back friend message
+# accept and answer friend call request
+# send back friend audio/video data
+
 
 class AV(ToxAV):
-    def __init__(self, core, max_calls):
+    def __init__(self, core):
+        super(AV, self).__init__(core)
         self.core = self.get_tox()
         self.cs = None
-        self.call_type = self.TypeAudio
+        # self.call_type = self.TypeAudio
+        iti = self.iteration_interval()
+        print(iti)
+
+    def on_call(self, friend_number, audio_enabled, video_enabled):
+        print("Incoming call: %d, %d, %d" % (friend_number, audio_enabled, video_enabled))
+        self.answer(friend_number, 16, 64)
+        print("Answered, in call...")
+
+    def on_call_state(self, friend_number, state):
+        print('call state:%d,%d' % (friend_number, state))
 
     def on_invite(self, idx):
         self.cs = self.get_peer_csettings(idx, 0)
-        self.call_type = self.cs["call_type"]
+        # self.call_type = self.cs["call_type"]
 
         print("Incoming %s call from %d:%s ..." % (
             "video" if self.call_type == self.TypeVideo else "audio", idx,
@@ -120,7 +137,7 @@ class EchoBot(Tox):
         print('ID: %s' % self.self_get_address())
 
         self.connect()
-        self.av = AV(self, 1)
+        self.av = AV(self)
 
     def connect(self):
         print('connecting...')
@@ -152,6 +169,7 @@ class EchoBot(Tox):
         print('Friend request from %s: %s' % (pk, message))
         self.friend_add_norequest(pk)
         print('Accepted.')
+        save_to_file(self, DATA)
 
     def on_friend_message(self, friendId, type, message):
         name = self.friend_get_name(friendId)

@@ -152,6 +152,9 @@ static int init_helper(ToxAVCore *self, PyObject* args)
 
     PyObject* core = NULL;
 
+    if (args == NULL) {
+        return 0;
+    }
     if (!PyArg_ParseTuple(args, "O", &core)) {
         PyErr_SetString(PyExc_TypeError, "must associate with a core instance");
         return -1;
@@ -191,7 +194,7 @@ ToxAVCore_new(PyTypeObject *type, PyObject* args, PyObject* kwds)
     self->out_image = NULL;
     self->i_w = self->i_h = self->o_w = self->o_h = 0;
 
-    if (init_helper(self, args) == -1) {
+    if (init_helper(self, NULL) == -1) {
         return NULL;
     }
 
@@ -402,8 +405,8 @@ ToxAVCore_group_send_audio(ToxAVCore *self, PyObject* args)
 static PyObject*
 ToxAVCore_get_tox(ToxAVCore *self, PyObject* args)
 {
-  Py_INCREF(self->core);
-  return self->core;
+    Py_INCREF(self->core);
+    return self->core;
 }
 
 static PyObject*
@@ -424,7 +427,7 @@ ToxAVCore_iterate(ToxAVCore *self)
 static PyObject*
 ToxAVCore_callback_stub(ToxAVCore *self, PyObject* args)
 {
-  Py_RETURN_NONE;
+    Py_RETURN_NONE;
 }
 
 PyMethodDef ToxAVCore_methods[] = {
@@ -500,48 +503,48 @@ PyMethodDef ToxAVCore_methods[] = {
 
 PyTypeObject ToxAVCoreType = {
 #if PY_MAJOR_VERSION >= 3
-  PyVarObject_HEAD_INIT(NULL, 0)
+    PyVarObject_HEAD_INIT(NULL, 0)
 #else
-  PyObject_HEAD_INIT(NULL)
-  0,                         /*ob_size*/
+    PyObject_HEAD_INIT(NULL)
+    0,                         /*ob_size*/
 #endif
-  "ToxAV",                   /*tp_name*/
-  sizeof(ToxAVCore),           /*tp_basicsize*/
-  0,                         /*tp_itemsize*/
-  (destructor)ToxAVCore_dealloc, /*tp_dealloc*/
-  0,                         /*tp_print*/
-  0,                         /*tp_getattr*/
-  0,                         /*tp_setattr*/
-  0,                         /*tp_compare*/
-  0,                         /*tp_repr*/
-  0,                         /*tp_as_number*/
-  0,                         /*tp_as_sequence*/
-  0,                         /*tp_as_mapping*/
-  0,                         /*tp_hash */
-  0,                         /*tp_call*/
-  0,                         /*tp_str*/
-  0,                         /*tp_getattro*/
-  0,                         /*tp_setattro*/
-  0,                         /*tp_as_buffer*/
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
-  "ToxAV object",            /* tp_doc */
-  0,                         /* tp_traverse */
-  0,                         /* tp_clear */
-  0,                         /* tp_richcompare */
-  0,                         /* tp_weaklistoffset */
-  0,                         /* tp_iter */
-  0,                         /* tp_iternext */
-  ToxAVCore_methods,             /* tp_methods */
-  0,                         /* tp_members */
-  0,                         /* tp_getset */
-  0,                         /* tp_base */
-  0,                         /* tp_dict */
-  0,                         /* tp_descr_get */
-  0,                         /* tp_descr_set */
-  0,                         /* tp_dictoffset */
-  (initproc)ToxAVCore_init,      /* tp_init */
-  0,                         /* tp_alloc */
-  ToxAVCore_new,                 /* tp_new */
+    "ToxAV",                   /*tp_name*/
+    sizeof(ToxAVCore),           /*tp_basicsize*/
+    0,                         /*tp_itemsize*/
+    (destructor)ToxAVCore_dealloc, /*tp_dealloc*/
+    0,                         /*tp_print*/
+    0,                         /*tp_getattr*/
+    0,                         /*tp_setattr*/
+    0,                         /*tp_compare*/
+    0,                         /*tp_repr*/
+    0,                         /*tp_as_number*/
+    0,                         /*tp_as_sequence*/
+    0,                         /*tp_as_mapping*/
+    0,                         /*tp_hash */
+    0,                         /*tp_call*/
+    0,                         /*tp_str*/
+    0,                         /*tp_getattro*/
+    0,                         /*tp_setattro*/
+    0,                         /*tp_as_buffer*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    "ToxAV object",            /* tp_doc */
+    0,                         /* tp_traverse */
+    0,                         /* tp_clear */
+    0,                         /* tp_richcompare */
+    0,                         /* tp_weaklistoffset */
+    0,                         /* tp_iter */
+    0,                         /* tp_iternext */
+    ToxAVCore_methods,             /* tp_methods */
+    0,                         /* tp_members */
+    0,                         /* tp_getset */
+    0,                         /* tp_base */
+    0,                         /* tp_dict */
+    0,                         /* tp_descr_get */
+    0,                         /* tp_descr_set */
+    0,                         /* tp_dictoffset */
+    (initproc)ToxAVCore_init,      /* tp_init */
+    0,                         /* tp_alloc */
+    ToxAVCore_new,                 /* tp_new */
 };
 
 void ToxAVCore_install_dict()
