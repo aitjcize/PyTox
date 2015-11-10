@@ -35,7 +35,6 @@
 
 extern PyObject* ToxOpError;
 
-
 static void
 ToxAVCore_callback_call(ToxAV *toxAV, uint32_t friend_number, bool audio_enabled,
                         bool video_enabled, void *self)
@@ -59,14 +58,13 @@ ToxAVCore_callback_bit_rate_status(ToxAV *toxAV, uint32_t friend_number,
 }
 
 static void
-ToxAVCore_callback_audio_receive_frame(ToxAV *toxAV, uint32_t friend_number,const int16_t *pcm,
+ToxAVCore_callback_audio_receive_frame(ToxAV *toxAV, uint32_t friend_number, const int16_t *pcm,
                                        size_t sample_count, uint8_t channels, uint32_t sampling_rate,
                                        void *self)
 {
     PyGILState_STATE gstate = PyGILState_Ensure();
 
     uint32_t length = sample_count * channels * 2;
-
     PyObject_CallMethod((PyObject*)self, "on_audio_receive_frame", "i" BUF_TCS "iii",
                         friend_number, (const char*)pcm, length, sample_count, channels, sampling_rate);
 
@@ -287,12 +285,12 @@ ToxAVCore_audio_send_frame(ToxAVCore *self, PyObject* args)
     uint32_t friend_number;
     int16_t *pcm = NULL;
     uint32_t pcm_length;
-    size_t sample_count;
-    uint8_t channels;
+    uint32_t sample_count;
+    uint32_t channels;
     uint32_t sampling_rate;
 
     if (!PyArg_ParseTuple(args, "i" BUF_TCS "iii", &friend_number,
-                          &pcm, &pcm_length, &sample_count, &channels, &sampling_rate)) {
+                          (uint8_t**)&pcm, &pcm_length, &sample_count, &channels, &sampling_rate)) {
         return NULL;
     }
 
@@ -310,8 +308,8 @@ static PyObject*
 ToxAVCore_video_send_frame(ToxAVCore *self, PyObject* args)
 {
     uint32_t friend_number;
-    uint16_t width;
-    uint16_t height;
+    uint32_t width;
+    uint32_t height;
     uint8_t *y = NULL;
     uint8_t *u = NULL;
     uint8_t *v = NULL;

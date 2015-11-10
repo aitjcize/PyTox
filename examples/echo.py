@@ -49,16 +49,55 @@ class AV(ToxAV):
         self.core = self.get_tox()
         self.cs = None
         # self.call_type = self.TypeAudio
-        iti = self.iteration_interval()
-        print(iti)
+        self.has_audio = False
 
     def on_call(self, friend_number, audio_enabled, video_enabled):
-        print("Incoming call: %d, %d, %d" % (friend_number, audio_enabled, video_enabled))
-        self.answer(friend_number, 16, 64)
-        print("Answered, in call...")
+        print("Incoming call: fn=%d, audio=%d, video=%d" % (friend_number, audio_enabled, video_enabled))
+        bret = self.answer(friend_number, 48, 64)
+        print("Answered, in call..." + str(bret))
 
     def on_call_state(self, friend_number, state):
-        print('call state:%d,%d' % (friend_number, state))
+        print('call state:fn=%d, state=%d' % (friend_number, state))
+
+    def on_bit_rate_status(self, friend_number, audio_bit_rate, video_bit_rate):
+        print('bit rate status: fn=%d, abr=%d, vbr=%d' %
+              (friend_number, audio_bit_rate, video_bit_rate))
+
+    def on_audio_receive_frame(self, friend_number, pcm, sample_count, channels, sampling_rate):
+        print('audio frame: %d, %d, %d, %d' %
+              (friend_number, sample_count, channels, sampling_rate))
+        print('pcm len:%d, %s' % (len(pcm), str(type(pcm))))
+        # self.has_audio = True
+        self.audio_friend_number = friend_number
+        self.audio_pcm = pcm
+        self.audio_sample_count = sample_count
+        self.audio_channels = channels
+        self.audio_sampling_rate = sampling_rate
+        bret = self.audio_send_frame(friend_number, pcm, sample_count, channels, sampling_rate)
+        if bret is False:
+            pass
+
+    def on_video_receive_frame(self, friend_number, width, height,
+                               y, u, v, ystride, ustride, vstride):
+        print('video frame: %d, %d, %d, %d, %d, %d' %
+              (friend_number, width, height, ystride, ustride, vstride))
+        # video frame:      1, 1272, 688, 1344, 672, 672
+        bret = self.video_send_frame(friend_number, width, height, y, u, v)
+        if bret is False:
+            pass
+
+    def witerate(self):
+        # bret = self.audio_send_frame(friend_number, pcm, sample_count, channels, sampling_rate)
+        # if bret is False:
+        #    pass
+        self.iterate()
+        if self.has_audio is True:
+            self.has_audio = False
+            bret = self.audio_send_frame(self.audio_friend_number, self.audio_pcm,
+                                         self.audio_sample_count, self.audio_channels,
+                                         self.audio_sampling_rate)
+            if bret is False:
+                pass
 
     def on_invite(self, idx):
         self.cs = self.get_peer_csettings(idx, 0)
@@ -161,6 +200,7 @@ class EchoBot(Tox):
                     checked = False
 
                 self.iterate()
+                self.av.witerate()
                 sleep(0.01)
         except KeyboardInterrupt:
             save_to_file(self, DATA)
