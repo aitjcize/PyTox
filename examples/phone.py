@@ -48,13 +48,13 @@ audio = pyaudio.PyAudio()
 
 
 class AV(ToxAV):
-    def __init__(self, core, max_calls, debug=False):
+    def __init__(self, core, debug=False):
+        super(AV, self).__init__(core)
         self.debug = debug
         self.core = self.get_tox()
         self.stop = True
         self.cs = None
         self.call_idx = None
-        self.call_type = self.TypeAudio
         self.ae_thread = None
         self.ve_thread = None
         self.frame_size = 960
@@ -79,6 +79,14 @@ class AV(ToxAV):
                                        "max_video_height": height})
         except:
             pass
+
+    def on_call(self, friend_number, audio_enabled, video_enabled):
+        print("Incoming call: %d, %d, %d" % (friend_number, audio_enabled, video_enabled))
+        self.answer(friend_number, 16, 64)
+        print("Answered, in call...")
+
+    def on_call_state(self, friend_number, state):
+        print('call state:%d,%d' % (friend_number, state))
 
     def on_invite(self, idx):
         self.update_settings(idx)
@@ -225,7 +233,7 @@ class Phone(Tox):
         print('ID: %s' % self.self_get_address())
 
         self.connect()
-        self.av = AV(self, 1, debug=True)
+        self.av = AV(self, debug=True)
 
     def connect(self):
         print('connecting...')
