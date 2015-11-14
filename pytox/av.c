@@ -217,8 +217,8 @@ ToxAVCore_callback_video_receive_frame(ToxAV *toxAV, uint32_t friend_number, uin
     i420_to_rgb(width, height, y, u, v, ystride, ustride, vstride, self->out_image);
 
     // python method: on_video_receive_frame(friend_number, width, height, frame)
-    PyObject_CallMethod((PyObject*)self, "on_video_receive_frame", "iiis#", friend_number,
-                        self->o_w, self->o_h, self->out_image, buf_size);
+    PyObject_CallMethod((PyObject*)self, "on_video_receive_frame", "iii" BUF_TCS,
+                        friend_number, self->o_w, self->o_h, self->out_image, buf_size);
 
     if (PyErr_Occurred()) {
         PyErr_Print();
@@ -440,7 +440,7 @@ ToxAVCore_video_send_frame(ToxAVCore *self, PyObject* args)
     uint32_t friend_number = 0, len = 0, width = 0, height = 0;
     char* data = NULL;
 
-    if (!PyArg_ParseTuple(args, "iiis#", &friend_number, &width, &height, &data, &len)) {
+    if (!PyArg_ParseTuple(args, "iii" BUF_TCS, &friend_number, &width, &height, &data, &len)) {
         return NULL;
     }
 
