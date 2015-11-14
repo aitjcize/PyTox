@@ -35,6 +35,7 @@
 
 extern PyObject* ToxOpError;
 
+
 static void
 ToxAVCore_callback_call(ToxAV *toxAV, uint32_t friend_number, bool audio_enabled,
                         bool video_enabled, void *self)
@@ -76,20 +77,148 @@ ToxAVCore_callback_audio_receive_frame(ToxAV *toxAV, uint32_t friend_number, con
 }
 
 static void
+i420_to_rgb(int width, int height, const uint8_t *y, const uint8_t *u, const uint8_t *v,
+            int ystride, int ustride, int vstride, unsigned char *out)
+{
+    const int w = width;
+    const int w2 = w / 2;
+    const int pstride = w * 3;
+    const int h = height;
+    const int h2 = h / 2;
+
+    const int strideY = ystride;
+    const int strideU = ustride;
+    const int strideV = vstride;
+    int posy, posx;
+
+    for (posy = 0; posy < h2; posy++) {
+        unsigned char *dst = out + pstride * (posy * 2);
+        unsigned char *dst2 = out + pstride * (posy * 2 + 1);
+        const unsigned char *srcY = y + strideY * posy * 2;
+        const unsigned char *srcY2 = y + strideY * (posy * 2 + 1);
+        const unsigned char *srcU = u + strideU * posy;
+        const unsigned char *srcV = v + strideV * posy;
+
+        for (posx = 0; posx < w2; posx++) {
+            unsigned char Y, U, V;
+            short R, G, B;
+            short iR, iG, iB;
+
+            U = *(srcU++);
+            V = *(srcV++);
+            iR = (351 * (V - 128)) / 256;
+            iG = - (179 * (V - 128)) / 256 - (86 * (U - 128)) / 256;
+            iB = (444 * (U - 128)) / 256;
+
+            Y = *(srcY++);
+            R = Y + iR ;
+            G = Y + iG ;
+            B = Y + iB ;
+            R = (R < 0 ? 0 : (R > 255 ? 255 : R));
+            G = (G < 0 ? 0 : (G > 255 ? 255 : G));
+            B = (B < 0 ? 0 : (B > 255 ? 255 : B));
+            *(dst++) = R;
+            *(dst++) = G;
+            *(dst++) = B;
+
+            Y = *(srcY2++);
+            R = Y + iR ;
+            G = Y + iG ;
+            B = Y + iB ;
+            R = (R < 0 ? 0 : (R > 255 ? 255 : R));
+            G = (G < 0 ? 0 : (G > 255 ? 255 : G));
+            B = (B < 0 ? 0 : (B > 255 ? 255 : B));
+            *(dst2++) = R;
+            *(dst2++) = G;
+            *(dst2++) = B;
+
+            Y = *(srcY++) ;
+            R = Y + iR ;
+            G = Y + iG ;
+            B = Y + iB ;
+            R = (R < 0 ? 0 : (R > 255 ? 255 : R));
+            G = (G < 0 ? 0 : (G > 255 ? 255 : G));
+            B = (B < 0 ? 0 : (B > 255 ? 255 : B));
+            *(dst++) = R;
+            *(dst++) = G;
+            *(dst++) = B;
+
+            Y = *(srcY2++);
+            R = Y + iR ;
+            G = Y + iG ;
+            B = Y + iB ;
+            R = (R < 0 ? 0 : (R > 255 ? 255 : R));
+            G = (G < 0 ? 0 : (G > 255 ? 255 : G));
+            B = (B < 0 ? 0 : (B > 255 ? 255 : B));
+            *(dst2++) = R;
+            *(dst2++) = G;
+            *(dst2++) = B;
+        }
+    }
+}
+
+static void rgb_to_i420(unsigned char* rgb, vpx_image_t *img)
+{
+    int upos = 0;
+    int vpos = 0;
+    int x = 0, i = 0;
+    int line = 0;
+
+    for (line = 0; line < img->d_h; ++line) {
+        if (!(line % 2)) {
+            for (x = 0; x < img->d_w; x += 2) {
+                uint8_t r = rgb[3 * i];
+                uint8_t g = rgb[3 * i + 1];
+                uint8_t b = rgb[3 * i + 2];
+
+                img->planes[VPX_PLANE_Y][i++] = ((66*r + 129*g + 25*b) >> 8) + 16;
+                img->planes[VPX_PLANE_U][upos++] = ((-38*r + -74*g + 112*b) >> 8) + 128;
+                img->planes[VPX_PLANE_V][vpos++] = ((112*r + -94*g + -18*b) >> 8) + 128;
+
+                r = rgb[3 * i];
+                g = rgb[3 * i + 1];
+                b = rgb[3 * i + 2];
+
+                img->planes[VPX_PLANE_Y][i++] = ((66*r + 129*g + 25*b) >> 8) + 16;
+            }
+        } else {
+            for (x = 0; x < img->d_w; x += 1) {
+                uint8_t r = rgb[3 * i];
+                uint8_t g = rgb[3 * i + 1];
+                uint8_t b = rgb[3 * i + 2];
+
+                img->planes[VPX_PLANE_Y][i++] = ((66*r + 129*g + 25*b) >> 8) + 16;
+            }
+        }
+    }
+}
+
+static void
 ToxAVCore_callback_video_receive_frame(ToxAV *toxAV, uint32_t friend_number, uint16_t width,
                                        uint16_t height, const uint8_t *y, const uint8_t *u, const uint8_t *v,
-                                       int32_t ystride, int32_t ustride, int32_t vstride,  void *self)
+                                       int32_t ystride, int32_t ustride, int32_t vstride,  void *user_data)
 {
+    ToxAVCore *self = (ToxAVCore*)user_data;
     PyGILState_STATE gstate = PyGILState_Ensure();
 
-    uint32_t ylength = height * width;
-    uint32_t ulength = (height/2) * (width/2);
-    uint32_t vlength = (height/2) * (width/2);
+    if (self->out_image && (self->o_w != width || self->o_h != height)) {
+        free(self->out_image);
+        self->out_image = NULL;
+    }
 
-    PyObject_CallMethod((PyObject*)self, "on_video_receive_frame", "iii" BUF_TCS BUF_TCS BUF_TCS "iii",
-                        friend_number, width, height,
-                        (char*)y, ylength, (char*)u, ulength, (char*)v, vlength,
-                        ystride, ustride, vstride);
+    const int buf_size = width * height * 3;
+
+    if (self->out_image == NULL) {
+        self->o_w = width;
+        self->o_h = height;
+        self->out_image = malloc(buf_size);
+    }
+
+    i420_to_rgb(width, height, y, u, v, ystride, ustride, vstride, self->out_image);
+
+    // python method: on_video_receive_frame(friend_number, width, height, frame)
+    PyObject_CallMethod((PyObject*)self, "on_video_receive_frame", "iiis#", friend_number,
+                        self->o_w, self->o_h, self->out_image, buf_size);
 
     if (PyErr_Occurred()) {
         PyErr_Print();
@@ -263,8 +392,8 @@ static PyObject*
 ToxAVCore_bit_rate_set(ToxAVCore *self, PyObject* args)
 {
     uint32_t friend_number;
-    uint32_t audio_bit_rate;
-    uint32_t video_bit_rate;
+    int32_t audio_bit_rate;
+    int32_t video_bit_rate;
 
     if (!PyArg_ParseTuple(args, "iii", &friend_number, &audio_bit_rate, &video_bit_rate)) {
         return NULL;
@@ -307,29 +436,39 @@ ToxAVCore_audio_send_frame(ToxAVCore *self, PyObject* args)
 static PyObject*
 ToxAVCore_video_send_frame(ToxAVCore *self, PyObject* args)
 {
-    uint32_t friend_number;
-    uint32_t width;
-    uint32_t height;
-    uint8_t *y = NULL;
-    uint8_t *u = NULL;
-    uint8_t *v = NULL;
-    uint32_t ylength;
-    uint32_t ulength;
-    uint32_t vlength;
 
-    if (!PyArg_ParseTuple(args, "iii" BUF_TCS BUF_TCS BUF_TCS, &friend_number, &width, &height,
-                          &y, &ylength, &u, &ulength, &v, &vlength)) {
+    uint32_t friend_number = 0, len = 0, width = 0, height = 0;
+    char* data = NULL;
+
+    if (!PyArg_ParseTuple(args, "iiis#", &friend_number, &width, &height, &data, &len)) {
         return NULL;
     }
 
+    if (self->in_image && (self->i_w != width || self->i_h != height)) {
+        vpx_img_free(self->in_image);
+        self->in_image = NULL;
+    }
+
+    if (self->in_image == NULL) {
+        self->i_w = width;
+        self->i_h = height;
+        self->in_image = vpx_img_alloc(NULL, VPX_IMG_FMT_I420, width, height, 1);
+    }
+
+    rgb_to_i420((unsigned char*)data, self->in_image);
+
     TOXAV_ERR_SEND_FRAME err = 0;
     bool ret = toxav_video_send_frame(self->av, friend_number, width, height,
-                                      y, u, v, &err);
+                                      self->in_image->planes[0],
+                                      self->in_image->planes[1],
+                                      self->in_image->planes[2],
+                                      &err);
     if (ret == false) {
         PyErr_Format(ToxOpError, "toxav video send frame error: %d", err);
         return NULL;
     }
     return PyBool_FromLong(ret);
+
 }
 
 static PyObject*
