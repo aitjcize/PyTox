@@ -29,9 +29,9 @@ from time import sleep
 from os.path import exists
 
 SERVER = [
-    "54.199.139.199",
+    "192.210.149.121",
     33445,
-    "7F9C31FE850E97CEFD4C4591DF93FC757C7C12549DDD55F8EEAECC34FE76C029"
+    "F404ABAA1C99A9D37D61AB54898F56793E1DEF8BD46B1038B9D822E8460FAB67"
 ]
 
 DATA = 'echo.data'
@@ -47,12 +47,11 @@ class AV(ToxAV):
     def __init__(self, core):
         super(AV, self).__init__(core)
         self.core = self.get_tox()
-        self.cs = None
-        # self.call_type = self.TypeAudio
-        self.has_audio = False
 
     def on_call(self, friend_number, audio_enabled, video_enabled):
-        print("Incoming call: fn=%d, audio=%d, video=%d" % (friend_number, audio_enabled, video_enabled))
+        print("Incoming %s call from %d:%s ..." % (
+            "video" if video_enabled else "audio", friend_number,
+            self.core.friend_get_name(friend_number)))
         bret = self.answer(friend_number, 48, 64)
         print("Answered, in call..." + str(bret))
 
@@ -64,83 +63,26 @@ class AV(ToxAV):
               (friend_number, audio_bit_rate, video_bit_rate))
 
     def on_audio_receive_frame(self, friend_number, pcm, sample_count, channels, sampling_rate):
-        print('audio frame: %d, %d, %d, %d' %
-              (friend_number, sample_count, channels, sampling_rate))
-        print('pcm len:%d, %s' % (len(pcm), str(type(pcm))))
-        # self.has_audio = True
-        self.audio_friend_number = friend_number
-        self.audio_pcm = pcm
-        self.audio_sample_count = sample_count
-        self.audio_channels = channels
-        self.audio_sampling_rate = sampling_rate
+        # print('audio frame: %d, %d, %d, %d' %
+        #      (friend_number, sample_count, channels, sampling_rate))
+        # print('pcm len:%d, %s' % (len(pcm), str(type(pcm))))
+        sys.stdout.write('.')
+        sys.stdout.flush()
         bret = self.audio_send_frame(friend_number, pcm, sample_count, channels, sampling_rate)
         if bret is False:
             pass
 
-    def on_video_receive_frame(self, friend_number, width, height,
-                               y, u, v, ystride, ustride, vstride):
-        print('video frame: %d, %d, %d, %d, %d, %d' %
-              (friend_number, width, height, ystride, ustride, vstride))
-        # video frame:      1, 1272, 688, 1344, 672, 672
-        bret = self.video_send_frame(friend_number, width, height, y, u, v)
+    def on_video_receive_frame(self, friend_number, width, height, frame):
+        # print('video frame: %d, %d, %d, ' % (friend_number, width, height))
+        sys.stdout.write('*')
+        sys.stdout.flush()
+        bret = self.video_send_frame(friend_number, width, height, frame)
         if bret is False:
+            print('video send frame error.')
             pass
 
     def witerate(self):
-        # bret = self.audio_send_frame(friend_number, pcm, sample_count, channels, sampling_rate)
-        # if bret is False:
-        #    pass
         self.iterate()
-        if self.has_audio is True:
-            self.has_audio = False
-            bret = self.audio_send_frame(self.audio_friend_number, self.audio_pcm,
-                                         self.audio_sample_count, self.audio_channels,
-                                         self.audio_sampling_rate)
-            if bret is False:
-                pass
-
-    def on_invite(self, idx):
-        self.cs = self.get_peer_csettings(idx, 0)
-        # self.call_type = self.cs["call_type"]
-
-        print("Incoming %s call from %d:%s ..." % (
-            "video" if self.call_type == self.TypeVideo else "audio", idx,
-            self.core.get_name(self.get_peer_id(idx, 0))))
-
-        self.answer(idx, self.call_type)
-        print("Answered, in call...")
-
-    def on_start(self, idx):
-        try:
-            self.change_settings(idx, {"max_video_width": 1920,
-                                       "max_video_height": 1080})
-        except:
-            pass
-
-        video_enabled = True if self.call_type == self.TypeVideo else False
-        self.prepare_transmission(idx, video_enabled)
-
-    def on_end(self, idx):
-        self.kill_transmission(idx)
-        print('Call ended')
-
-    def on_cancel(self, idx):
-        self.kill_transmission(idx)
-
-    def on_peer_timeout(self, idx):
-        self.kill_transmission(idx)
-        self.stop_call(idx)
-
-    def on_audio_data(self, idx, size, data):
-        sys.stdout.write('.')
-        sys.stdout.flush()
-        self.send_audio(idx, size, data)
-
-    def on_video_data(self, idx, width, height, data):
-        sys.stdout.write('*')
-        sys.stdout.flush()
-        self.send_video(idx, width, height, data)
-
 
 class ToxOptions():
     def __init__(self):
@@ -199,8 +141,8 @@ class EchoBot(Tox):
                     self.connect()
                     checked = False
 
-                self.iterate()
                 self.av.witerate()
+                self.iterate()
                 sleep(0.01)
         except KeyboardInterrupt:
             save_to_file(self, DATA)
@@ -219,10 +161,12 @@ class EchoBot(Tox):
 
 
 opts = None
+opts = ToxOptions()
+opts.udp_enabled = True
 if len(sys.argv) == 2:
     DATA = sys.argv[1]
     if exists(DATA):
-        opts = ToxOptions()
+        # opts = ToxOptions()
         opts.savedata_data = load_from_file(DATA)
         opts.savedata_length = len(opts.savedata_data)
         opts.savedata_type = Tox.SAVEDATA_TYPE_TOX_SAVE
