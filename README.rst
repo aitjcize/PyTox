@@ -36,17 +36,17 @@ PyTox provides a Pythonic binding, i.e Object-oriented instead of C style, raise
             while True:
                 self.iterate()
                 time.sleep(0.03)
-    
+
         def on_friend_request(self, pk, message):
             print 'Friend request from %s: %s' % (pk, message)
             self.friend_add_norequest(pk)
             print 'Accepted.'
-    
-        def on_friend_message(self, friendId, message):
-            name = self.self_get_name(friendId)
+
+        def on_friend_message(self, fid, message):
+            name = self.self_get_name(fid)
             print '%s: %s' % (name, message)
             print 'EchoBot: %s' % message
-            self.friend_send_message(friendId, Tox.MESSAGE_TYPE_NORMAL, message)
+            self.friend_send_message(fid, Tox.MESSAGE_TYPE_NORMAL, message)
 
 As you can see callbacks are mapped into class method instead of using it the the c ways. For more details please refer to `examples/echo.py <https://github.com/aitjcize/PyTox/blob/master/examples/echo.py>`_.
 

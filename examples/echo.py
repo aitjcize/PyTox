@@ -37,10 +37,11 @@ SERVER = [
 DATA = 'echo.data'
 
 # echo.py features
-# accept friend request
-# echo back friend message
-# accept and answer friend call request
-# send back friend audio/video data
+# - accept friend request
+# - echo back friend message
+# - accept and answer friend call request
+# - send back friend audio/video data
+# - send back files friend sent
 
 
 class AV(ToxAV):
@@ -48,41 +49,45 @@ class AV(ToxAV):
         super(AV, self).__init__(core)
         self.core = self.get_tox()
 
-    def on_call(self, friend_number, audio_enabled, video_enabled):
+    def on_call(self, fid, audio_enabled, video_enabled):
         print("Incoming %s call from %d:%s ..." % (
-            "video" if video_enabled else "audio", friend_number,
-            self.core.friend_get_name(friend_number)))
-        bret = self.answer(friend_number, 48, 64)
+            "video" if video_enabled else "audio", fid,
+            self.core.friend_get_name(fid)))
+        bret = self.answer(fid, 48, 64)
         print("Answered, in call..." + str(bret))
 
-    def on_call_state(self, friend_number, state):
-        print('call state:fn=%d, state=%d' % (friend_number, state))
+    def on_call_state(self, fid, state):
+        print('call state:fn=%d, state=%d' % (fid, state))
 
-    def on_bit_rate_status(self, friend_number, audio_bit_rate, video_bit_rate):
+    def on_bit_rate_status(self, fid,
+                           audio_bit_rate, video_bit_rate):
         print('bit rate status: fn=%d, abr=%d, vbr=%d' %
-              (friend_number, audio_bit_rate, video_bit_rate))
+              (fid, audio_bit_rate, video_bit_rate))
 
-    def on_audio_receive_frame(self, friend_number, pcm, sample_count, channels, sampling_rate):
+    def on_audio_receive_frame(self, fid, pcm, sample_count,
+                               channels, sampling_rate):
         # print('audio frame: %d, %d, %d, %d' %
-        #      (friend_number, sample_count, channels, sampling_rate))
+        #      (fid, sample_count, channels, sampling_rate))
         # print('pcm len:%d, %s' % (len(pcm), str(type(pcm))))
         sys.stdout.write('.')
         sys.stdout.flush()
-        bret = self.audio_send_frame(friend_number, pcm, sample_count, channels, sampling_rate)
+        bret = self.audio_send_frame(fid, pcm, sample_count,
+                                     channels, sampling_rate)
         if bret is False:
             pass
 
-    def on_video_receive_frame(self, friend_number, width, height, frame):
-        # print('video frame: %d, %d, %d, ' % (friend_number, width, height))
+    def on_video_receive_frame(self, fid, width, height, frame):
+        # print('video frame: %d, %d, %d, ' % (fid, width, height))
         sys.stdout.write('*')
         sys.stdout.flush()
-        bret = self.video_send_frame(friend_number, width, height, frame)
+        bret = self.video_send_frame(fid, width, height, frame)
         if bret is False:
             print('video send frame error.')
             pass
 
     def witerate(self):
         self.iterate()
+
 
 class ToxOptions():
     def __init__(self):
@@ -116,6 +121,8 @@ class EchoBot(Tox):
 
         self.self_set_name("EchoBot")
         print('ID: %s' % self.self_get_address())
+
+        self.files = {}
 
         self.connect()
         self.av = AV(self)
@@ -158,6 +165,45 @@ class EchoBot(Tox):
         print('%s: %s' % (name, message))
         print('EchoBot: %s' % message)
         self.friend_send_message(friendId, Tox.MESSAGE_TYPE_NORMAL, message)
+
+    def on_file_recv(self, fid, filenumber, kind, size, filename):
+        print (fid, filenumber, kind, size, filename)
+        if size == 0:
+            return
+
+        self.files[(fid, filenumber)] = {
+            'f': bytes(),
+            'filename': filename,
+            'size': size
+        }
+
+        self.file_control(fid, filenumber, Tox.FILE_CONTROL_RESUME)
+
+    def on_file_recv_chunk(self, fid, filenumber, position, data):
+        filename = self.files[(fid, filenumber)]['filename']
+        size = self.files[(fid, filenumber)]['size']
+        print (fid, filenumber, filename, position/float(size)*100)
+
+        if data is None:
+            msg = "I got '{}', sending it back right away!".format(filename)
+            self.friend_send_message(fid, Tox.MESSAGE_TYPE_NORMAL, msg)
+
+            self.files[(fid, 0)] = self.files[(fid, filenumber)]
+
+            length = self.files[(fid, filenumber)]['size']
+            self.file_send(fid, 0, length, filename, filename)
+
+            del self.files[(fid, filenumber)]
+            return
+
+        self.files[(fid, filenumber)]['f'] += data
+
+    def on_file_chunk_request(self, fid, filenumber, position, length):
+        if length == 0:
+            return
+
+        data = self.files[(fid, filenumber)]['f'][position:(position + length)]
+        self.file_send_chunk(fid, filenumber, position, data)
 
 
 opts = None

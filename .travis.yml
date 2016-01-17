@@ -13,13 +13,14 @@ compiler:
   - clang
 
 before_script:
+  - sudo apt-get update
   # installing libsodium, needed for toxcore
   - git clone https://github.com/jedisct1/libsodium.git
   - cd libsodium
   - git checkout tags/1.0.3
   - ./autogen.sh
   - ./configure --prefix=/usr
-  - make -j2 > /dev/null
+  - make -j3 > /dev/null
   - sudo make install > /dev/null
   - cd ..
   # installing libopus, needed for audio encoding/decoding
