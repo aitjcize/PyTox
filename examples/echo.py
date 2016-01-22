@@ -209,13 +209,14 @@ class EchoBot(Tox):
 opts = None
 opts = ToxOptions()
 opts.udp_enabled = True
+
 if len(sys.argv) == 2:
     DATA = sys.argv[1]
-    if exists(DATA):
-        # opts = ToxOptions()
-        opts.savedata_data = load_from_file(DATA)
-        opts.savedata_length = len(opts.savedata_data)
-        opts.savedata_type = Tox.SAVEDATA_TYPE_TOX_SAVE
+
+if exists(DATA):
+    opts.savedata_data = load_from_file(DATA)
+    opts.savedata_length = len(opts.savedata_data)
+    opts.savedata_type = Tox.SAVEDATA_TYPE_TOX_SAVE
 
 t = EchoBot(opts)
 t.loop()
