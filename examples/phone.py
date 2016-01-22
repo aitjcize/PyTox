@@ -324,13 +324,16 @@ class Phone(Tox):
         self.call_idx = self.av.call(friend_number, self.av.TypeVideo, 60)
 
 opts = None
+opts = ToxOptions()
+opts.udp_enabled = True
+
 if len(sys.argv) == 2:
     DATA = sys.argv[1]
-    if exists(DATA):
-        opts = ToxOptions()
-        opts.savedata_data = load_from_file(DATA)
-        opts.savedata_length = len(opts.savedata_data)
-        opts.savedata_type = Tox.SAVEDATA_TYPE_TOX_SAVE
+
+if exists(DATA):
+    opts.savedata_data = load_from_file(DATA)
+    opts.savedata_length = len(opts.savedata_data)
+    opts.savedata_type = Tox.SAVEDATA_TYPE_TOX_SAVE
 
 t = Phone(opts)
 t.loop()
