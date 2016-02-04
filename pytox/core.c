@@ -1888,11 +1888,11 @@ PyMethodDef Tox_methods[] = {
     "return size of messenger data (for saving)."
   },
   {
-    "get_savedata", (PyCFunction)ToxCore_get_savedata, METH_VARARGS,
+    "get_savedata", (PyCFunction)ToxCore_get_savedata, METH_NOARGS,
     "get_savedata()\n"
     "Return messenger blob in str."
   },
-  {NULL}
+    {NULL, NULL, 0, NULL, NULL}
 };
 
 PyTypeObject ToxCoreType = {

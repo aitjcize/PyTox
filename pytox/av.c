@@ -635,6 +635,7 @@ PyMethodDef ToxAVCore_methods[] = {
         "Send audio to the group chat."
         "Returns -1 on failure.\n\n"
     },
+    {NULL, NULL, 0, NULL, NULL}
 };
 
 
