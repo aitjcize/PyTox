@@ -6,23 +6,17 @@ cache:
     - $HOME/cache
 
 python:
-#  - "2.6"
+  - "2.6"
   - "2.7"
-#  - "3.2"
-#  - "3.3"
-#  - "3.4"
-#  - "3.5"
-
-compiler:
-#  - gcc
-  - clang
-
-env:
-  - TOXCORE_REPO=TokTok/c-toxcore
+  - "3.2"
+  - "3.3"
+  - "3.4"
+  - "3.5"
 
 addons: {apt: {packages: [yasm]}}
 
 before_script:
+  - export TOXCORE_REPO=TokTok/c-toxcore
   - export CACHE_DIR="$HOME/cache"
   - export CFLAGS="-I$CACHE_DIR/usr/include"
   - export LDFLAGS="-L$CACHE_DIR/usr/lib"

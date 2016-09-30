@@ -2,9 +2,7 @@
 
 set -eux
 
-CACHE_DIR="$HOME/cache"
-
-# installing libsodium, needed for toxcore
+# install libsodium, needed for crypto
 if ! [ -d libsodium ]; then
   git clone --depth=1 --branch=stable https://github.com/jedisct1/libsodium.git
 fi
@@ -20,7 +18,7 @@ fi
 cd ..
 rm -rf libsodium
 
-# installing libopus, needed for audio encoding/decoding
+# install libopus, needed for audio encoding/decoding
 if ! [ -f $CACHE_DIR/usr/lib/pkgconfig/opus.pc ]; then
   curl http://downloads.xiph.org/releases/opus/opus-1.1.tar.gz -o opus-1.1.tar.gz
   tar xzf opus-1.1.tar.gz
@@ -47,7 +45,7 @@ fi
 cd ..
 rm -rf libvpx
 
-# creating librarys' links and updating cache
+# install toxcore
 if ! [ -d toxcore ]; then
   git clone --depth=1 --branch=master https://github.com/$TOXCORE_REPO.git toxcore
 fi
