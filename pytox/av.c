@@ -161,8 +161,8 @@ static void rgb_to_i420(unsigned char* rgb, vpx_image_t *img)
 {
     int upos = 0;
     int vpos = 0;
-    int x = 0, i = 0;
-    int line = 0;
+    unsigned int x = 0, i = 0;
+    unsigned int line = 0;
 
     for (line = 0; line < img->d_h; ++line) {
         if (!(line % 2)) {
@@ -216,7 +216,7 @@ ToxAVCore_callback_video_receive_frame(ToxAV *toxAV, uint32_t friend_number, uin
 
     i420_to_rgb(width, height, y, u, v, ystride, ustride, vstride, self->out_image);
 
-    // python method: on_video_receive_frame(friend_number, width, height, frame)
+    /* python method: on_video_receive_frame(friend_number, width, height, frame) */
     PyObject_CallMethod((PyObject*)self, "on_video_receive_frame", "iii" BUF_TCS,
                         friend_number, self->o_w, self->o_h, self->out_image, buf_size);
 
@@ -331,10 +331,10 @@ ToxAVCore_new(PyTypeObject *type, PyObject* args, PyObject* kwds)
 static int
 ToxAVCore_init(ToxAVCore *self, PyObject* args, PyObject* kwds)
 {
-    // since __init__ in Python is optional(superclass need to call it
-    // explicitly), we need to initialize self->tox in ToxAVCore_new instead of
-    // init. If ToxAVCore_init is called, we re-initialize self->tox and pass
-    // the new ipv6enabled setting.
+    /* since __init__ in Python is optional(superclass need to call it
+     * explicitly), we need to initialize self->tox in ToxAVCore_new instead of
+     * init. If ToxAVCore_init is called, we re-initialize self->tox and pass
+     * the new ipv6enabled setting. */
     return init_helper(self, args);
 }
 
@@ -561,11 +561,13 @@ ToxAVCore_iterate(ToxAVCore *self)
 }
 
 
+#if 0
 static PyObject*
 ToxAVCore_callback_stub(ToxAVCore *self, PyObject* args)
 {
     Py_RETURN_NONE;
 }
+#endif
 
 PyMethodDef ToxAVCore_methods[] = {
     {
@@ -635,7 +637,10 @@ PyMethodDef ToxAVCore_methods[] = {
         "Send audio to the group chat."
         "Returns -1 on failure.\n\n"
     },
-    {NULL, NULL, 0, NULL, NULL}
+    {
+        NULL, NULL, 0,
+        NULL
+    }
 };
 
 

@@ -69,7 +69,7 @@ PyMODINIT_FUNC initpytox(void)
   ToxAVCore_install_dict();
 #endif
 
-  // Initialize toxcore
+  /* Initialize toxcore */
   if (PyType_Ready(&ToxCoreType) < 0) {
     fprintf(stderr, "Invalid PyTypeObject `ToxCoreType'\n");
     goto error;
@@ -82,7 +82,7 @@ PyMODINIT_FUNC initpytox(void)
   PyModule_AddObject(m, "OperationFailedError", (PyObject*)ToxOpError);
 
 #ifdef ENABLE_AV
-  // Initialize toxav
+  /* Initialize toxav */
   if (PyType_Ready(&ToxAVCoreType) < 0) {
     fprintf(stderr, "Invalid PyTypeObject `ToxAVCoreType'\n");
     goto error;

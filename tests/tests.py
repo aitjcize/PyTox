@@ -69,6 +69,10 @@ class AliceTox(Tox):
     def __init__(self, opts):
         super(AliceTox, self).__init__(opts)
 
+        def on_log(self, level, file, line, func, message):
+            print((level, file, line, func, message))
+        AliceTox.on_log = on_log
+
 
 class BobTox(Tox):
     def __init__(self, opts):
@@ -220,9 +224,9 @@ class ToxTest(unittest.TestCase):
         AliceTox.on_friend_status = Tox.on_friend_status
         BobTox.on_friend_status = Tox.on_friend_status
 
-    def test_bootstrap(self):
+    def test_self_get_connection_status(self):
         """
-        t:bootstrap
+        t:self_get_connection_status
         """
         assert self.alice.self_get_connection_status() != Tox.CONNECTION_NONE
         assert self.bob.self_get_connection_status() != Tox.CONNECTION_NONE
@@ -424,6 +428,7 @@ class ToxTest(unittest.TestCase):
 
         def on_friend_message(self, fid, msg_type, message):
             assert fid == BID
+            assert msg_type == Tox.MESSAGE_TYPE_NORMAL
             assert message == MSG
             self.fm = True
 
@@ -441,6 +446,7 @@ class ToxTest(unittest.TestCase):
 
         def on_friend_action(self, fid, msg_type, action):
             assert fid == BID
+            assert msg_type == Tox.MESSAGE_TYPE_ACTION
             assert action == ACTION
             self.fa = True
 
@@ -486,138 +492,135 @@ class ToxTest(unittest.TestCase):
         assert self.alice.friend_get_last_online(self.bid) is not None
         assert self.bob.friend_get_last_online(self.aid) is not None
 
-    def test_group(self):
+    def test_conference(self):
         """
-        t:add_groupchat
-        t:count_chatlist
-        t:del_groupchat
-        t:get_chatlist
-        t:group_action_send
-        t:group_get_names
-        t:group_get_title
-        t:group_get_type
-        t:group_message_send
-        t:group_number_peers
-        t:group_peername
-        t:group_set_title
-        t:invite_friend
-        t:join_groupchat
-        t:on_group_action
-        t:on_group_invite
-        t:on_group_message
-        t:on_group_namelist_change
+        t:conference_new
+        t:conference_delete
+        t:conference_get_chatlist_size
+        t:conference_get_chatlist
+        t:conference_send_message
+        t:conference_get_title
+        t:conference_get_type
+        t:conference_send_message
+        t:conference_peer_count
+        t:conference_peer_get_name
+        t:conference_set_title
+        t:conference_invite
+        t:conference_join
+        t:on_conference_invite
+        t:on_conference_message
+        t:on_conference_namelist_change
         """
         self.bob_add_alice_as_friend()
 
         #: Test group add
-        group_id = self.bob.add_groupchat()
+        group_id = self.bob.conference_new()
         assert group_id >= 0
 
         self.loop(50)
 
         BID = self.bid
 
-        def on_group_invite(self, fid, type_, data):
+        def on_conference_invite(self, fid, type_, data):
             assert fid == BID
             assert type_ == 0
-            gn = self.join_groupchat(fid, data)
-            assert type_ == self.group_get_type(gn)
+            gn = self.conference_join(fid, data)
+            assert type_ == self.conference_get_type(gn)
             self.gi = True
 
-        AliceTox.on_group_invite = on_group_invite
+        AliceTox.on_conference_invite = on_conference_invite
 
-        def on_group_namelist_change(self, gid, peer_number, change):
+        def on_conference_namelist_change(self, gid, peer_number, change):
             assert gid == group_id
-            assert change == Tox.CHAT_CHANGE_PEER_ADD
+            assert change == Tox.CONFERENCE_STATE_CHANGE_PEER_JOIN
             self.gn = True
 
-        AliceTox.on_group_namelist_change = on_group_namelist_change
+        AliceTox.on_conference_namelist_change = on_conference_namelist_change
 
         self.alice.gi = False
         self.alice.gn = False
 
-        self.ensure_exec(self.bob.invite_friend, (self.aid, group_id))
+        self.ensure_exec(self.bob.conference_invite, (self.aid, group_id))
 
         assert self.wait_callbacks(self.alice, ['gi', 'gn'])
 
-        AliceTox.on_group_invite = Tox.on_group_invite
-        AliceTox.on_group_namelist_change = Tox.on_group_namelist_change
+        AliceTox.on_conference_invite = Tox.on_conference_invite
+        AliceTox.on_conference_namelist_change = Tox.on_conference_namelist_change
 
         #: Test group number of peers
         self.loop(50)
-        assert self.bob.group_number_peers(group_id) == 2
+        assert self.bob.conference_peer_count(group_id) == 2
 
         #: Test group peername
         self.alice.self_set_name('Alice')
         self.bob.self_set_name('Bob')
 
-        def on_group_namelist_change(self, gid, peer_number, change):
-            if change == Tox.CHAT_CHANGE_PEER_NAME:
+        def on_conference_namelist_change(self, gid, peer_number, change):
+            if change == Tox.CONFERENCE_STATE_CHANGE_PEER_NAME_CHANGE:
                 self.gn = True
 
-        AliceTox.on_group_namelist_change = on_group_namelist_change
+        AliceTox.on_conference_namelist_change = on_conference_namelist_change
         self.alice.gn = False
 
         assert self.wait_callback(self.alice, 'gn')
-        AliceTox.on_group_namelist_change = Tox.on_group_namelist_change
+        AliceTox.on_conference_namelist_change = Tox.on_conference_namelist_change
 
-        peernames = [self.bob.group_peername(group_id, i) for i in
-                     range(self.bob.group_number_peers(group_id))]
+        peernames = [self.bob.conference_peer_get_name(group_id, i) for i in
+                     range(self.bob.conference_peer_count(group_id))]
 
         assert 'Alice' in peernames
         assert 'Bob' in peernames
 
-        assert sorted(self.bob.group_get_names(group_id)) == ['Alice', 'Bob']
-
         #: Test title change
-        self.bob.group_set_title(group_id, 'My special title')
-        assert self.bob.group_get_title(group_id) == 'My special title'
+        self.bob.conference_set_title(group_id, 'My special title')
+        assert self.bob.conference_get_title(group_id) == 'My special title'
 
         #: Test group message
         AID = self.aid
         BID = self.bid
         MSG = 'Group message test'
 
-        def on_group_message(self, gid, fgid, message):
+        def on_conference_message(self, gid, fgid, msg_type, message):
             if fgid == AID:
                 assert gid == group_id
                 assert message == MSG
                 self.gm = True
 
-        AliceTox.on_group_message = on_group_message
+        AliceTox.on_conference_message = on_conference_message
         self.alice.gm = False
 
-        self.ensure_exec(self.bob.group_message_send, (group_id, MSG))
+        self.ensure_exec(self.bob.conference_send_message, (group_id, Tox.MESSAGE_TYPE_NORMAL, MSG))
 
         assert self.wait_callback(self.alice, 'gm')
-        AliceTox.on_group_message = Tox.on_group_message
+        AliceTox.on_conference_message = Tox.on_conference_message
 
         #: Test group action
         AID = self.aid
         BID = self.bid
         MSG = 'Group action test'
 
-        def on_group_action(self, gid, fgid, action):
+        def on_conference_action(self, gid, fgid, msg_type, action):
             if fgid == AID:
                 assert gid == group_id
+                assert msg_type == Tox.MESSAGE_TYPE_ACTION
                 assert action == MSG
                 self.ga = True
 
-        AliceTox.on_group_action = on_group_action
+        AliceTox.on_conference_message = on_conference_action
         self.alice.ga = False
 
-        self.ensure_exec(self.bob.group_action_send, (group_id, MSG))
+        self.ensure_exec(self.bob.conference_send_message, (group_id, Tox.MESSAGE_TYPE_ACTION, MSG))
 
         assert self.wait_callback(self.alice, 'ga')
-        AliceTox.on_group_action = Tox.on_group_action
+        AliceTox.on_conference_message = Tox.on_conference_message
 
         #: Test chatlist
-        assert len(self.bob.get_chatlist()) == self.bob.count_chatlist()
-        assert len(self.alice.get_chatlist()) == self.bob.count_chatlist()
+        assert len(self.bob.conference_get_chatlist()) == self.bob.conference_get_chatlist_size()
+        assert len(self.alice.conference_get_chatlist()) == self.bob.conference_get_chatlist_size()
 
-        assert self.bob.count_chatlist() == 1
-        self.bob.del_groupchat(group_id)
-        assert self.bob.count_chatlist() == 0
+        assert self.bob.conference_get_chatlist_size() == 1
+        self.bob.conference_delete(group_id)
+        assert self.bob.conference_get_chatlist_size() == 0
 
     def test_file_transfer(self):
         """

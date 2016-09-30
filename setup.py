@@ -3,13 +3,35 @@ from subprocess import Popen, PIPE
 
 
 def supports_av():
-    h = Popen("ld -ltoxav", shell=True, stderr=PIPE)
+    h = Popen("ld $LDFLAGS -ltoxav", shell=True, stderr=PIPE)
     out, err = h.communicate()
     return 'toxav' not in str(err)
 
 sources = ["pytox/pytox.c", "pytox/core.c", "pytox/util.c"]
-libraries = ["toxcore"]
-cflags = ["-Wall", "-Wno-declaration-after-statement"]
+libraries = [
+  "opus",
+  "sodium",
+  "toxcore",
+  "toxcrypto",
+  "toxdht",
+  "toxdns",
+  "toxencryptsave",
+  "toxfriends",
+  "toxgroup",
+  "toxmessenger",
+  "toxnetcrypto",
+  "toxnetwork",
+  "vpx",
+]
+cflags = [
+  "-Wall",
+  "-Werror",
+  "-Wextra",
+  "-Wno-declaration-after-statement",
+  "-Wno-missing-field-initializers",
+  "-Wno-unused-parameter",
+  "-fno-strict-aliasing",
+]
 
 if supports_av():
     libraries.append("toxav")

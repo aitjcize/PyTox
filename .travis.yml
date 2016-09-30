@@ -1,64 +1,35 @@
 language: python
+sudo: false
+
+cache:
+  directories:
+    - $HOME/cache
 
 python:
-  - "2.6"
+#  - "2.6"
   - "2.7"
-  - "3.2"
-  - "3.3"
-  - "3.4"
-  - "3.5"
+#  - "3.2"
+#  - "3.3"
+#  - "3.4"
+#  - "3.5"
 
 compiler:
-  - gcc
+#  - gcc
   - clang
 
+env:
+  - TOXCORE_REPO=TokTok/c-toxcore
+
+addons: {apt: {packages: [yasm]}}
+
 before_script:
-  - sudo apt-get update
-  # installing libsodium, needed for toxcore
-  - git clone https://github.com/jedisct1/libsodium.git
-  - cd libsodium
-  - git checkout tags/1.0.3
-  - ./autogen.sh
-  - ./configure --prefix=/usr
-  - make -j3 > /dev/null
-  - sudo make install > /dev/null
-  - cd ..
-  # installing libopus, needed for audio encoding/decoding
-  - wget http://downloads.xiph.org/releases/opus/opus-1.1.tar.gz > /dev/null
-  - tar xzf opus-1.1.tar.gz > /dev/null
-  - cd opus-1.1
-  - ./configure
-  - make -j3 > /dev/null
-  - sudo make install > /dev/null
-  - cd ..
-  # installing vpx
-  - sudo apt-get install yasm
-  - git clone https://chromium.googlesource.com/webm/libvpx > /dev/null
-  - cd libvpx
-  - ./configure --enable-shared > /dev/null
-  - make -j3 >/dev/null
-  - sudo make install > /dev/null
-  - cd ..
-  # creating librarys' links and updating cache
-  - sudo ldconfig
-  - git clone https://github.com/irungentoo/toxcore.git toxcore
-  - cd toxcore
-  - autoreconf -i
-  - ./configure --prefix=/usr --disable-tests --disable-ntox
-  - make -j2
-  - sudo make install
-  - cd ..
-  - sudo ldconfig > /dev/null
+  - export CACHE_DIR="$HOME/cache"
+  - export CFLAGS="-I$CACHE_DIR/usr/include"
+  - export LDFLAGS="-L$CACHE_DIR/usr/lib"
+  - export LD_LIBRARY_PATH="$CACHE_DIR/usr/lib"
+  - export PKG_CONFIG_PATH="$CACHE_DIR/usr/lib/pkgconfig"
+  - tools/install-deps.sh > /dev/null
 
 script:
   - pip install .
   - python tests/tests.py
-
-notifications:
-  email: false
-
-  irc:
-    channels:
-      - "chat.freenode.net#tox-dev"
-    on_success: always
-    on_failure: always

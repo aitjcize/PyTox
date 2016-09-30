@@ -35,6 +35,13 @@
 
 extern PyObject* ToxOpError;
 
+static void callback_log(Tox *tox, TOX_LOG_LEVEL level, const char *file, uint32_t line, const char *func,
+                         const char *message, void* self)
+{
+    PyObject_CallMethod((PyObject*)self, "on_log", "isiss", level, file, line,
+                        func, message);
+}
+
 static void callback_self_connection_status(Tox* tox, TOX_CONNECTION connection_status,
                                             void *self)
 {
@@ -103,33 +110,25 @@ static void callback_friend_connection_status(Tox *tox, uint32_t friendnumber,
       friendnumber, PyBool_FromLong(status));
 }
 
-// TODO group old api
-static void callback_group_invite(Tox *tox, int32_t friendnumber, uint8_t type,
-    const uint8_t *data, uint16_t length, void *self)
+static void callback_conference_invite(Tox *tox, uint32_t friendnumber, TOX_CONFERENCE_TYPE type,
+    const uint8_t *data, size_t length, void *self)
 {
-  PyObject_CallMethod((PyObject*)self, "on_group_invite", "ii" BUF_TC "#",
+  PyObject_CallMethod((PyObject*)self, "on_conference_invite", "ii" BUF_TC "#",
       friendnumber, type, data, length);
 }
-// TODO group old api
-static void callback_group_message(Tox *tox, int groupid,
-    int friendgroupid, const uint8_t* message, uint16_t length, void *self)
+
+static void callback_conference_message(Tox *tox, uint32_t conference_number,
+    uint32_t peer_number, TOX_MESSAGE_TYPE type, const uint8_t* message, size_t length, void *self)
 {
-  PyObject_CallMethod((PyObject*)self, "on_group_message", "iis#", groupid,
-      friendgroupid, message, length - (message[length - 1] == 0));
-}
-// TODO group old api
-static void callback_group_action(Tox *tox, int groupid,
-    int friendgroupid, const uint8_t* action, uint16_t length, void *self)
-{
-  PyObject_CallMethod((PyObject*)self, "on_group_action", "iis#", groupid,
-      friendgroupid, action, length - (action[length - 1] == 0));
+  PyObject_CallMethod((PyObject*)self, "on_conference_message", "iiis#", conference_number,
+      peer_number, type, message, length - (message[length - 1] == 0));
 }
 
-static void callback_group_namelist_change(Tox *tox, int groupid,
-    int peernumber, uint8_t change, void* self)
+static void callback_conference_namelist_change(Tox *tox, uint32_t conference_number,
+    uint32_t peer_number, TOX_CONFERENCE_STATE_CHANGE change, void* self)
 {
-  PyObject_CallMethod((PyObject*)self, "on_group_namelist_change", "iii",
-      groupid, peernumber, change);
+  PyObject_CallMethod((PyObject*)self, "on_conference_namelist_change", "iii",
+      conference_number, peer_number, change);
 }
 
 static void callback_file_chunk_request(Tox *tox, uint32_t friend_number, uint32_t file_number,
@@ -262,23 +261,23 @@ static int init_helper(ToxCore* self, PyObject* args)
       return -1;
   }
 
-  tox_callback_self_connection_status(tox, callback_self_connection_status, self);
-  tox_callback_friend_request(tox, callback_friend_request, self);
-  tox_callback_friend_message(tox, callback_friend_message, self);
-  tox_callback_friend_name(tox, callback_friend_name, self);
-  tox_callback_friend_status_message(tox, callback_friend_status_message, self);
-  tox_callback_friend_status(tox, callback_friend_status, self);
-  tox_callback_friend_typing(tox, callback_friend_typing, self);
-  tox_callback_friend_read_receipt(tox, callback_friend_read_receipt, self);
-  tox_callback_friend_connection_status(tox, callback_friend_connection_status, self);
-  tox_callback_group_invite(tox, callback_group_invite, self);
-  tox_callback_group_message(tox, callback_group_message, self);
-  tox_callback_group_action(tox, callback_group_action, self);
-  tox_callback_group_namelist_change(tox, callback_group_namelist_change, self);
-  tox_callback_file_chunk_request(tox, callback_file_chunk_request, self);
-  tox_callback_file_recv_control(tox, callback_file_recv_control, self);
-  tox_callback_file_recv(tox, callback_file_recv, self);
-  tox_callback_file_recv_chunk(tox, callback_file_recv_chunk, self);
+  tox_callback_log(tox, callback_log, self);
+  tox_callback_self_connection_status(tox, callback_self_connection_status);
+  tox_callback_friend_request(tox, callback_friend_request);
+  tox_callback_friend_message(tox, callback_friend_message);
+  tox_callback_friend_name(tox, callback_friend_name);
+  tox_callback_friend_status_message(tox, callback_friend_status_message);
+  tox_callback_friend_status(tox, callback_friend_status);
+  tox_callback_friend_typing(tox, callback_friend_typing);
+  tox_callback_friend_read_receipt(tox, callback_friend_read_receipt);
+  tox_callback_friend_connection_status(tox, callback_friend_connection_status);
+  tox_callback_conference_invite(tox, callback_conference_invite);
+  tox_callback_conference_message(tox, callback_conference_message);
+  tox_callback_conference_namelist_change(tox, callback_conference_namelist_change);
+  tox_callback_file_chunk_request(tox, callback_file_chunk_request);
+  tox_callback_file_recv_control(tox, callback_file_recv_control);
+  tox_callback_file_recv(tox, callback_file_recv);
+  tox_callback_file_recv_chunk(tox, callback_file_recv_chunk);
 
   self->tox = tox;
 
@@ -291,7 +290,7 @@ ToxCore_new(PyTypeObject *type, PyObject* args, PyObject* kwds)
   ToxCore* self = (ToxCore*)type->tp_alloc(type, 0);
   self->tox = NULL;
 
-  // We don't care about subclass's arguments
+  /* We don't care about subclass's arguments */
   if (init_helper(self, NULL) == -1) {
     return NULL;
   }
@@ -301,10 +300,10 @@ ToxCore_new(PyTypeObject *type, PyObject* args, PyObject* kwds)
 
 static int ToxCore_init(ToxCore* self, PyObject* args, PyObject* kwds)
 {
-  // since __init__ in Python is optional(superclass need to call it
-  // explicitly), we need to initialize self->tox in ToxCore_new instead of
-  // init. If ToxCore_init is called, we re-initialize self->tox and pass
-  // the new ipv6enabled setting.
+  /* since __init__ in Python is optional(superclass need to call it
+   * explicitly), we need to initialize self->tox in ToxCore_new instead of
+   * init. If ToxCore_init is called, we re-initialize self->tox and pass
+   * the new ipv6enabled setting. */
   return init_helper(self, args);
 }
 
@@ -390,7 +389,9 @@ ToxCore_friend_add(ToxCore* self, PyObject* args)
     PyErr_SetString(ToxOpError, "increasing the friend list size fails");
     break;
   default:
-      // success = 1;
+#if 0
+      success = 1;
+#endif
       break;
   }
 
@@ -582,10 +583,6 @@ ToxCore_self_get_name(ToxCore* self, PyObject* args)
   memset(buf, 0, TOX_MAX_NAME_LENGTH);
 
   tox_self_get_name(self->tox, buf);
-  if (buf == 0) {
-    PyErr_SetString(ToxOpError, "failed to get self name");
-    return NULL;
-  }
 
   return PYSTRING_FromString((const char*)buf);
 }
@@ -869,282 +866,242 @@ ToxCore_self_get_friend_list(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_add_groupchat(ToxCore* self, PyObject* args)
+ToxCore_conference_new(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int ret = tox_add_groupchat(self->tox);
-  if (ret == -1) {
-    PyErr_SetString(ToxOpError, "failed to add groupchat");
+  TOX_ERR_CONFERENCE_NEW error;
+  uint32_t conference_number = tox_conference_new(self->tox, &error);
+  if (error != TOX_ERR_CONFERENCE_NEW_OK) {
+    PyErr_SetString(ToxOpError, "failed to create conference");
   }
 
-  return PyLong_FromLong(ret);
+  return PyLong_FromLong(conference_number);
 }
 
 static PyObject*
-ToxCore_group_get_title(ToxCore* self, PyObject* args)
+ToxCore_conference_delete(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int groupid = 0;
-  if (!PyArg_ParseTuple(args, "i", &groupid)) {
+  int conference_number = 0;
+
+  if (!PyArg_ParseTuple(args, "i", &conference_number)) {
     return NULL;
   }
 
-  uint8_t buf[TOX_MAX_STATUS_MESSAGE_LENGTH];
-  memset(buf, 0, TOX_MAX_STATUS_MESSAGE_LENGTH);
+  TOX_ERR_CONFERENCE_DELETE error;
+  tox_conference_delete(self->tox, conference_number, &error);
+  if (error != TOX_ERR_CONFERENCE_DELETE_OK) {
+    PyErr_SetString(ToxOpError, "failed to delete conference");
+  }
 
-  int ret = tox_group_get_title(self->tox, groupid, buf,
-      TOX_MAX_STATUS_MESSAGE_LENGTH);
-  if (ret == -1) {
-    return PYSTRING_FromString("");  // no title.
+  Py_RETURN_NONE;
+}
+
+static PyObject*
+ToxCore_conference_get_title(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  int conference_number = 0;
+  if (!PyArg_ParseTuple(args, "i", &conference_number)) {
+    return NULL;
+  }
+
+  uint8_t buf[TOX_MAX_NAME_LENGTH];
+  memset(buf, 0, TOX_MAX_NAME_LENGTH);
+
+  TOX_ERR_CONFERENCE_TITLE error;
+  tox_conference_get_title(self->tox, conference_number, buf, &error);
+  if (error != TOX_ERR_CONFERENCE_TITLE_OK) {
+    return PYSTRING_FromString("");  /* no title. */
   }
 
   return PYSTRING_FromString((const char*)buf);
 }
 
 static PyObject*
-ToxCore_group_set_title(ToxCore* self, PyObject* args)
+ToxCore_conference_set_title(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int groupid = 0;
+  int conference_number = 0;
   uint8_t* title = NULL;
   uint32_t length = 0;
 
-  if (!PyArg_ParseTuple(args, "is#", &groupid, &title, &length)) {
+  if (!PyArg_ParseTuple(args, "is#", &conference_number, &title, &length)) {
     return NULL;
   }
 
-  int rc = tox_group_set_title(self->tox, groupid, title, length);
-  if (rc == -1) {
-    PyErr_SetString(ToxOpError, "failed to set the group title");
+  TOX_ERR_CONFERENCE_TITLE error;
+  tox_conference_set_title(self->tox, conference_number, title, length, &error);
+  if (error != TOX_ERR_CONFERENCE_TITLE_OK) {
+    PyErr_SetString(ToxOpError, "failed to set the conference title");
   }
 
-  return PyLong_FromLong(rc);
+  Py_RETURN_NONE;
 }
 
 static PyObject*
-ToxCore_group_get_type(ToxCore* self, PyObject* args)
+ToxCore_conference_get_type(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int type = 0;
-  if (!PyArg_ParseTuple(args, "i", &type)) {
+  int conference_number = 0;
+  if (!PyArg_ParseTuple(args, "i", &conference_number)) {
     return NULL;
   }
 
-  int ret = tox_group_get_type(self->tox, type);
-  if (ret == -1) {
-    PyErr_SetString(ToxOpError, "failed to get group type");
+  TOX_ERR_CONFERENCE_GET_TYPE error;
+  TOX_CONFERENCE_TYPE type = tox_conference_get_type(self->tox, conference_number, &error);
+  if (error != TOX_ERR_CONFERENCE_GET_TYPE_OK) {
+    PyErr_SetString(ToxOpError, "failed to get conference type");
   }
 
-  return PyLong_FromLong(ret);
+  return PyLong_FromLong(type);
 }
 
 static PyObject*
-ToxCore_del_groupchat(ToxCore* self, PyObject* args)
-{
-  CHECK_TOX(self);
-
-  int groupid = 0;
-
-  if (!PyArg_ParseTuple(args, "i", &groupid)) {
-    return NULL;
-  }
-
-  int rc = tox_del_groupchat(self->tox, groupid);
-  if (rc == -1) {
-    PyErr_SetString(ToxOpError, "failed to del groupchat");
-  }
-
-  return PyLong_FromLong(rc);
-}
-
-static PyObject*
-ToxCore_group_peername(ToxCore* self, PyObject* args)
+ToxCore_conference_peer_get_name(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
   uint8_t buf[TOX_MAX_NAME_LENGTH];
   memset(buf, 0, TOX_MAX_NAME_LENGTH);
 
-  int groupid = 0;
-  int peernumber = 0;
-  if (!PyArg_ParseTuple(args, "ii", &groupid, &peernumber)) {
+  int conference_number = 0;
+  int peer_number = 0;
+  if (!PyArg_ParseTuple(args, "ii", &conference_number, &peer_number)) {
     return NULL;
   }
 
-  int ret = tox_group_peername(self->tox, groupid, peernumber, buf);
-  if (ret == -1) {
-    PyErr_SetString(ToxOpError, "failed to get group peername");
+  TOX_ERR_CONFERENCE_PEER_QUERY error;
+  tox_conference_peer_get_name(self->tox, conference_number,
+      peer_number, buf, &error);
+  if (error != TOX_ERR_CONFERENCE_PEER_QUERY_OK) {
+    PyErr_SetString(ToxOpError, "failed to get conference peer name");
   }
 
   return PYSTRING_FromString((const char*)buf);
 }
 
 static PyObject*
-ToxCore_invite_friend(ToxCore* self, PyObject* args)
+ToxCore_conference_invite(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int32_t friendnumber = 0;
-  int groupid = 0;
-  if (!PyArg_ParseTuple(args, "ii", &friendnumber, &groupid)) {
+  int friend_number = 0;
+  int conference_number = 0;
+  if (!PyArg_ParseTuple(args, "ii", &friend_number, &conference_number)) {
     return NULL;
   }
 
-  int rc = tox_invite_friend(self->tox, friendnumber, groupid);
-  if (rc == -1) {
+  TOX_ERR_CONFERENCE_INVITE error;
+  tox_conference_invite(self->tox, friend_number, conference_number, &error);
+  if (error != TOX_ERR_CONFERENCE_INVITE_OK) {
     PyErr_SetString(ToxOpError, "failed to invite friend");
   }
 
-  return PyLong_FromLong(rc);
+  Py_RETURN_NONE;
 }
 
 static PyObject*
-ToxCore_join_groupchat(ToxCore* self, PyObject* args)
+ToxCore_conference_join(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  uint8_t* data = NULL;
+  int friend_number = 0;
+  uint8_t* cookie = NULL;
   int length = 0;
-  int32_t friendnumber = 0;
 
-  if (!PyArg_ParseTuple(args, "is#", &friendnumber, &data, &length)) {
+  if (!PyArg_ParseTuple(args, "is#", &friend_number, &cookie, &length)) {
     return NULL;
   }
 
-  int ret = tox_join_groupchat(self->tox, friendnumber, data, length);
-  if (ret == -1) {
-    PyErr_SetString(ToxOpError, "failed to join group chat");
+  TOX_ERR_CONFERENCE_JOIN error;
+  uint32_t ret = tox_conference_join(self->tox, friend_number, cookie, length,
+      &error);
+  if (error != TOX_ERR_CONFERENCE_JOIN_OK) {
+    PyErr_SetString(ToxOpError, "failed to join conference");
   }
 
   return PyLong_FromLong(ret);
 }
 
 static PyObject*
-ToxCore_group_message_send(ToxCore* self, PyObject* args)
+ToxCore_conference_send_message(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int groupid = 0;
+  int conference_number = 0;
+  int type = 0;
   uint8_t* message = NULL;
   uint32_t length = 0;
 
-  if (!PyArg_ParseTuple(args, "is#", &groupid, &message, &length)) {
+  if (!PyArg_ParseTuple(args, "iis#", &conference_number, &type, &message, &length)) {
     return NULL;
   }
 
-  int rc = tox_group_message_send(self->tox, groupid, message, length);
-  if (rc == -1) {
-    PyErr_SetString(ToxOpError, "failed to send group message");
+  TOX_ERR_CONFERENCE_SEND_MESSAGE error;
+  tox_conference_send_message(self->tox, conference_number, type, message, length, &error);
+  if (error != TOX_ERR_CONFERENCE_SEND_MESSAGE_OK) {
+    PyErr_SetString(ToxOpError, "failed to send conference message");
   }
 
-  return PyLong_FromLong(rc);
+  Py_RETURN_NONE;
 }
 
 static PyObject*
-ToxCore_group_action_send(ToxCore* self, PyObject* args)
+ToxCore_conference_peer_count(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int groupid = 0;
-  uint8_t* action = NULL;
-  uint32_t length = 0;
+  int conference_number = 0;
 
-  if (!PyArg_ParseTuple(args, "is#", &groupid, &action, &length)) {
+  if (!PyArg_ParseTuple(args, "i", &conference_number)) {
     return NULL;
   }
 
-  int rc = tox_group_action_send(self->tox, groupid, action, length);
-  if (rc == -1) {
-    PyErr_SetString(ToxOpError, "failed to send group action");
+  TOX_ERR_CONFERENCE_PEER_QUERY error;
+  uint32_t count = tox_conference_peer_count(self->tox, conference_number, &error);
+  if (error != TOX_ERR_CONFERENCE_PEER_QUERY_OK) {
+    PyErr_SetString(ToxOpError, "failed to get conference peer count");
   }
 
-  return PyLong_FromLong(rc);
+  return PyLong_FromLong(count);
 }
 
 static PyObject*
-ToxCore_group_number_peers(ToxCore* self, PyObject* args)
+ToxCore_conference_get_chatlist_size(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int groupid = 0;
-
-  if (!PyArg_ParseTuple(args, "i", &groupid)) {
-    return NULL;
-  }
-
-  int ret = tox_group_number_peers(self->tox, groupid);
-
-  return PyLong_FromLong(ret);
-}
-
-static PyObject*
-ToxCore_group_get_names(ToxCore* self, PyObject* args)
-{
-  CHECK_TOX(self);
-
-  int groupid = 0;
-  if (!PyArg_ParseTuple(args, "i", &groupid)) {
-    return NULL;
-  }
-
-  int n = tox_group_number_peers(self->tox, groupid);
-  uint16_t* lengths = (uint16_t*)malloc(sizeof(uint16_t) * n);
-  uint8_t (*names)[TOX_MAX_NAME_LENGTH] = (uint8_t(*)[TOX_MAX_NAME_LENGTH])
-    malloc(sizeof(uint8_t) * n * TOX_MAX_NAME_LENGTH);
-
-  int n2 = tox_group_get_names(self->tox, groupid, names, lengths, n);
-  if (n2 == -1) {
-    PyErr_SetString(ToxOpError, "failed to get group member names");
-    return NULL;
-  }
-
-  PyObject* list = NULL;
-  if (!(list = PyList_New(0))) {
-    return NULL;
-  }
-
-  int i = 0;
-  for (i = 0; i < n2; ++i) {
-    PyList_Append(list,
-        PYSTRING_FromStringAndSize((const char*)names[i], lengths[i]));
-  }
-
-  free(names);
-  free(lengths);
-
-  return list;
-}
-
-static PyObject*
-ToxCore_count_chatlist(ToxCore* self, PyObject* args)
-{
-  CHECK_TOX(self);
-
-  uint32_t n = tox_count_chatlist(self->tox);
+  size_t n = tox_conference_get_chatlist_size(self->tox);
   return PyLong_FromUnsignedLong(n);
 }
 
 static PyObject*
-ToxCore_get_chatlist(ToxCore* self, PyObject* args)
+ToxCore_conference_get_chatlist(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  PyObject* plist = NULL;
-  uint32_t count = tox_count_chatlist(self->tox);
-  int* list = (int*)malloc(count * sizeof(int));
+  uint32_t count = tox_conference_get_chatlist_size(self->tox);
+  uint32_t* list = (uint32_t*)malloc(count * sizeof(uint32_t));
+  if (list == NULL) {
+    PyErr_SetString(ToxOpError, "allocation failure");
+    Py_RETURN_NONE;
+  }
 
-  int n = tox_get_chatlist(self->tox, list, count);
+  tox_conference_get_chatlist(self->tox, list);
 
-  if (!(plist = PyList_New(0))) {
+  PyObject* plist = PyList_New(0);
+  if (!plist) {
     return NULL;
   }
 
-  int i = 0;
-  for (i = 0; i < n; ++i) {
+  uint32_t i = 0;
+  for (i = 0; i < count; ++i) {
     PyList_Append(plist, PyLong_FromLong(list[i]));
   }
   free(list);
@@ -1416,7 +1373,7 @@ ToxCore_iterate(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  tox_iterate(self->tox);
+  tox_iterate(self->tox, self);
 
   if (PyErr_Occurred()) {
     return NULL;
@@ -1450,12 +1407,18 @@ ToxCore_get_savedata(ToxCore* self, PyObject* args)
 }
 
 PyMethodDef Tox_methods[] = {
-    {
-        "on_self_connection_status", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
-        "on_self_connection_status(friend_number, status)\n"
-        "Callback for receiving read receipt, default implementation does "
-        "nothing."
-    },
+  {
+    "on_log", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_log(level, file, line, func, message)\n"
+    "Callback for internal log messages, default implementation does "
+    "nothing."
+  },
+  {
+    "on_self_connection_status", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_self_connection_status(friend_number, status)\n"
+    "Callback for receiving read receipt, default implementation does "
+    "nothing."
+  },
   {
     "on_friend_request", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
     "on_friend_request(address, message)\n"
@@ -1507,41 +1470,34 @@ PyMethodDef Tox_methods[] = {
     "after previously online."
   },
   {
-    "on_group_invite", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
-    "on_group_invite(friend_number, type, group_public_key)\n"
-    "Callback for receiving group invitations, default implementation does "
+    "on_conference_invite", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_conference_invite(friend_number, type, cookie)\n"
+    "Callback for receiving conference invitations, default implementation does "
     "nothing.\n\n"
     ".. seealso ::\n"
-    "    :meth:`.group_get_type`"
+    "    :meth:`.conference_get_type`"
   },
   {
-    "on_group_message", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
-    "on_group_message(group_number, friend_group_number, message)\n"
-    "Callback for receiving group messages, default implementation does "
+    "on_conference_message", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_conference_message(conference_number, peer_number, message)\n"
+    "Callback for receiving conference messages, default implementation does "
     "nothing."
   },
   {
-    "on_group_action", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
-    "on_group_action(group_number, friend_group_number, action)\n"
-    "Callback for receiving group actions, default implementation does "
-    "nothing."
-  },
-  {
-    "on_group_namelist_change", (PyCFunction)ToxCore_callback_stub,
-    METH_VARARGS,
-    "on_group_namelist_change(group_number, peer_number, change)\n"
-    "Callback for receiving group messages, default implementation does "
+    "on_conference_namelist_change", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_conference_namelist_change(conference_number, peer_number, change)\n"
+    "Callback for joins/parts/name changes, default implementation does "
     "nothing.\n\n"
     "There are there possible *change* values:\n\n"
-    "+---------------------------+----------------------+\n"
-    "| change                    | description          |\n"
-    "+===========================+======================+\n"
-    "| Tox.CHAT_CHANGE_PEER_ADD  | a peer is added      |\n"
-    "+---------------------------+----------------------+\n"
-    "| Tox.CHAT_CHANGE_PEER_DEL  | a peer is deleted    |\n"
-    "+---------------------------+----------------------+\n"
-    "| Tox.CHAT_CHANGE_PEER_NAME | name of peer changed |\n"
-    "+---------------------------+----------------------+\n"
+    "+----------------------------------------------+----------------------+\n"
+    "| change                                       | description          |\n"
+    "+==============================================+======================+\n"
+    "| Tox.CONFERENCE_STATE_CHANGE_PEER_JOIN        | a peer is added      |\n"
+    "+----------------------------------------------+----------------------+\n"
+    "| Tox.CONFERENCE_STATE_CHANGE_PEER_EXIT        | a peer is deleted    |\n"
+    "+----------------------------------------------+----------------------+\n"
+    "| Tox.CONFERENCE_STATE_CHANGE_PEER_NAME_CHANGE | name of peer changed |\n"
+    "+----------------------------------------------+----------------------+\n"
   },
   {
     "on_file_recv", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
@@ -1574,8 +1530,7 @@ PyMethodDef Tox_methods[] = {
     "Add a friend."
   },
   {
-    "friend_add_norequest", (PyCFunction)ToxCore_friend_add_norequest,
-    METH_VARARGS,
+    "friend_add_norequest", (PyCFunction)ToxCore_friend_add_norequest, METH_VARARGS,
     "friend_add_norequest(address)\n"
     "Add a friend without sending request."
   },
@@ -1595,8 +1550,7 @@ PyMethodDef Tox_methods[] = {
     "Remove a friend."
   },
   {
-    "friend_get_connection_status",
-    (PyCFunction)ToxCore_friend_get_connection_status, METH_VARARGS,
+    "friend_get_connection_status", (PyCFunction)ToxCore_friend_get_connection_status, METH_VARARGS,
     "friend_get_connection_status(friend_number)\n"
     "Return True if friend is connected(Online) else False."
   },
@@ -1657,14 +1611,12 @@ PyMethodDef Tox_methods[] = {
     "+------------------------+--------------------+\n"
   },
   {
-    "friend_get_status_message_size", (PyCFunction)ToxCore_friend_get_status_message_size,
-    METH_VARARGS,
+    "friend_get_status_message_size", (PyCFunction)ToxCore_friend_get_status_message_size, METH_VARARGS,
     "friend_get_status_message_size(friend_number)\n"
     "Return the length of *friend_number*'s status message."
   },
   {
-    "friend_get_status_message", (PyCFunction)ToxCore_friend_get_status_message,
-    METH_VARARGS,
+    "friend_get_status_message", (PyCFunction)ToxCore_friend_get_status_message, METH_VARARGS,
     "friend_get_status_message(friend_number)\n"
     "Get status message of a friend."
   },
@@ -1682,8 +1634,7 @@ PyMethodDef Tox_methods[] = {
     "Get status message string length of yourself."
   },
   {
-    "friend_get_status", (PyCFunction)ToxCore_friend_get_status,
-    METH_VARARGS,
+    "friend_get_status", (PyCFunction)ToxCore_friend_get_status, METH_VARARGS,
     "friend_get_status(friend_number)\n"
     "Get friend status.\n\n"
     ".. seealso ::\n"
@@ -1698,21 +1649,18 @@ PyMethodDef Tox_methods[] = {
     "    :meth:`.set_user_status`"
   },
   {
-    "friend_get_last_online", (PyCFunction)ToxCore_friend_get_last_online,
-    METH_VARARGS,
+    "friend_get_last_online", (PyCFunction)ToxCore_friend_get_last_online, METH_VARARGS,
     "friend_get_last_online(friend_number)\n"
     "returns datetime.datetime object representing the last time "
     "*friend_number* was seen online, or None if never seen."
   },
   {
-    "self_set_typing", (PyCFunction)ToxCore_self_set_typing,
-    METH_VARARGS,
+    "self_set_typing", (PyCFunction)ToxCore_self_set_typing, METH_VARARGS,
     "self_set_typing(friend_number, is_typing)\n"
     "Set user typing status.\n\n"
   },
   {
-    "friend_get_typing", (PyCFunction)ToxCore_friend_get_typing,
-    METH_VARARGS,
+    "friend_get_typing", (PyCFunction)ToxCore_friend_get_typing, METH_VARARGS,
     "friend_get_typing(friend_number)\n"
     "Return True is user is typing.\n\n"
   },
@@ -1729,82 +1677,72 @@ PyMethodDef Tox_methods[] = {
     "Get a list of valid friend numbers."
   },
   {
-    "group_get_title", (PyCFunction)ToxCore_group_get_title, METH_VARARGS,
-    "group_get_title(group_number)\n"
-    "Returns the title for group_number."
+    "conference_get_title", (PyCFunction)ToxCore_conference_get_title, METH_VARARGS,
+    "conference_get_title(conference_number)\n"
+    "Returns the title for a conference."
   },
   {
-    "group_set_title", (PyCFunction)ToxCore_group_set_title, METH_VARARGS,
-    "group_set_title(group_number, title)\n"
-    "Sets the title for group."
+    "conference_set_title", (PyCFunction)ToxCore_conference_set_title, METH_VARARGS,
+    "conference_set_title(conference_number, title)\n"
+    "Sets the title for a conference."
   },
   {
-    "group_get_type", (PyCFunction)ToxCore_group_get_type, METH_VARARGS,
-    "group_get_type(group_number)\n"
-    "Return the type of group, could be the following value:\n\n"
-    "+-------------------------+-------------+\n"
-    "| type                    | description |\n"
-    "+=========================+=============+\n"
-    "| Tox.GROUPCHAT_TYPE_TEXT | text chat   |\n"
-    "+-------------------------+-------------+\n"
-    "| Tox.GROUPCHAT_TYPE_AV   | video chat  |\n"
-    "+-------------------------+-------------+\n"
+    "conference_get_type", (PyCFunction)ToxCore_conference_get_type, METH_VARARGS,
+    "conference_get_type(conference_number)\n"
+    "Return the type of conference, could be the following value:\n\n"
+    "+--------------------------+-------------+\n"
+    "| type                     | description |\n"
+    "+==========================+=============+\n"
+    "| Tox.CONFERENCE_TYPE_TEXT | text chat   |\n"
+    "+--------------------------+-------------+\n"
+    "| Tox.CONFERENCE_TYPE_AV   | video chat  |\n"
+    "+--------------------------+-------------+\n"
   },
   {
-    "add_groupchat", (PyCFunction)ToxCore_add_groupchat, METH_VARARGS,
-    "add_groupchat()\n"
-    "Creates a new groupchat and puts it in the chats array."
+    "conference_new", (PyCFunction)ToxCore_conference_new, METH_VARARGS,
+    "conference_new()\n"
+    "Creates a new conference and puts it in the chats array."
   },
   {
-    "del_groupchat", (PyCFunction)ToxCore_del_groupchat, METH_VARARGS,
-    "del_groupchat(group_number)\n"
-    "Delete a groupchat from the chats array."
+    "conference_delete", (PyCFunction)ToxCore_conference_delete, METH_VARARGS,
+    "conference_delete(conference_number)\n"
+    "Delete a conference from the chats array."
   },
   {
-    "group_peername", (PyCFunction)ToxCore_group_peername, METH_VARARGS,
-    "group_peername(group_number, peer_number)\n"
-    "Get the group peer's name."
+    "conference_peer_get_name", (PyCFunction)ToxCore_conference_peer_get_name, METH_VARARGS,
+    "conference_peer_get_name(conference_number, peer_number)\n"
+    "Get the conference peer's name."
   },
   {
-    "invite_friend", (PyCFunction)ToxCore_invite_friend, METH_VARARGS,
-    "invite_friend(friend_number, group_number)\n"
-    "Invite friendnumber to groupnumber."
+    "conference_invite", (PyCFunction)ToxCore_conference_invite, METH_VARARGS,
+    "conference_invite(friend_number, conference_number)\n"
+    "Invite friend_number to conference_number."
   },
   {
-    "join_groupchat", (PyCFunction)ToxCore_join_groupchat, METH_VARARGS,
-    "join_groupchat(friend_number, data)\n"
-    "Join a group (you need to have been invited first.). Returns the group "
-    "number of success."
+    "conference_join", (PyCFunction)ToxCore_conference_join, METH_VARARGS,
+    "conference_join(friend_number, cookie)\n"
+    "Join a conference (you need to have been invited first.). Returns the "
+    "conference number of success."
   },
   {
-    "group_message_send", (PyCFunction)ToxCore_group_message_send, METH_VARARGS,
-    "group_message_send(group_number, message)\n"
-    "send a group message."
+    "conference_send_message", (PyCFunction)ToxCore_conference_send_message, METH_VARARGS,
+    "conference_send_message(conference_number, type, message)\n"
+    "Send a conference message."
   },
   {
-    "group_action_send", (PyCFunction)ToxCore_group_action_send, METH_VARARGS,
-    "group_action_send(group_number, action)\n"
-    "send a group action."
+    "conference_peer_count", (PyCFunction)ToxCore_conference_peer_count, METH_VARARGS,
+    "conference_peer_count(conference_number)\n"
+    "Return the number of peers in the conference."
   },
   {
-    "group_number_peers", (PyCFunction)ToxCore_group_number_peers, METH_VARARGS,
-    "group_number_peers(group_number)\n"
-    "Return the number of peers in the group chat."
+    "conference_get_chatlist_size", (PyCFunction)ToxCore_conference_get_chatlist_size, METH_VARARGS,
+    "conference_get_chatlist_size()\n"
+    "Return the number of conferences in the current Tox instance."
   },
   {
-    "group_get_names", (PyCFunction)ToxCore_group_get_names, METH_VARARGS,
-    "group_get_names(group_number)\n"
-    "List all the peers in the group chat."
-  },
-  {
-    "count_chatlist", (PyCFunction)ToxCore_count_chatlist, METH_VARARGS,
-    "count_chatlist()\n"
-    "Return the number of chats in the current Tox instance."
-  },
-  {
-    "get_chatlist", (PyCFunction)ToxCore_get_chatlist, METH_VARARGS,
-    "get_chatlist()\n"
-    "Return a list of valid group numbers."
+    "conference_get_chatlist", (PyCFunction)ToxCore_conference_get_chatlist, METH_VARARGS,
+    "conference_get_chatlist()\n"
+    "Return a list of valid conference numbers."
   },
   {
     "file_send", (PyCFunction)ToxCore_file_send, METH_VARARGS,
@@ -1838,8 +1776,7 @@ PyMethodDef Tox_methods[] = {
     "get nospam part from ID"
   },
   {
-    "self_set_nospam", (PyCFunction)ToxCore_self_set_nospam,
-    METH_VARARGS,
+    "self_set_nospam", (PyCFunction)ToxCore_self_set_nospam, METH_VARARGS,
     "self_set_nospam(nospam)\n"
     "set nospam part of ID. *nospam* should be of type uint32"
   },
@@ -1851,8 +1788,7 @@ PyMethodDef Tox_methods[] = {
     "(public_key, secret_key)"
   },
   {
-    "bootstrap", (PyCFunction)ToxCore_bootstrap,
-    METH_VARARGS,
+    "bootstrap", (PyCFunction)ToxCore_bootstrap, METH_VARARGS,
     "bootstrap(address, port, public_key)\n"
     "Resolves address into an IP address. If successful, sends a 'get nodes'"
     "request to the given node with ip, port."
@@ -1892,7 +1828,10 @@ PyMethodDef Tox_methods[] = {
     "get_savedata()\n"
     "Return messenger blob in str."
   },
-    {NULL, NULL, 0, NULL, NULL}
+  {
+    NULL, NULL, 0,
+    NULL,
+  }
 };
 
 PyTypeObject ToxCoreType = {
@@ -1971,16 +1910,21 @@ void ToxCore_install_dict()
     SET(USER_STATUS_NONE)
     SET(USER_STATUS_AWAY)
     SET(USER_STATUS_BUSY)
-    SET(CHAT_CHANGE_PEER_ADD)
-    SET(CHAT_CHANGE_PEER_DEL)
-    SET(CHAT_CHANGE_PEER_NAME)
+    SET(CONFERENCE_STATE_CHANGE_PEER_JOIN)
+    SET(CONFERENCE_STATE_CHANGE_PEER_EXIT)
+    SET(CONFERENCE_STATE_CHANGE_PEER_NAME_CHANGE)
     SET(FILE_KIND_DATA)
     SET(FILE_KIND_AVATAR)
     SET(FILE_CONTROL_RESUME)
     SET(FILE_CONTROL_PAUSE)
     SET(FILE_CONTROL_CANCEL)
-    SET(GROUPCHAT_TYPE_TEXT)
-    SET(GROUPCHAT_TYPE_AV)
+    SET(CONFERENCE_TYPE_TEXT)
+    SET(CONFERENCE_TYPE_AV)
+    SET(LOG_LEVEL_LOG_TRACE)
+    SET(LOG_LEVEL_LOG_DEBUG)
+    SET(LOG_LEVEL_LOG_INFO)
+    SET(LOG_LEVEL_LOG_WARNING)
+    SET(LOG_LEVEL_LOG_ERROR)
 
 #undef SET
 
