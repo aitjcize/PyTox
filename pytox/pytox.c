@@ -24,16 +24,10 @@
 #include <stdio.h>
 
 #include "core.h"
+#include "util.h"
 
 #ifdef ENABLE_AV
   #include "av.h"
-#endif
-
-extern PyObject* ToxOpError;
-extern PyTypeObject ToxCoreType;
-
-#ifdef ENABLE_AV
-extern PyTypeObject ToxAVCoreType;
 #endif
 
 #if PY_MAJOR_VERSION >= 3
@@ -50,6 +44,7 @@ struct PyModuleDef moduledef = {
 };
 #endif
 
+PyMODINIT_FUNC initpytox(void);
 #if PY_MAJOR_VERSION >= 3
 PyMODINIT_FUNC PyInit_pytox(void)
 {

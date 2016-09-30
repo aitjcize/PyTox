@@ -20,10 +20,12 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __UTIL_H__
-#define __UTIL_H__
+#ifndef PYTOX_UTIL_H
+#define PYTOX_UTIL_H
 
 #include <Python.h>
+
+extern PyObject* ToxOpError;
 
 #define CHECK_TOX(self)                                        \
   if ((self)->tox == NULL) {                                   \
@@ -52,4 +54,4 @@ void hex_string_to_bytes(uint8_t* hexstr, int length, uint8_t* bytes);
 void PyStringUnicode_AsStringAndSize(PyObject* object, char** str,
     Py_ssize_t* len);
 
-#endif /* __UTIL_H__ */
+#endif /* PYTOX_UTIL_H */

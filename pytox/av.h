@@ -20,8 +20,8 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __AV_H__
-#define __AV_H__
+#ifndef PYTOX_AV_H
+#define PYTOX_AV_H
 
 #include <Python.h>
 #include <tox/toxav.h>
@@ -38,6 +38,9 @@ typedef struct {
     vpx_image_t *in_image;
 } ToxAVCore;
 
+/* This needs to be extern as it's dynamically loaded by the Python interpreter. */
+extern PyTypeObject ToxAVCoreType;
+
 void ToxAVCore_install_dict(void);
 
-#endif /* __AV_H__ */
+#endif /* PYTOX_AV_H */

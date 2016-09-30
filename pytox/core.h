@@ -20,8 +20,8 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __CORE_H__
-#define __CORE_H__
+#ifndef PYTOX_CORE_H
+#define PYTOX_CORE_H
 
 #include <Python.h>
 #include <tox/tox.h>
@@ -32,6 +32,9 @@ typedef struct {
   Tox* tox;
 } ToxCore;
 
+/* This needs to be extern as it's dynamically loaded by the Python interpreter. */
+extern PyTypeObject ToxCoreType;
+
 void ToxCore_install_dict(void);
 
-#endif /* __CORE_H__ */
+#endif /* PYTOX_CORE_H */

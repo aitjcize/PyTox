@@ -23,17 +23,11 @@
 #include "core.h"
 #include "util.h"
 
-#define TOX_ENABLE_IPV6_DEFAULT true
-
-#include <arpa/inet.h>
-
 #if PY_MAJOR_VERSION < 3
 # define BUF_TC "s"
 #else
 # define BUF_TC "y"
 #endif
-
-extern PyObject* ToxOpError;
 
 static void callback_log(Tox *tox, TOX_LOG_LEVEL level, const char *file, uint32_t line, const char *func,
                          const char *message, void* self)
@@ -181,8 +175,9 @@ static void init_options(PyObject* pyopts, struct Tox_Options* tox_opts)
     p = PyObject_GetAttrString(pyopts, "savedata_data");
     PyBytes_AsStringAndSize(p, &buf, &sz);
     if (sz > 0) {
-        tox_opts->savedata_data = calloc(1, sz);
-        memcpy((void*)tox_opts->savedata_data, buf, sz);
+        uint8_t *savedata_data = calloc(1, sz); /* XXX: Memory leak! */
+        memcpy(savedata_data, buf, sz);
+        tox_opts->savedata_data = savedata_data;
         tox_opts->savedata_length = sz;
         tox_opts->savedata_type = TOX_SAVEDATA_TYPE_TOX_SAVE;
     }
@@ -190,8 +185,9 @@ static void init_options(PyObject* pyopts, struct Tox_Options* tox_opts)
     p = PyObject_GetAttrString(pyopts, "proxy_host");
     PyStringUnicode_AsStringAndSize(p, &buf, &sz);
     if (sz > 0) {
-        tox_opts->proxy_host = calloc(1, sz);
-        memcpy((void*)tox_opts->proxy_host, buf, sz);
+        char *proxy_host = calloc(1, sz); /* XXX: Memory leak! */
+        memcpy(proxy_host, buf, sz);
+        tox_opts->proxy_host = proxy_host;
     }
 
     p = PyObject_GetAttrString(pyopts, "proxy_port");
@@ -388,7 +384,7 @@ ToxCore_friend_add(ToxCore* self, PyObject* args)
   case TOX_ERR_FRIEND_ADD_MALLOC:
     PyErr_SetString(ToxOpError, "increasing the friend list size fails");
     break;
-  default:
+  case TOX_ERR_FRIEND_ADD_OK:
 #if 0
       success = 1;
 #endif
@@ -845,14 +841,18 @@ ToxCore_self_get_friend_list(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  PyObject* plist = NULL;
   uint32_t count = tox_self_get_friend_list_size(self->tox);
   uint32_t* list = (uint32_t*)malloc(count * sizeof(uint32_t));
+  if (!list) {
+    return NULL;
+  }
 
   uint32_t n = count;
   tox_self_get_friend_list(self->tox, list);
 
-  if (!(plist = PyList_New(0))) {
+  PyObject* plist = PyList_New(0);
+  if (!plist) {
+    free(list);
     return NULL;
   }
 
@@ -1406,7 +1406,7 @@ ToxCore_get_savedata(ToxCore* self, PyObject* args)
   return res;
 }
 
-PyMethodDef Tox_methods[] = {
+static PyMethodDef Tox_methods[] = {
   {
     "on_log", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
     "on_log(level, file, line, func, message)\n"

@@ -33,8 +33,6 @@
 # define BUF_TCS "y#"
 #endif
 
-extern PyObject* ToxOpError;
-
 
 static void
 ToxAVCore_callback_call(ToxAV *toxAV, uint32_t friend_number, bool audio_enabled,
@@ -239,7 +237,7 @@ ToxAVCore_callback_add_av_groupchat(/*Tox*/void *tox, int groupnumber, int peern
     uint32_t length = samples * channels * 2;
 
     PyObject_CallMethod((PyObject*)self, "on_add_av_groupchat", "ii" BUF_TCS "iii",
-                        groupnumber, peernumber, (char*)pcm, length,
+                        groupnumber, peernumber, pcm, length,
                         samples, channels, sample_rate);
 
     if (PyErr_Occurred()) {
@@ -258,7 +256,7 @@ ToxAVCore_callback_join_av_groupchat(/*Tox*/void *tox, int groupnumber, int peer
     uint32_t length = samples * channels * 2;
 
     PyObject_CallMethod((PyObject*)self, "on_join_av_groupchat", "ii" BUF_TCS "iii",
-                        groupnumber, peernumber, (char*)pcm, length,
+                        groupnumber, peernumber, pcm, length,
                         samples, channels, sample_rate);
 
     if (PyErr_Occurred()) {
@@ -518,7 +516,7 @@ static PyObject*
 ToxAVCore_group_send_audio(ToxAVCore *self, PyObject* args)
 {
     uint32_t group_number;
-    uint8_t *pcm;
+    int16_t *pcm;
     uint32_t length;
     uint32_t samples;
     uint32_t channels;
@@ -530,7 +528,7 @@ ToxAVCore_group_send_audio(ToxAVCore *self, PyObject* args)
     }
 
     Tox *tox = ((ToxCore*)self->core)->tox;
-    int ret = toxav_group_send_audio(tox, group_number, (int16_t*)pcm, samples, channels, sample_rate);
+    int ret = toxav_group_send_audio(tox, group_number, pcm, samples, channels, sample_rate);
     if (ret == -1) {
         PyErr_Format(ToxOpError, "toxav group send audio error.");
         return NULL;
@@ -569,7 +567,7 @@ ToxAVCore_callback_stub(ToxAVCore *self, PyObject* args)
 }
 #endif
 
-PyMethodDef ToxAVCore_methods[] = {
+static PyMethodDef ToxAVCore_methods[] = {
     {
         "call", (PyCFunction)ToxAVCore_call, METH_VARARGS,
         "call(friend_number, audio_bit_rate, video_bit_rate)\n"
