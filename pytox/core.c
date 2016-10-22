@@ -1066,19 +1066,36 @@ ToxCore_group_action_send(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
-ToxCore_group_number_peers(ToxCore* self, PyObject* args)
+ToxCore_group_peernumber_is_ours(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
 
-  int groupid = 0;
+  int group_number = 0;
+  int peer_number = 0;
 
-  if (!PyArg_ParseTuple(args, "i", &groupid)) {
+  if (!PyArg_ParseTuple(args, "ii", &group_number, &peer_number)) {
     return NULL;
   }
 
-  int ret = tox_group_number_peers(self->tox, groupid);
+  int ret = tox_group_peernumber_is_ours(self->tox, group_number, peer_number);
 
   return PyLong_FromLong(ret);
+}
+
+static PyObject*
+ToxCore_group_number_peers(ToxCore* self, PyObject* args)
+{
+    CHECK_TOX(self);
+
+    int groupid = 0;
+
+    if (!PyArg_ParseTuple(args, "i", &groupid)) {
+        return NULL;
+    }
+
+    int ret = tox_group_number_peers(self->tox, groupid);
+
+    return PyLong_FromLong(ret);
 }
 
 static PyObject*
@@ -1785,6 +1802,11 @@ PyMethodDef Tox_methods[] = {
     "group_action_send", (PyCFunction)ToxCore_group_action_send, METH_VARARGS,
     "group_action_send(group_number, action)\n"
     "send a group action."
+  },
+  {
+    "group_peernumber_is_ours", (PyCFunction)ToxCore_group_peernumber_is_ours, METH_VARARGS,
+    "group_peernumber_is_ours(group_number, peer_number)\n"
+    "Check if the current peernumber corresponds to ours."
   },
   {
     "group_number_peers", (PyCFunction)ToxCore_group_number_peers, METH_VARARGS,
