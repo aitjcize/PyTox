@@ -1053,6 +1053,27 @@ ToxCore_conference_send_message(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
+ToxCore_conference_peer_number_is_ours(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  int conference_number = 0;
+  int peer_number = 0;
+
+  if (!PyArg_ParseTuple(args, "ii", &conference_number, &peer_number)) {
+    return NULL;
+  }
+
+  TOX_ERR_CONFERENCE_PEER_QUERY error;
+  bool ret = tox_conference_peer_number_is_ours(self->tox, conference_number, peer_number, &error);
+  if (error != TOX_ERR_CONFERENCE_PEER_QUERY_OK) {
+    PyErr_SetString(ToxOpError, "failed to check if peer number is ours");
+  }
+
+  return PyLong_FromLong(ret);
+}
+
+static PyObject*
 ToxCore_conference_peer_count(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
@@ -1738,6 +1759,11 @@ static PyMethodDef Tox_methods[] = {
     "conference_get_chatlist_size", (PyCFunction)ToxCore_conference_get_chatlist_size, METH_VARARGS,
     "conference_get_chatlist_size()\n"
     "Return the number of conferences in the current Tox instance."
+  },
+  {
+    "conference_peer_number_is_ours", (PyCFunction)ToxCore_conference_peer_number_is_ours, METH_VARARGS,
+    "conference_peer_number_is_ours(conference_number, peer_number)\n"
+    "Check if the current peer number corresponds to ours."
   },
   {
     "conference_get_chatlist", (PyCFunction)ToxCore_conference_get_chatlist, METH_VARARGS,
