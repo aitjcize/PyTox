@@ -984,6 +984,31 @@ ToxCore_group_peername(ToxCore* self, PyObject* args)
 }
 
 static PyObject*
+ToxCore_group_peer_pubkey(ToxCore* self, PyObject* args)
+{
+  CHECK_TOX(self);
+
+  uint8_t buf[TOX_PUBLIC_KEY_SIZE];
+  memset(buf, 0, TOX_PUBLIC_KEY_SIZE);
+
+  int groupid = 0;
+  int peernumber = 0;
+  if (!PyArg_ParseTuple(args, "ii", &groupid, &peernumber)) {
+      return NULL;
+  }
+
+  int ret = tox_group_peer_pubkey(self->tox, groupid, peernumber, buf);
+  if (ret == -1) {
+      PyErr_SetString(ToxOpError, "failed to get group peer pubkey");
+  }
+
+  uint8_t hex[TOX_PUBLIC_KEY_SIZE*2+1];
+  memset(hex, 0, TOX_PUBLIC_KEY_SIZE*2+1);
+  bytes_to_hex_string(buf, TOX_PUBLIC_KEY_SIZE, hex);
+  return PYSTRING_FromString((const char*)hex);
+}
+
+static PyObject*
 ToxCore_invite_friend(ToxCore* self, PyObject* args)
 {
   CHECK_TOX(self);
@@ -1085,18 +1110,18 @@ ToxCore_group_peernumber_is_ours(ToxCore* self, PyObject* args)
 static PyObject*
 ToxCore_group_number_peers(ToxCore* self, PyObject* args)
 {
-    CHECK_TOX(self);
+  CHECK_TOX(self);
 
-    int groupid = 0;
+  int groupid = 0;
 
-    if (!PyArg_ParseTuple(args, "i", &groupid)) {
-        return NULL;
-    }
+  if (!PyArg_ParseTuple(args, "i", &groupid)) {
+      return NULL;
+  }
 
-    int ret = tox_group_number_peers(self->tox, groupid);
+  int ret = tox_group_number_peers(self->tox, groupid);
 
-    return PyLong_FromLong(ret);
-}
+  return PyLong_FromLong(ret);
+  }
 
 static PyObject*
 ToxCore_group_get_names(ToxCore* self, PyObject* args)
@@ -1781,6 +1806,11 @@ PyMethodDef Tox_methods[] = {
     "group_peername", (PyCFunction)ToxCore_group_peername, METH_VARARGS,
     "group_peername(group_number, peer_number)\n"
     "Get the group peer's name."
+  },
+  {
+    "group_peer_pubkey", (PyCFunction)ToxCore_group_peer_pubkey, METH_VARARGS,
+    "group_peer_pubkey(group_number, peer_number)\n"
+    "Get the group peer's pubkey."
   },
   {
     "invite_friend", (PyCFunction)ToxCore_invite_friend, METH_VARARGS,
