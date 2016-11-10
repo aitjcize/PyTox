@@ -166,7 +166,7 @@ static void callback_file_recv_chunk(Tox *tox, uint32_t friend_number, uint32_t 
                         friend_number, file_number, position, data, length);
 }
 
-static void init_options(PyObject* pyopts, struct Tox_Options* tox_opts)
+static void init_options(ToxCore* self, PyObject* pyopts, struct Tox_Options* tox_opts)
 {
     char *buf = NULL;
     Py_ssize_t sz = 0;
@@ -224,6 +224,9 @@ static void init_options(PyObject* pyopts, struct Tox_Options* tox_opts)
     if (p) {
         tox_opts->tcp_port = PyLong_AsLong(p);
     }
+
+    tox_opts->log_callback = callback_log;
+    tox_opts->log_user_data = self;
 }
 
 static int init_helper(ToxCore* self, PyObject* args)
@@ -246,7 +249,7 @@ static int init_helper(ToxCore* self, PyObject* args)
   tox_options_default(&options);
 
   if (opts != NULL) {
-      init_options(opts, &options);
+      init_options(self, opts, &options);
   }
 
   TOX_ERR_NEW err = 0;
@@ -257,7 +260,6 @@ static int init_helper(ToxCore* self, PyObject* args)
       return -1;
   }
 
-  tox_callback_log(tox, callback_log, self);
   tox_callback_self_connection_status(tox, callback_self_connection_status);
   tox_callback_friend_request(tox, callback_friend_request);
   tox_callback_friend_message(tox, callback_friend_message);
@@ -1946,11 +1948,11 @@ void ToxCore_install_dict()
     SET(FILE_CONTROL_CANCEL)
     SET(CONFERENCE_TYPE_TEXT)
     SET(CONFERENCE_TYPE_AV)
-    SET(LOG_LEVEL_LOG_TRACE)
-    SET(LOG_LEVEL_LOG_DEBUG)
-    SET(LOG_LEVEL_LOG_INFO)
-    SET(LOG_LEVEL_LOG_WARNING)
-    SET(LOG_LEVEL_LOG_ERROR)
+    SET(LOG_LEVEL_TRACE)
+    SET(LOG_LEVEL_DEBUG)
+    SET(LOG_LEVEL_INFO)
+    SET(LOG_LEVEL_WARNING)
+    SET(LOG_LEVEL_ERROR)
 
 #undef SET
 
