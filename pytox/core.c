@@ -137,7 +137,7 @@ static void callback_file_recv(Tox *tox, uint32_t friend_number, uint32_t file_n
                                uint64_t file_size,
                                const uint8_t *filename, size_t filename_length, void *self)
 {
-    if (kind == TOX_FILE_KIND_AVATAR) {
+    if (kind == TOX_FILE_KIND_AVATAR && filename != NULL) {
         assert(TOX_HASH_LENGTH == filename_length);
         char filename_hex[TOX_HASH_LENGTH * 2 + 1];
         memset(filename_hex, 0, TOX_HASH_LENGTH * 2 + 1);
