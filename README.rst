@@ -7,7 +7,11 @@
 
 PyTox
 =====
-Python binding for `Project Tox <https://github.com/irungentoo/toxcore>`_.
+Python binding for `Project Tox <https://github.com/TokTok/c-toxcore>`_.
+
+Docker hub: https://hub.docker.com/r/tetsaicn/pytox/
+Download docker images:docker pull tetsaicn/pytox
+Dockerfile: CN:Dockerfile-cn other:Dockerfile
 
 PyTox provides a Pythonic binding, i.e Object-oriented instead of C style, raise exception instead of returning error code. A simple example is as follows:
 
