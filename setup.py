@@ -25,7 +25,7 @@ libraries = [
 ]
 cflags = [
   "-Wall",
-  "-Werror",
+  # "-Werror",
   "-Wextra",
   "-Wno-declaration-after-statement",
   "-Wno-missing-field-initializers",
