@@ -59,10 +59,13 @@ class AV(ToxAV):
     def on_call_state(self, fid, state):
         print('call state:fn=%d, state=%d' % (fid, state))
 
-    def on_bit_rate_status(self, fid,
-                           audio_bit_rate, video_bit_rate):
-        print('bit rate status: fn=%d, abr=%d, vbr=%d' %
-              (fid, audio_bit_rate, video_bit_rate))
+    def on_audio_bit_rate(self, fid, video_bit_rate):
+        print('audio bit rate status: fn=%d, abr=%d' %
+              (fid, audio_bit_rate))
+
+    def on_video_bit_rate(self, fid, video_bit_rate):
+        print('video bit rate status: fn=%d, vbr=%d' %
+              (fid, video_bit_rate))
 
     def on_audio_receive_frame(self, fid, pcm, sample_count,
                                channels, sampling_rate):
