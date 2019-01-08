@@ -509,7 +509,7 @@ class ToxTest(unittest.TestCase):
         t:conference_join
         t:on_conference_invite
         t:on_conference_message
-        t:on_conference_namelist_change
+        t:on_conference_peer_list_changed
         """
         self.bob_add_alice_as_friend()
 
@@ -530,12 +530,11 @@ class ToxTest(unittest.TestCase):
 
         AliceTox.on_conference_invite = on_conference_invite
 
-        def on_conference_namelist_change(self, gid, peer_number, change):
+        def on_conference_peer_list_changed(self, gid):
             assert gid == group_id
-            assert change == Tox.CONFERENCE_STATE_CHANGE_PEER_JOIN
             self.gn = True
 
-        AliceTox.on_conference_namelist_change = on_conference_namelist_change
+        AliceTox.on_conference_peer_list_changed = on_conference_peer_list_changed
 
         self.alice.gi = False
         self.alice.gn = False
@@ -545,7 +544,7 @@ class ToxTest(unittest.TestCase):
         assert self.wait_callbacks(self.alice, ['gi', 'gn'])
 
         AliceTox.on_conference_invite = Tox.on_conference_invite
-        AliceTox.on_conference_namelist_change = Tox.on_conference_namelist_change
+        AliceTox.on_conference_peer_list_change = Tox.on_conference_peer_list_changed
 
         #: Test group number of peers
         self.loop(50)
@@ -555,15 +554,14 @@ class ToxTest(unittest.TestCase):
         self.alice.self_set_name('Alice')
         self.bob.self_set_name('Bob')
 
-        def on_conference_namelist_change(self, gid, peer_number, change):
-            if change == Tox.CONFERENCE_STATE_CHANGE_PEER_NAME_CHANGE:
-                self.gn = True
+        def on_conference_peer_list_changed(self, gid):
+            self.gn = True
 
-        AliceTox.on_conference_namelist_change = on_conference_namelist_change
+        AliceTox.on_conference_peer_list_changed = on_conference_peer_list_changed
         self.alice.gn = False
 
         assert self.wait_callback(self.alice, 'gn')
-        AliceTox.on_conference_namelist_change = Tox.on_conference_namelist_change
+        AliceTox.on_conference_peer_list_changed = Tox.on_conference_peer_list_changed
 
         peernames = [self.bob.conference_peer_get_name(group_id, i) for i in
                      range(self.bob.conference_peer_count(group_id))]

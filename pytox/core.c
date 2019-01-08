@@ -118,11 +118,16 @@ static void callback_conference_message(Tox *tox, uint32_t conference_number,
       peer_number, type, message, length - (message[length - 1] == 0));
 }
 
-static void callback_conference_namelist_change(Tox *tox, uint32_t conference_number,
-    uint32_t peer_number, TOX_CONFERENCE_STATE_CHANGE change, void* self)
+static void callback_conference_peer_name(Tox *tox, uint32_t conference_number,
+    uint32_t peer_number, const uint8_t *name, size_t length, void* self)
 {
-  PyObject_CallMethod((PyObject*)self, "on_conference_namelist_change", "iii",
-      conference_number, peer_number, change);
+  PyObject_CallMethod((PyObject*)self, "on_conference_peer_name", "iis#",
+      conference_number, peer_number, name, length);
+}
+
+static void callback_conference_peer_list_changed(Tox *tox, uint32_t conference_number, void* self)
+{
+  PyObject_CallMethod((PyObject*)self, "on_conference_peer_list_changed", "i", conference_number);
 }
 
 static void callback_file_chunk_request(Tox *tox, uint32_t friend_number, uint32_t file_number,
@@ -271,7 +276,8 @@ static int init_helper(ToxCore* self, PyObject* args)
   tox_callback_friend_connection_status(tox, callback_friend_connection_status);
   tox_callback_conference_invite(tox, callback_conference_invite);
   tox_callback_conference_message(tox, callback_conference_message);
-  tox_callback_conference_namelist_change(tox, callback_conference_namelist_change);
+  tox_callback_conference_peer_name(tox, callback_conference_peer_name);
+  tox_callback_conference_peer_list_changed(tox, callback_conference_peer_list_changed);
   tox_callback_file_chunk_request(tox, callback_file_chunk_request);
   tox_callback_file_recv_control(tox, callback_file_recv_control);
   tox_callback_file_recv(tox, callback_file_recv);
@@ -1507,20 +1513,16 @@ static PyMethodDef Tox_methods[] = {
     "nothing."
   },
   {
-    "on_conference_namelist_change", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
-    "on_conference_namelist_change(conference_number, peer_number, change)\n"
+    "on_conference_peer_name", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_conference_peer_name(conference_number, peer_number, peer_name)\n"
+    "Callback for receiving conference peer name changes, default implementation does "
+    "nothing.\n"
+  },
+  {
+    "on_conference_peer_list_changed", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
+    "on_conference_peer_list_changed(conference_number)\n"
     "Callback for joins/parts/name changes, default implementation does "
-    "nothing.\n\n"
-    "There are there possible *change* values:\n\n"
-    "+----------------------------------------------+----------------------+\n"
-    "| change                                       | description          |\n"
-    "+==============================================+======================+\n"
-    "| Tox.CONFERENCE_STATE_CHANGE_PEER_JOIN        | a peer is added      |\n"
-    "+----------------------------------------------+----------------------+\n"
-    "| Tox.CONFERENCE_STATE_CHANGE_PEER_EXIT        | a peer is deleted    |\n"
-    "+----------------------------------------------+----------------------+\n"
-    "| Tox.CONFERENCE_STATE_CHANGE_PEER_NAME_CHANGE | name of peer changed |\n"
-    "+----------------------------------------------+----------------------+\n"
+    "nothing.\n"
   },
   {
     "on_file_recv", (PyCFunction)ToxCore_callback_stub, METH_VARARGS,
@@ -1938,9 +1940,6 @@ void ToxCore_install_dict()
     SET(USER_STATUS_NONE)
     SET(USER_STATUS_AWAY)
     SET(USER_STATUS_BUSY)
-    SET(CONFERENCE_STATE_CHANGE_PEER_JOIN)
-    SET(CONFERENCE_STATE_CHANGE_PEER_EXIT)
-    SET(CONFERENCE_STATE_CHANGE_PEER_NAME_CHANGE)
     SET(FILE_KIND_DATA)
     SET(FILE_KIND_AVATAR)
     SET(FILE_CONTROL_RESUME)
