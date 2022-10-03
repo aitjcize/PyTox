@@ -1,3 +1,7 @@
+Deprecated Warning: The project is no longer being maintained, please use the alternative project `emdee/tox_profile <https://git.plastiras.org/emdee/tox_profile/>`_ instead.
+========
+
+
 .. image:: http://img.shields.io/travis/aitjcize/PyTox.svg
    :target: https://travis-ci.org/aitjcize/PyTox
 .. image:: http://img.shields.io/pypi/v/PyTox.svg
